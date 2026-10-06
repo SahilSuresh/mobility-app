@@ -39,6 +39,8 @@ export const MAX_FONT_SCALE = 1.3;
 
 export const fonts = {
   display: 'BricolageGrotesque_700Bold',
+  /** Serif for the Today screen's mastheads and big numbers. */
+  serif: 'Lora_600SemiBold',
   regular: 'Figtree_400Regular',
   medium: 'Figtree_500Medium',
   semibold: 'Figtree_600SemiBold',

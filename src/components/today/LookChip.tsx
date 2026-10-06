@@ -33,7 +33,7 @@ export function LookChip({ L, label, icon, selected, onPress, small }: Props) {
 }
 
 const styles = StyleSheet.create({
-  chip: { minHeight: 38, paddingHorizontal: 15, borderRadius: 19, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 7 },
+  chip: { minHeight: 44, paddingHorizontal: 16, borderRadius: 22, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 7 },
   small: { minHeight: 28, paddingHorizontal: 10, borderRadius: 14 },
   label: { fontFamily: fonts.semibold, fontSize: 15 },
   smallLabel: { fontFamily: fonts.semibold, fontSize: 12 },

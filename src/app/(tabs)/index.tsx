@@ -2,32 +2,27 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect } from 'expo-router';
 import { setStatusBarStyle } from 'expo-status-bar';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import { AreaIcon } from '@/components/AreaIcon';
-import { BodyFigure } from '@/components/BodyFigure';
 import { Icon } from '@/components/Icon';
 import { PoseBubble } from '@/components/PoseBubble';
 import { PremiumSheet } from '@/components/Sheet';
 import { T } from '@/components/T';
-import { AskStage, ANSWERS, type Answer } from '@/components/today/AskStage';
-import { Bento, streakIcon } from '@/components/today/Bento';
-import { DockedStart } from '@/components/today/DockedStart';
+import { ANSWERS, type Answer } from '@/components/today/answers';
 import { DoneStage } from '@/components/today/DoneStage';
+import { Garden } from '@/components/today/Garden';
 import { LookChip } from '@/components/today/LookChip';
 import { SessionHero } from '@/components/today/SessionHero';
+import { streakIcon } from '@/components/today/streak';
 import { OptionPill, Screen } from '@/components/ui';
 import { WeekStrip } from '@/components/WeekStrip';
 import { LOOKS } from '@/constants/looks';
-import { colors, fonts, REGION_COLORS, shadows } from '@/constants/theme';
-import { AREA_NAMES } from '@/data/areas';
+import { fonts, REGION_COLORS, shadows } from '@/constants/theme';
 import { PROGRAMMES } from '@/data/content';
-import type { AreaId } from '@/data/types';
-import { DAY_LONG, daysBetween, headerDate, isSameDay, partOfDay, relativeDay, weekdayIndex } from '@/lib/dates';
+import { DAY_LONG, dayMonth, isSameDay, partOfDay, weekdayIndex } from '@/lib/dates';
 import { startSession } from '@/lib/flow';
-import { insightLine } from '@/lib/insight';
 import { adjustSession, type CheckIn } from '@/lib/plan';
-import { lastTrained, nextSession, recencyGlow, streak, thisWeek, weekDays } from '@/lib/progress';
+import { nextSession, streak, thisWeek, weekDays } from '@/lib/progress';
 import { useCountTo } from '@/lib/useCountTo';
 import { useNow } from '@/lib/useNow';
 import { useAppStore } from '@/store/useAppStore';
@@ -47,11 +42,9 @@ export default function Today() {
   const programmeDays = useAppStore((s) => s.programmeDays);
   const startProgramme = useAppStore((s) => s.startProgramme);
   const startCustom = useAppStore((s) => s.startCustom);
-  const { choice, layout, stage: stageChoice, setStage } = useLook();
-  const [answer, setAnswer] = useState<Answer | 'skip' | null>(null);
+  const choice = useLook((s) => s.choice);
+  const [answer, setAnswer] = useState<Answer | null>(null);
   const [sheet, setSheet] = useState(false);
-  const [scrollY, setScrollY] = useState(0);
-  const [heroBottom, setHeroBottom] = useState(Infinity);
   const now = useNow();
   const look = resolveLook(choice, now);
   const L = LOOKS[look];
@@ -76,43 +69,27 @@ export default function Today() {
   const run = streak(plan, history, now);
   const adjusted = !!session && session !== planned;
   const level = session ? Math.max(...session.areas.map((a) => areaLevels[a] ?? plan.level)) : plan.level;
-  const kicker = !session
-    ? 'This week'
+  const when = !session
+    ? ''
     : next?.when === 'upcoming'
-      ? `Next · ${DAY_LONG[session.weekday]}`
+      ? `On ${DAY_LONG[session.weekday]}`
       : next?.when === 'catchup'
-        ? 'Catch up'
+        ? `Catch-up from ${DAY_LONG[session.weekday]}`
         : 'Today';
   const note = checkIn ? CHECK_IN_NOTE[checkIn] : null;
   const todays = history.filter((h) => isSameDay(new Date(h.date), now));
-
-  // Daily layout: ask until you answer, plan once you have, done once you've trained today.
-  const autoStage = todays.length > 0 ? 'done' : answer || !session ? 'plan' : 'ask';
-  const stage = stageChoice === 'auto' ? autoStage : stageChoice === 'ask' && !session ? 'plan' : stageChoice;
-
-  // Areas glow by how recently they were trained, fading over about a week.
-  const last = lastTrained(history);
-  const bodyGlows = Object.fromEntries(
-    Object.entries(last).map(([a, iso]) => [a, recencyGlow(daysBetween(new Date(iso as string), now))]),
-  ) as Partial<Record<AreaId, number>>;
+  const daysShownUp = new Set(history.map((h) => new Date(h.date).toDateString())).size;
 
   const pick = (key: Answer) => {
+    if (answer === key) {
+      setAnswer(null);
+      return;
+    }
     if (key === 'stiff') {
       router.push('/focus');
       return;
     }
     setAnswer(key);
-    if (stageChoice === 'ask') setStage('plan');
-  };
-
-  const skip = () => {
-    setAnswer('skip');
-    if (stageChoice === 'ask') setStage('plan');
-  };
-
-  const reopenCheckIn = () => {
-    setAnswer(null);
-    if (stageChoice !== 'auto') setStage('ask');
   };
 
   const start = () => {
@@ -139,43 +116,28 @@ export default function Today() {
     if (s) router.push({ pathname: '/session', params: { id: s.id } });
   };
 
-  const answered = ANSWERS.find((a) => a.key === answer);
-  const tag = answered ? { label: answered.label, icon: answered.icon, onChange: reopenCheckIn } : answer === 'skip' ? { label: 'As planned', icon: 'calendar' as const, onChange: reopenCheckIn } : undefined;
-  const insight = insightLine(history, isPremium, now);
-  const daily = layout === 'daily';
-  const showDock = daily && stage === 'plan' && !!session && scrollY > heroBottom - 40;
-
-  const hero = (
-    <SessionHero
-      L={L}
-      session={session}
-      kicker={kicker}
-      minutes={minutes}
-      level={level}
-      note={note}
-      tag={daily ? tag : undefined}
-      onStart={start}
-      onLayout={(e) => setHeroBottom(e.nativeEvent.layout.y + e.nativeEvent.layout.height)}
-    />
-  );
-
   return (
     <Screen
       scroll
       tabBar
-      onScroll={setScrollY}
       backdrop={L.background ? <LinearGradient colors={L.background} style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]} /> : undefined}
-      overlay={session ? <DockedStart L={L} visible={showDock} session={session} minutes={session.minutes} onStart={start} /> : null}
     >
       <View style={styles.header}>
         <View style={styles.flex}>
-          <T style={[styles.date, { color: L.muted }]}>{headerDate(now)}</T>
-          <T variant="title" color={L.ink} style={styles.day}>
+          {/* One line at any width or text size: shrinks a little first, then truncates. */}
+          <T variant="title" color={L.ink} style={styles.day} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} accessibilityRole="header">
             {`${DAY_LONG[weekdayIndex(now)]} ${partOfDay(now)}`}
+          </T>
+          <T variant="body" color={L.muted}>
+            {dayMonth(now)}
           </T>
         </View>
         <View style={styles.headerRight}>
-          <View style={[styles.streak, { backgroundColor: L.chip.bg, borderColor: L.chip.border }, L.dark && styles.flat]} accessibilityLabel={`${run} day streak`}>
+          <View
+            accessible
+            accessibilityLabel={`${run} day streak`}
+            style={[styles.streak, { backgroundColor: L.chip.bg, borderColor: L.chip.border }, L.dark && styles.flat]}
+          >
             <Icon name={streakIcon(run)} size={17} color={L.accent} strokeWidth={1.9} />
             <T style={[styles.streakText, { color: L.accent }]}>{String(run)}</T>
           </View>
@@ -189,51 +151,10 @@ export default function Today() {
           </Pressable>
         </View>
       </View>
-      {daily && insight ? (
-        <T variant="small" color={L.muted} style={styles.insight}>
-          {insight}
-        </T>
-      ) : null}
 
-      {daily ? (
-        stage === 'ask' ? (
-          <AskStage L={L} onAnswer={pick} onSkip={skip} />
-        ) : stage === 'done' ? (
-          <>
-            <DoneStage L={L} today={todays} run={run} next={session} />
-            <Bento
-              L={L}
-              variant="done"
-              done={done}
-              target={plan.days}
-              run={run}
-              areas={plan.areas}
-              last={last}
-              bodyGlows={bodyGlows}
-              now={now}
-              isPremium={isPremium}
-              programmeDays={programmeDays}
-              onProgramme={openProgramme}
-            />
-          </>
-        ) : (
-          <>
-            {hero}
-            <Bento
-              L={L}
-              done={done}
-              target={plan.days}
-              run={run}
-              areas={plan.areas}
-              last={last}
-              bodyGlows={bodyGlows}
-              now={now}
-              isPremium={isPremium}
-              programmeDays={programmeDays}
-              onProgramme={openProgramme}
-            />
-          </>
-        )
+      {todays.length > 0 ? (
+        // Once you've trained today, show what you did instead of asking again.
+        <DoneStage L={L} today={todays} run={run} next={planned} now={now} dayNumber={daysShownUp} />
       ) : (
         <>
           {session ? (
@@ -241,116 +162,72 @@ export default function Today() {
               <T variant="bodyStrong" color={L.ink} style={styles.ask}>
                 How&apos;s your body today?
               </T>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.bleed} contentContainerStyle={styles.chips}>
+              <View style={styles.chips}>
                 {ANSWERS.map((c) =>
                   look === 'current' ? (
-                    <OptionPill
-                      key={c.key}
-                      label={c.label}
-                      icon={c.icon}
-                      selected={answer === c.key}
-                      onPress={() => (answer === c.key ? setAnswer(null) : pick(c.key))}
-                      style={styles.chip}
-                    />
+                    <OptionPill key={c.key} label={c.label} icon={c.icon} selected={answer === c.key} onPress={() => pick(c.key)} style={styles.chip} />
                   ) : (
-                    <LookChip key={c.key} L={L} label={c.label} icon={c.icon} selected={answer === c.key} onPress={() => (answer === c.key ? setAnswer(null) : pick(c.key))} />
+                    <LookChip key={c.key} L={L} label={c.label} icon={c.icon} selected={answer === c.key} onPress={() => pick(c.key)} />
                   ),
                 )}
-              </ScrollView>
+              </View>
             </>
           ) : null}
 
-          {hero}
-
-          <View style={styles.sectionHead}>
-            <T variant="kicker" color={L.accent}>
-              This week
-            </T>
-            <T variant="smallStrong" color={L.ink} style={styles.tabular}>{`${done} of ${plan.days} done`}</T>
-          </View>
-          <Pressable accessibilityRole="button" accessibilityLabel={`This week, ${done} of ${plan.days}`} onPress={() => router.navigate('/progress')} style={styles.week}>
-            <WeekStrip
-              days={days}
-              size={36}
-              tone={look === 'current' ? undefined : { ink: L.ink, muted: L.faint, done: L.bright, onDone: L.onBright, glow: L.weekGlow }}
-            />
-          </Pressable>
-
-          <View style={[styles.rule, { backgroundColor: L.rule }]} />
-
-          <View style={styles.sectionHead}>
-            <T variant="kicker" color={L.accent}>
-              Your body this week
-            </T>
-            <Pressable accessibilityRole="button" onPress={() => router.push('/edit-areas')} hitSlop={8}>
-              <T variant="smallStrong" color={L.ink}>
-                Edit areas
-              </T>
-            </Pressable>
-          </View>
-          <View style={styles.body}>
-            <BodyFigure height={196} glows={bodyGlows} fill={L.figureFill} glowColor={L.glow} />
-            <View style={styles.areaList}>
-              {plan.areas.map((a) => (
-                <Pressable
-                  key={a}
-                  accessibilityRole="button"
-                  accessibilityLabel={AREA_NAMES[a]}
-                  onPress={() => router.push({ pathname: '/area/[id]', params: { id: a } })}
-                  style={({ pressed }) => [styles.areaRow, pressed && { opacity: 0.7 }]}
-                >
-                  <AreaIcon area={a} size={34} color={look === 'current' ? colors.green : L.accent} />
-                  <View style={styles.flex}>
-                    <T variant="bodyStrong" color={L.ink} style={{ fontSize: 15 }}>
-                      {AREA_NAMES[a]}
-                    </T>
-                    <T variant="caption" color={L.muted} style={{ fontSize: 12 }}>
-                      {last[a] ? relativeDay(last[a], now) : 'Not trained yet'}
-                    </T>
-                  </View>
-                </Pressable>
-              ))}
-            </View>
-          </View>
-
-          <View style={[styles.rule, { backgroundColor: L.rule }]} />
-
-          <View style={styles.sectionHead}>
-            <T variant="kicker" color={L.accent}>
-              Programmes
-            </T>
-            {isPremium ? null : (
-              <View style={styles.premiumLine}>
-                <Icon name="lock" size={11} color={L.muted} strokeWidth={2.4} />
-                <T variant="caption" color={L.muted}>
-                  Premium
-                </T>
-              </View>
-            )}
-          </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.bleed} contentContainerStyle={styles.programmes}>
-            {PROGRAMMES.map((p) => (
-              <Pressable
-                key={p.id}
-                accessibilityRole="button"
-                accessibilityLabel={p.title}
-                onPress={() => openProgramme(p.id)}
-                style={({ pressed }) => [styles.programme, pressed && { opacity: 0.8 }]}
-              >
-                <PoseBubble pose={p.pose} size={44} color={REGION_COLORS[p.areas[0]]} dot={false} />
-                <View>
-                  <T variant="bodyStrong" color={L.ink} style={{ fontSize: 15 }}>
-                    {p.title}
-                  </T>
-                  <T variant="caption" color={L.muted} style={{ fontSize: 12 }}>
-                    {isPremium && programmeDays[p.id] ? `Day ${Math.min(p.days, programmeDays[p.id] + 1)} of ${p.days}` : p.meta}
-                  </T>
-                </View>
-              </Pressable>
-            ))}
-          </ScrollView>
+          <SessionHero L={L} session={session} when={when} minutes={minutes} level={level} note={note} onStart={start} />
         </>
       )}
+
+      {/* The session comes first so Start sits in thumb reach; the garden follows and shows what today grew. */}
+      <Garden L={L} areas={plan.areas} history={history} now={now} />
+
+      <View style={styles.sectionHead}>
+        <T style={[styles.heading, { color: L.ink }]} accessibilityRole="header">
+          This week
+        </T>
+        <T variant="body" color={L.muted} style={styles.tabular}>{`${done} of ${plan.days} done`}</T>
+      </View>
+      <Pressable accessibilityRole="button" accessibilityLabel={`This week, ${done} of ${plan.days}`} onPress={() => router.navigate('/progress')} style={styles.week}>
+        <WeekStrip
+          days={days}
+          size={36}
+          tone={look === 'current' ? undefined : { ink: L.ink, muted: L.faint, done: L.bright, onDone: L.onBright, glow: L.weekGlow }}
+        />
+      </Pressable>
+
+      <View style={[styles.rule, { backgroundColor: L.rule }]} />
+
+      <View style={styles.sectionHead}>
+        <T style={[styles.heading, { color: L.ink }]} accessibilityRole="header">
+          Programmes
+        </T>
+      </View>
+      {/* A grid rather than a sideways scroll, so every programme is visible without a hidden gesture. */}
+      <View style={styles.programmes}>
+        {PROGRAMMES.map((p) => {
+          const meta = isPremium && programmeDays[p.id] ? `Day ${Math.min(p.days, programmeDays[p.id] + 1)} of ${p.days}` : p.meta;
+          return (
+            <Pressable
+              key={p.id}
+              accessibilityRole="button"
+              accessibilityLabel={`${p.title}, ${meta}${isPremium ? '' : ', Premium'}`}
+              onPress={() => openProgramme(p.id)}
+              style={({ pressed }) => [styles.programme, { backgroundColor: L.chip.bg, borderColor: L.chip.border }, pressed && { opacity: 0.8 }]}
+            >
+              <View style={styles.programmeTop}>
+                <PoseBubble pose={p.pose} size={44} color={REGION_COLORS[p.areas[0]]} dot={false} />
+                {isPremium ? null : <Icon name="lock" size={14} color={L.muted} strokeWidth={2.2} />}
+              </View>
+              <T variant="bodyStrong" color={L.ink} numberOfLines={1}>
+                {p.title}
+              </T>
+              <T variant="caption" color={L.muted} numberOfLines={1}>
+                {isPremium ? meta : `${meta}, Premium`}
+              </T>
+            </Pressable>
+          );
+        })}
+      </View>
 
       <PremiumSheet
         visible={sheet}
@@ -365,27 +242,23 @@ export default function Today() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  bleed: { marginHorizontal: -24 },
   flat: { boxShadow: 'none' },
   tabular: { fontVariant: ['tabular-nums'] },
-  header: { marginTop: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 52 },
-  date: { fontFamily: fonts.bold, fontSize: 11, letterSpacing: 1.2 },
-  day: { fontSize: 26, lineHeight: 30, marginTop: 1 },
-  insight: { marginTop: 6 },
+  header: { marginTop: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, minHeight: 56 },
+  day: { fontFamily: fonts.serif, fontSize: 30, lineHeight: 36 },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  streak: { height: 38, paddingHorizontal: 13, borderRadius: 19, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 5, boxShadow: shadows.small },
-  streakText: { fontFamily: fonts.bold, fontSize: 15, fontVariant: ['tabular-nums'] },
-  profile: { width: 38, height: 38, borderRadius: 19, borderWidth: 1, alignItems: 'center', justifyContent: 'center', boxShadow: shadows.small },
-  ask: { marginTop: 22 },
-  chips: { paddingHorizontal: 24, paddingVertical: 10, gap: 8 },
-  chip: { minHeight: 38, paddingHorizontal: 15 },
-  sectionHead: { marginTop: 26, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  streak: { height: 44, paddingHorizontal: 14, borderRadius: 22, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 6, boxShadow: shadows.small },
+  streakText: { fontFamily: fonts.bold, fontSize: 16, fontVariant: ['tabular-nums'] },
+  profile: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center', boxShadow: shadows.small },
+  ask: { marginTop: 24 },
+  chips: { marginTop: 12, flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: { minHeight: 44, paddingHorizontal: 16 },
+  // More space above a heading than below it.
+  sectionHead: { marginTop: 32, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  heading: { fontFamily: fonts.serif, fontSize: 20, lineHeight: 26 },
   week: { marginTop: 12 },
-  rule: { marginTop: 26, height: StyleSheet.hairlineWidth },
-  body: { marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 20 },
-  areaList: { flex: 1, gap: 12 },
-  areaRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  premiumLine: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  programmes: { paddingHorizontal: 24, paddingTop: 12, paddingBottom: 8, gap: 18 },
-  programme: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  rule: { marginTop: 32, height: StyleSheet.hairlineWidth },
+  programmes: { marginTop: 12, flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  programme: { flexBasis: '47%', flexGrow: 1, padding: 16, gap: 4, borderWidth: 1, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderBottomRightRadius: 24, borderBottomLeftRadius: 10 },
+  programmeTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 },
 });
