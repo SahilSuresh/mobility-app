@@ -5,18 +5,31 @@ import { AREA_NAMES, AREA_ORDER } from '@/data/areas';
 import type { AreaId } from '@/data/types';
 import { tap } from '@/lib/haptics';
 
+import { Appear, STAGGER, usePopSounds } from './Appear';
 import { Icon } from './Icon';
 
 /**
  * Every area as a chip, wrapped so all of them are in view: the list alternative to tapping the body map.
  * Selected chips turn green with a check, so the state never relies on colour alone.
+ * With `introDelay`, the chips pop in one after another, each with a soft pop sound,
+ * starting that many ms after the screen opens.
  */
-export function AreaChips({ selected, onToggle }: { selected: AreaId[]; onToggle: (area: AreaId) => void }) {
+export function AreaChips({
+  selected,
+  onToggle,
+  introDelay,
+}: {
+  selected: AreaId[];
+  onToggle: (area: AreaId) => void;
+  introDelay?: number;
+}) {
+  usePopSounds(introDelay, AREA_ORDER.length);
+
   return (
     <View style={styles.wrap}>
-      {AREA_ORDER.map((area) => {
+      {AREA_ORDER.map((area, i) => {
         const on = selected.includes(area);
-        return (
+        const chip = (
           <Pressable
             key={area}
             accessibilityRole="checkbox"
@@ -34,6 +47,13 @@ export function AreaChips({ selected, onToggle }: { selected: AreaId[]; onToggle
               {AREA_NAMES[area]}
             </Text>
           </Pressable>
+        );
+        return introDelay === undefined ? (
+          chip
+        ) : (
+          <Appear key={area} kind="pop" delay={introDelay + i * STAGGER}>
+            {chip}
+          </Appear>
         );
       })}
     </View>

@@ -15,6 +15,7 @@ import { accent, colors, fonts, glass, NATIVE_DRIVER, REGION_COLORS, shadows, ti
 import { AREA_NAMES } from '@/data/areas';
 import { durationLabel, getExercise } from '@/data/exercises';
 import type { AreaId, Exercise } from '@/data/types';
+import { playStartSound } from '@/lib/sounds';
 
 /**
  * Moves from the library, in a ring round the body. Tour stops light an area on the body and lift its move;
@@ -197,7 +198,14 @@ export default function Welcome() {
       </Rise>
 
       <Rise intro={intro} order={4}>
-        <PrimaryButton label="Get started" style={styles.cta} onPress={() => router.push('/onboarding/areas')} />
+        <PrimaryButton
+          label="Get started"
+          style={styles.cta}
+          onPress={() => {
+            playStartSound();
+            router.push('/onboarding/areas');
+          }}
+        />
         <T variant="caption" center color={colors.faint} style={styles.note}>
           Three quick questions · under a minute
         </T>

@@ -1,6 +1,8 @@
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { Appear } from '@/components/Appear';
 import { Icon, type IconName } from '@/components/Icon';
 import { PoseBubble } from '@/components/PoseBubble';
 import { T } from '@/components/T';
@@ -12,6 +14,7 @@ import type { Exercise } from '@/data/types';
 import { goBack } from '@/lib/flow';
 import { tap } from '@/lib/haptics';
 import { HOLD, holdFor, moveTime, restSeconds } from '@/lib/holds';
+import { playSound, playStartSound, preloadSounds } from '@/lib/sounds';
 import { findSession, useAppStore } from '@/store/useAppStore';
 
 function clock(seconds: number): string {
@@ -30,6 +33,9 @@ export default function SessionPreview() {
   const holds = useAppStore((s) => s.holds);
   const readySeconds = useAppStore((s) => restSeconds(s.readySeconds));
   const setHold = useAppStore((s) => s.setHold);
+  // The last move whose time was changed, so only that time pops.
+  const [touched, setTouched] = useState<string | null>(null);
+  useEffect(() => preloadSounds(), []);
   if (!session) return <Redirect href="/" />;
 
   const all = session.exerciseIds.map((m) => getExercise(m)).filter((e): e is Exercise => !!e);
@@ -44,9 +50,21 @@ export default function SessionPreview() {
   const adjust = (e: Exercise, by: number) => {
     const next = Math.min(HOLD.max, Math.max(HOLD.min, holdFor(e, holds) + by));
     tap();
+    playSound(by > 0 ? 'select' : 'deselect');
+    setTouched(e.id);
     // Back at the default, the move simply uses its default again.
     setHold(e.id, next === e.seconds ? null : next);
   };
+
+  const start = () => {
+    playStartSound();
+    router.replace({ pathname: '/session', params: { id: session.id } });
+  };
+
+  // The screen builds in: the title, the facts, then the moves one by one (the ones in view), then Start.
+  const ROWS_AT = 420;
+  const ROW_STAGGER = 60;
+  const BUTTON_AT = ROWS_AT + Math.min(moves.length, 8) * ROW_STAGGER + 100;
 
   return (
     <Screen>
@@ -54,67 +72,89 @@ export default function SessionPreview() {
         <IconButton icon="close" label="Close" onPress={() => goBack()} />
       </View>
 
-      <T variant="kicker" style={styles.kicker}>
-        {`${moves.length} moves`}
-      </T>
-      <T variant="title" accessibilityRole="header">
-        {session.title}
-      </T>
+      <Appear>
+        <T variant="kicker" style={styles.kicker}>
+          {`${moves.length} moves`}
+        </T>
+      </Appear>
+      <Appear delay={80}>
+        <T variant="title" accessibilityRole="header">
+          {session.title}
+        </T>
+      </Appear>
       <View style={styles.facts}>
-        <Fact icon="clock" label={`${totalMinutes} min`} strong />
-        {equipment.length ? equipment.map((q) => <Fact key={q} icon={q} label={EQUIPMENT_LABEL[q]} />) : <Fact icon="person" label="No equipment" />}
-        <Fact icon="target" label={sortAreas(session.areas).map((a) => AREA_NAMES[a]).join(', ')} />
+        {/* The time pops again whenever a change to a hold changes it. */}
+        <Appear key={totalMinutes} kind="pop" delay={touched ? 0 : 180}>
+          <Fact icon="clock" label={`${totalMinutes} min`} strong />
+        </Appear>
+        {(equipment.length ? equipment : [null]).map((q, i) => (
+          <Appear key={q ?? 'none'} kind="pop" delay={240 + i * 60}>
+            {q ? <Fact icon={q} label={EQUIPMENT_LABEL[q]} /> : <Fact icon="person" label="No equipment" />}
+          </Appear>
+        ))}
+        <Appear kind="pop" delay={240 + Math.max(1, equipment.length) * 60} style={styles.factWide}>
+          <Fact icon="target" label={sortAreas(session.areas).map((a) => AREA_NAMES[a]).join(', ')} />
+        </Appear>
       </View>
 
-      <View style={styles.listHeader}>
+      <Appear delay={ROWS_AT - 80} style={styles.listHeader}>
         <T variant="smallStrong" color={colors.muted}>
           Use − and + to change a hold
         </T>
         {changed.length ? (
           <TextButton label="Reset times" color={colors.greenText} onPress={() => changed.forEach((e) => setHold(e.id, null))} />
         ) : null}
-      </View>
+      </Appear>
 
-      <ScrollView style={styles.list} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
-        {moves.map((e, i) => {
-          const hold = holdFor(e, holds);
-          const custom = holds[e.id] !== undefined;
-          const n = rounds(e);
-          const detail = [AREA_NAMES[e.area], e.eachSide ? 'each side' : null, n > 1 ? `${n} rounds` : null].filter(Boolean).join(' · ');
-          return (
-            <View key={e.id} style={[styles.row, i > 0 && styles.rowRule]}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`${e.name}, how to do it`}
-                onPress={() => router.push({ pathname: '/exercise/[id]', params: { id: e.id } })}
-                style={({ pressed }) => [styles.move, pressed && styles.pressed]}
-              >
-                <PoseBubble pose={e.pose} size={48} color={REGION_COLORS[e.area]} dot={false} breathe phase={(i * 0.17) % 1} />
-                <View style={styles.moveText}>
-                  <T variant="bodyStrong" numberOfLines={1}>
-                    {e.name}
-                  </T>
-                  <T variant="caption" numberOfLines={1}>
-                    {detail}
-                  </T>
+      <Appear delay={ROWS_AT - 40} style={styles.listWrap}>
+        <ScrollView style={styles.list} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
+          {moves.map((e, i) => {
+            const hold = holdFor(e, holds);
+            const custom = holds[e.id] !== undefined;
+            const n = rounds(e);
+            const detail = [AREA_NAMES[e.area], e.eachSide ? 'each side' : null, n > 1 ? `${n} rounds` : null].filter(Boolean).join(' · ');
+            return (
+              <Appear key={e.id} delay={ROWS_AT + Math.min(i, 8) * ROW_STAGGER} style={[styles.row, i > 0 && styles.rowRule]}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${e.name}, how to do it`}
+                  onPress={() => router.push({ pathname: '/exercise/[id]', params: { id: e.id } })}
+                  style={({ pressed }) => [styles.move, pressed && styles.pressed]}
+                >
+                  <PoseBubble pose={e.pose} size={48} color={REGION_COLORS[e.area]} dot={false} breathe phase={(i * 0.17) % 1} />
+                  <View style={styles.moveText}>
+                    <T variant="bodyStrong" numberOfLines={1}>
+                      {e.name}
+                    </T>
+                    <T variant="caption" numberOfLines={1}>
+                      {detail}
+                    </T>
+                  </View>
+                </Pressable>
+                <View style={[styles.stepper, custom && styles.stepperCustom]}>
+                  <StepButton icon="minus" label={`Shorter ${e.name}`} disabled={hold <= HOLD.min} onPress={() => adjust(e, -HOLD.step)} />
+                  <View style={styles.time} accessibilityLiveRegion="polite" accessibilityLabel={`${hold} seconds${e.eachSide ? ' each side' : ''}`}>
+                    {/* Pops as it changes, so each tap on − or + lands. */}
+                    <Appear key={hold} kind="pop" still={touched !== e.id}>
+                      <T style={[styles.timeText, custom && styles.timeTextCustom]}>{clock(hold)}</T>
+                    </Appear>
+                  </View>
+                  <StepButton icon="plus" label={`Longer ${e.name}`} disabled={hold >= HOLD.max} onPress={() => adjust(e, HOLD.step)} />
                 </View>
-              </Pressable>
-              <View style={[styles.stepper, custom && styles.stepperCustom]}>
-                <StepButton icon="minus" label={`Shorter ${e.name}`} disabled={hold <= HOLD.min} onPress={() => adjust(e, -HOLD.step)} />
-                <View style={styles.time} accessibilityLiveRegion="polite" accessibilityLabel={`${hold} seconds${e.eachSide ? ' each side' : ''}`}>
-                  <T style={[styles.timeText, custom && styles.timeTextCustom]}>{clock(hold)}</T>
-                </View>
-                <StepButton icon="plus" label={`Longer ${e.name}`} disabled={hold >= HOLD.max} onPress={() => adjust(e, HOLD.step)} />
-              </View>
-            </View>
-          );
-        })}
-      </ScrollView>
+              </Appear>
+            );
+          })}
+        </ScrollView>
+      </Appear>
 
-      <T variant="caption" center style={styles.note}>
-        Your times are saved for next time. Move gently, within a comfortable range.
-      </T>
-      <PrimaryButton label={`Start · ${totalMinutes} min`} icon="play" onPress={() => router.replace({ pathname: '/session', params: { id: session.id } })} />
+      <Appear delay={BUTTON_AT}>
+        <T variant="caption" center style={styles.note}>
+          Your times are saved for next time. Move gently, within a comfortable range.
+        </T>
+      </Appear>
+      <Appear kind="pop" delay={BUTTON_AT + 80}>
+        <PrimaryButton label={`Start · ${totalMinutes} min`} icon="play" onPress={start} />
+      </Appear>
     </Screen>
   );
 }
@@ -151,11 +191,13 @@ const styles = StyleSheet.create({
   kicker: { marginTop: 14, marginBottom: 4 },
   facts: { marginTop: 14, flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   fact: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 30, paddingHorizontal: 11, borderRadius: 15, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, maxWidth: '100%' },
+  factWide: { maxWidth: '100%' },
   factStrong: { backgroundColor: colors.green, borderColor: colors.green },
   factText: { flexShrink: 1, fontFamily: fonts.semibold, fontSize: 13, color: colors.ink },
   factTextStrong: { color: colors.onGreen },
 
   listHeader: { marginTop: 22, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 28 },
+  listWrap: { flex: 1 },
   list: { flex: 1, marginTop: 8, borderRadius: 22, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
   listContent: { paddingHorizontal: 12 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10 },

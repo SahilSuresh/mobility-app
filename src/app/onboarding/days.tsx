@@ -1,7 +1,8 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { Appear, STAGGER, usePopSounds } from '@/components/Appear';
 import { AreaIcon } from '@/components/AreaIcon';
 import { Icon, type IconName } from '@/components/Icon';
 import { OnboardingHeader } from '@/components/OnboardingHeader';
@@ -14,6 +15,7 @@ import { DAY_LETTER, DAY_LONG, weekdayIndex } from '@/lib/dates';
 import { goBack } from '@/lib/flow';
 import { tap } from '@/lib/haptics';
 import { generateSessions, planStartDay } from '@/lib/plan';
+import { playSound, preloadSounds } from '@/lib/sounds';
 import { useAppStore } from '@/store/useAppStore';
 
 const KIND_LABEL: Record<PlannedSession['kind'], string> = {
@@ -23,6 +25,12 @@ const KIND_LABEL: Record<PlannedSession['kind'], string> = {
   quick: 'Quick',
   programme: 'Programme',
 };
+
+// In onboarding the screen builds itself in order: the question, the week day by day, the days picker, then the button.
+// "Minutes per session" waits until the days are picked.
+const ROWS_AT = 300;
+const PICKERS_AT = ROWS_AT + 7 * STAGGER + 120;
+const BUTTON_AT = PICKERS_AT + 140;
 
 /** How often and how long, on one screen, with the real week those choices build. Also opened from Settings to edit both. */
 export default function Routine() {
@@ -38,13 +46,24 @@ export default function Routine() {
   // Days picked by hand, or undefined for one of the preset spreads.
   const [weekdays, setWeekdays] = useState<number[] | undefined>(source.weekdays);
   const [minutes, setMinutes] = useState<Minutes>(source.minutes);
+  // In onboarding the days come first: nothing is picked, and the minutes stay hidden, until they're chosen.
+  const [daysPicked, setDaysPicked] = useState(editing);
+
+  // The build-up and the pops are for onboarding; editing from Settings opens straight away and quietly.
+  const still = editing;
+  useEffect(() => {
+    if (!still) preloadSounds();
+  }, [still]);
+  usePopSounds(still ? undefined : ROWS_AT, 7);
 
   const chooseDays = (n: DaysPerWeek) => {
+    setDaysPicked(true);
     setDays(n);
     setWeekdays(undefined);
     if (!editing) setDraft({ days: n, weekdays: undefined });
   };
   const chooseWeekdays = (list: number[]) => {
+    setDaysPicked(true);
     setWeekdays(list);
     setDays(list.length);
     if (!editing) setDraft({ days: list.length, weekdays: list });
@@ -69,53 +88,89 @@ export default function Routine() {
   return (
     <Screen>
       <OnboardingHeader step={editing ? undefined : 3} />
-      <T variant="title" style={styles.title} accessibilityRole="header">
-        {editing ? 'Your routine' : 'Fit it into your week'}
-      </T>
-      <T variant="body" color={colors.muted} style={styles.sub}>
-        Pick what you can keep up. You can change it any time.
-      </T>
+      <Appear still={still}>
+        <T variant="title" style={styles.title} accessibilityRole="header">
+          {editing ? 'Your routine' : 'Fit it into your week'}
+        </T>
+      </Appear>
+      <Appear still={still} delay={120}>
+        <T variant="body" color={colors.muted} style={styles.sub}>
+          Pick what you can keep up. You can change it any time.
+        </T>
+      </Appear>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.week} accessibilityLabel={`${days === 7 ? 'Every day' : `${days} days a week`}, ${minutes} minutes each, ${days * minutes} minutes a week`}>
-          <View style={styles.weekHead}>
-            <T variant="kicker">Your week</T>
-            <T variant="smallStrong" color={colors.greenText} accessibilityLiveRegion="polite">
-              {days * minutes} min a week
-            </T>
+        <Appear still={still} delay={200}>
+          <View
+            style={styles.week}
+            accessibilityLabel={
+              daysPicked ? `${days === 7 ? 'Every day' : `${days} days a week`}, ${minutes} minutes each, ${days * minutes} minutes a week` : 'Your week, once you pick your days'
+            }
+          >
+            <View style={styles.weekHead}>
+              <T variant="kicker">Your week</T>
+              <T variant="smallStrong" color={colors.greenText} accessibilityLiveRegion="polite">
+                {daysPicked ? `${days * minutes} min a week` : 'Pick your days below'}
+              </T>
+            </View>
+            {order.map((i, k) => {
+              const s = byDay.get(i);
+              const name = !editing && i === today ? 'Today' : DAY_LONG[i].slice(0, 3);
+              return (
+                <Appear key={i} still={still} delay={ROWS_AT + k * STAGGER} style={[styles.row, styles.rowRule]}>
+                  <T variant="smallStrong" color={s && daysPicked ? colors.ink : colors.faint} style={styles.dayName}>
+                    {name}
+                  </T>
+                  {daysPicked ? (
+                    // The sessions fill in down the week once the days are picked.
+                    <Appear key="filled" still={still} delay={k * 40} style={styles.line}>
+                      {s ? <SessionLine session={s} /> : <RestLine />}
+                    </Appear>
+                  ) : (
+                    <EmptyLine />
+                  )}
+                </Appear>
+              );
+            })}
           </View>
-          {order.map((i) => {
-            const s = byDay.get(i);
-            const name = !editing && i === today ? 'Today' : DAY_LONG[i].slice(0, 3);
-            return (
-              <View key={i} style={[styles.row, styles.rowRule]}>
-                <T variant="smallStrong" color={s ? colors.ink : colors.faint} style={styles.dayName}>
-                  {name}
-                </T>
-                {s ? <SessionLine session={s} /> : <RestLine />}
-              </View>
-            );
-          })}
-        </View>
+        </Appear>
 
       </ScrollView>
 
-      <DaysPicker days={days} weekdays={weekdays} current={week.map((w) => w.weekday)} onPreset={chooseDays} onCustom={chooseWeekdays} />
-      <MinutesPicker value={minutes} onChange={chooseMinutes} />
+      <Appear still={still} delay={PICKERS_AT}>
+        <DaysPicker
+          days={days}
+          weekdays={weekdays}
+          picked={daysPicked}
+          current={week.map((w) => w.weekday)}
+          sound={!still}
+          onPreset={chooseDays}
+          onCustom={chooseWeekdays}
+        />
+      </Appear>
+      {daysPicked ? (
+        <Appear still={still}>
+          <MinutesPicker value={minutes} sound={!still} onChange={chooseMinutes} />
+        </Appear>
+      ) : null}
 
-      <PrimaryButton
-        label={editing ? 'Save' : 'Build my plan'}
-        style={styles.cta}
-        onPress={() => {
-          if (editing) {
-            updatePlan({ days, weekdays, minutes });
-            goBack();
-          } else {
-            createPlan();
-            router.push('/onboarding/building');
-          }
-        }}
-      />
+      <Appear still={still} delay={BUTTON_AT}>
+        <PrimaryButton
+          label={editing ? 'Save' : daysPicked ? 'Build my plan' : 'Pick your days'}
+          disabled={!daysPicked}
+          style={styles.cta}
+          onPress={() => {
+            if (editing) {
+              updatePlan({ days, weekdays, minutes });
+              goBack();
+            } else {
+              playSound('build');
+              createPlan();
+              router.push('/onboarding/building');
+            }
+          }}
+        />
+      </Appear>
     </Screen>
   );
 }
@@ -124,14 +179,20 @@ export default function Routine() {
 function DaysPicker({
   days,
   weekdays,
+  picked,
   current,
+  sound,
   onPreset,
   onCustom,
 }: {
   days: DaysPerWeek;
   weekdays: number[] | undefined;
+  /** False until the person picks: no count shows as chosen yet. */
+  picked: boolean;
   /** The days the week uses right now, to start the custom pick from. */
   current: number[];
+  /** Play the select and deselect pops on each tap. */
+  sound: boolean;
   onPreset: (n: DaysPerWeek) => void;
   onCustom: (list: number[]) => void;
 }) {
@@ -142,6 +203,7 @@ function DaysPicker({
     // At least one day stays on.
     if (on && weekdays.length === 1) return;
     tap();
+    if (sound) playSound(on ? 'deselect' : 'select');
     onCustom(on ? weekdays.filter((x) => x !== d) : [...weekdays, d].sort((a, b) => a - b));
   };
   return (
@@ -151,13 +213,14 @@ function DaysPicker({
       </T>
       <View style={styles.segments} accessibilityRole="radiogroup" accessibilityLabel="Days a week">
         {DAY_OPTIONS.map((n) => (
-          <Segment key={n} label={String(n)} describe={n === 7 ? 'Every day' : `${n} days a week`} on={!open && days === n} onPress={() => onPreset(n)} />
+          <Segment key={n} label={String(n)} describe={n === 7 ? 'Every day' : `${n} days a week`} on={picked && !open && days === n} sound={sound} onPress={() => onPreset(n)} />
         ))}
         <Segment
           label="Custom"
           small
           describe={open ? `Custom days, ${days} a week` : 'Pick your own days'}
           on={open}
+          sound={sound}
           onPress={() => {
             if (!open) onCustom([...current].sort((a, b) => a - b));
           }}
@@ -187,7 +250,7 @@ function DaysPicker({
 }
 
 /** The preset lengths plus Custom, which opens a stepper for any length in the custom range. */
-function MinutesPicker({ value, onChange }: { value: Minutes; onChange: (m: Minutes) => void }) {
+function MinutesPicker({ value, sound, onChange }: { value: Minutes; sound: boolean; onChange: (m: Minutes) => void }) {
   const isCustom = !MINUTE_OPTIONS.includes(value);
   const [open, setOpen] = useState(isCustom);
   const step = (by: number) => {
@@ -206,6 +269,7 @@ function MinutesPicker({ value, onChange }: { value: Minutes; onChange: (m: Minu
             label={String(m)}
             describe={`${m} minutes`}
             on={!open && value === m}
+            sound={sound}
             onPress={() => {
               setOpen(false);
               onChange(m);
@@ -217,6 +281,7 @@ function MinutesPicker({ value, onChange }: { value: Minutes; onChange: (m: Minu
           small={!open}
           describe={open ? `Custom, ${value} minutes` : 'Custom length'}
           on={open}
+          sound={sound}
           onPress={() => {
             setOpen(true);
             if (!isCustom) onChange(CUSTOM_MINUTES.start);
@@ -239,7 +304,21 @@ function MinutesPicker({ value, onChange }: { value: Minutes; onChange: (m: Minu
   );
 }
 
-function Segment({ label, describe, on, small, onPress }: { label: string; describe: string; on: boolean; small?: boolean; onPress: () => void }) {
+function Segment({
+  label,
+  describe,
+  on,
+  small,
+  sound,
+  onPress,
+}: {
+  label: string;
+  describe: string;
+  on: boolean;
+  small?: boolean;
+  sound?: boolean;
+  onPress: () => void;
+}) {
   return (
     <Pressable
       accessibilityRole="radio"
@@ -247,6 +326,7 @@ function Segment({ label, describe, on, small, onPress }: { label: string; descr
       accessibilityLabel={describe}
       onPress={() => {
         tap();
+        if (sound && !on) playSound('select');
         onPress();
       }}
       style={({ pressed }) => [styles.segment, on && styles.segmentOn, pressed && !on && styles.pressed]}
@@ -300,6 +380,16 @@ function SessionLine({ session }: { session: PlannedSession }) {
   );
 }
 
+/** A faint placeholder for a day, before the days are picked. */
+function EmptyLine() {
+  return (
+    <View style={styles.line} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+      <View style={[styles.iconDot, styles.restDot]} />
+      <View style={styles.placeholder} />
+    </View>
+  );
+}
+
 function RestLine() {
   return (
     <View style={styles.line}>
@@ -330,6 +420,7 @@ const styles = StyleSheet.create({
   minutes: { fontFamily: fonts.semibold, color: colors.muted },
   iconDot: { width: 28, height: 28, borderRadius: 14, backgroundColor: colors.greenTint, alignItems: 'center', justifyContent: 'center' },
   restDot: { backgroundColor: tint(0.07) },
+  placeholder: { width: '45%', height: 10, borderRadius: 5, backgroundColor: tint(0.07) },
 
   note: { marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4 },
   noteText: { flex: 1 },

@@ -14,6 +14,7 @@ import { continueFirstRun, goBack } from '@/lib/flow';
 import { success, tap } from '@/lib/haptics';
 import { yearlySaving } from '@/lib/paywall';
 import { buy, loadOptions, purchasesLive, restore, type PaywallOption } from '@/lib/purchases';
+import { playStartSound } from '@/lib/sounds';
 import { useAppStore } from '@/store/useAppStore';
 
 const BENEFITS: { icon: IconName; label: string }[] = [
@@ -64,6 +65,8 @@ export default function Premium() {
     setMessage('');
     try {
       if (await buy(option)) {
+        // The trial or subscription has started: it sounds like every other start.
+        playStartSound();
         setPremium(true);
         success();
         unlocked();

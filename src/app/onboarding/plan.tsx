@@ -1,14 +1,14 @@
 import { Redirect } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Animated, Easing, ScrollView, StyleSheet, View } from 'react-native';
-import { useReducedMotion } from 'react-native-reanimated';
+import { useEffect } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { Appear, STAGGER, usePopSounds } from '@/components/Appear';
 import { BodyFigure } from '@/components/BodyFigure';
-import { Rise } from '@/components/Rise';
+import { CountUp } from '@/components/CountUp';
 import { SessionRow } from '@/components/SessionRow';
 import { T } from '@/components/T';
 import { PrimaryButton, Screen, TextButton } from '@/components/ui';
-import { accent, colors, fonts, glassSoft, NATIVE_DRIVER, shadows } from '@/constants/theme';
+import { accent, colors, fonts, glassSoft, shadows } from '@/constants/theme';
 import { AREA_NAMES, sortAreas } from '@/data/areas';
 import { GOAL_LABEL, LEVEL_NAME } from '@/data/content';
 import type { AreaId, BodyView } from '@/data/types';
@@ -16,6 +16,7 @@ import { addDays, startOfDay } from '@/lib/dates';
 import { planStartDay } from '@/lib/plan';
 import { goHome, startSession } from '@/lib/flow';
 import { nextSession } from '@/lib/progress';
+import { playSound, preloadSounds } from '@/lib/sounds';
 import { useAppStore } from '@/store/useAppStore';
 
 const FIGURE = 132;
@@ -24,15 +25,24 @@ const VIEWS: BodyView[] = ['front', 'back'];
 export default function PlanReady() {
   const plan = useAppStore((s) => s.plan);
   const history = useAppStore((s) => s.history);
-  const reduceMotion = useReducedMotion();
-  const [intro] = useState(() => new Animated.Value(reduceMotion ? 1 : 0));
+  // The reveal, in order: the headline, the card and both figures, the focus areas one by one,
+  // the numbers counting up, the first week session by session, then the button.
+  const areaCount = plan?.areas.length ?? 0;
+  const chipStagger = Math.min(STAGGER, Math.round(420 / Math.max(1, areaCount)));
+  const CHIPS_AT = 650;
+  const STATS_AT = CHIPS_AT + areaCount * chipStagger + 80;
+  const ROWS_AT = STATS_AT + 450;
+  const ROW_STAGGER = 110;
+  const rowCount = plan?.sessions.length ?? 0;
+  const BOTTOM_AT = ROWS_AT + rowCount * ROW_STAGGER + 150;
 
   useEffect(() => {
-    if (reduceMotion) return;
-    const anim = Animated.timing(intro, { toValue: 1, duration: 1000, easing: Easing.out(Easing.cubic), useNativeDriver: NATIVE_DRIVER });
-    anim.start();
-    return () => anim.stop();
-  }, [intro, reduceMotion]);
+    preloadSounds();
+    const timer = setTimeout(() => playSound('ready'), 120);
+    return () => clearTimeout(timer);
+  }, []);
+  usePopSounds(plan ? CHIPS_AT : undefined, areaCount, chipStagger);
+  usePopSounds(plan ? ROWS_AT : undefined, rowCount, ROW_STAGGER);
 
   if (!plan) return <Redirect href="/onboarding/areas" />;
 
@@ -51,20 +61,24 @@ export default function PlanReady() {
 
   return (
     <Screen>
-      <Rise intro={intro} order={0}>
+      <Appear>
         <T variant="kicker">Your plan is ready</T>
+      </Appear>
+      <Appear delay={110}>
         <T variant="title" style={styles.title} accessibilityRole="header">
           {LEVEL_NAME[plan.level]} · {GOAL_LABEL[plan.goal]}
         </T>
-      </Rise>
+      </Appear>
 
-      <Rise intro={intro} order={1}>
+      <Appear delay={260}>
         <View style={styles.hero}>
           <View style={styles.heroTop}>
             <View style={styles.bodies} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
               <View style={styles.halo} />
-              {VIEWS.map((view) => (
-                <BodyFigure key={view} height={FIGURE} view={view} glows={glows} />
+              {VIEWS.map((view, i) => (
+                <Appear key={view} kind="pop" delay={400 + i * 110}>
+                  <BodyFigure height={FIGURE} view={view} glows={glows} />
+                </Appear>
               ))}
             </View>
             <View style={styles.areas}>
@@ -72,65 +86,67 @@ export default function PlanReady() {
                 Focus areas
               </T>
               <View style={styles.chips}>
-                {areas.map((a) => (
-                  <View key={a} style={styles.chip}>
+                {areas.map((a, i) => (
+                  <Appear key={a} kind="pop" delay={CHIPS_AT + i * chipStagger} style={styles.chip}>
                     <T style={styles.chipText}>{AREA_NAMES[a]}</T>
-                  </View>
+                  </Appear>
                 ))}
               </View>
             </View>
           </View>
           <View style={styles.stats}>
-            <Stat value={String(plan.days)} label={plan.days === 7 ? 'every day' : 'days a week'} />
-            <Stat value={String(plan.minutes)} label="min a session" divider />
-            <Stat value={String(plan.days * plan.minutes)} label="min a week" divider />
+            <Stat value={plan.days} delay={STATS_AT} label={plan.days === 7 ? 'every day' : 'days a week'} />
+            <Stat value={plan.minutes} delay={STATS_AT + 120} label="min a session" divider />
+            <Stat value={plan.days * plan.minutes} delay={STATS_AT + 240} label="min a week" divider />
           </View>
         </View>
-      </Rise>
+      </Appear>
 
-      <Rise intro={intro} order={2} style={styles.weekWrap}>
-        <View style={styles.weekHeader}>
+      <View style={styles.weekWrap}>
+        <Appear delay={ROWS_AT - 120} style={styles.weekHeader}>
           <T variant="kicker">Your first week</T>
           <T variant="caption">
             {plan.sessions.length} {plan.sessions.length === 1 ? 'session' : 'sessions'}
           </T>
-        </View>
+        </Appear>
         <ScrollView style={styles.list} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
-          {firstWeek.map(({ s, date }) => {
+          {firstWeek.map(({ s, date }, i) => {
             const isNext = next?.session.id === s.id;
             const when = isNext ? `${next?.when === 'upcoming' ? 'Next' : 'Today'} · ` : '';
             return (
-              <SessionRow
-                key={s.id}
-                session={s}
-                now={now}
-                date={date}
-                meta={`${when}${s.minutes} min · ${s.exerciseIds.length} moves`}
-                highlight={isNext}
-                trailing="bubbles"
-                onPress={isNext ? start : undefined}
-              />
+              <Appear key={s.id} delay={ROWS_AT + i * ROW_STAGGER}>
+                <SessionRow
+                  session={s}
+                  now={now}
+                  date={date}
+                  meta={`${when}${s.minutes} min · ${s.exerciseIds.length} moves`}
+                  highlight={isNext}
+                  trailing="bubbles"
+                  onPress={isNext ? start : undefined}
+                />
+              </Appear>
             );
           })}
         </ScrollView>
-      </Rise>
+      </View>
 
-      <Rise intro={intro} order={3}>
+      <Appear delay={BOTTOM_AT}>
         <T variant="caption" center style={styles.safety}>
           Move gently, within a comfortable range.
         </T>
         <PrimaryButton label="Start first session" icon="play" onPress={start} />
         {/* A way out for anyone not starting yet: home, with onboarding cleared from the back stack. */}
         <TextButton label="Go to my home screen" color={colors.muted} onPress={goHome} style={styles.home} />
-      </Rise>
+      </Appear>
     </Screen>
   );
 }
 
-function Stat({ value, label, divider }: { value: string; label: string; divider?: boolean }) {
+/** One of the plan's numbers, counting up into place. */
+function Stat({ value, delay, label, divider }: { value: number; delay: number; label: string; divider?: boolean }) {
   return (
     <View style={[styles.stat, divider && styles.statDivider]}>
-      <T style={styles.statValue}>{value}</T>
+      <CountUp value={value} delay={delay} style={styles.statValue} />
       <T variant="caption">{label}</T>
     </View>
   );

@@ -13,6 +13,7 @@ import { areasLabel, sortAreas, VISIBLE } from '@/data/areas';
 import { LEVEL_NAME } from '@/data/content';
 import type { BodyView } from '@/data/types';
 import { DAY_LETTER } from '@/lib/dates';
+import { playSound } from '@/lib/sounds';
 import { useViewport } from '@/lib/viewport';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -39,7 +40,14 @@ export default function Building() {
       ).start();
       Animated.timing(bar, { toValue: 1, duration: STEP_MS * 3, easing: Easing.inOut(Easing.cubic), useNativeDriver: false }).start();
     }
-    const timers = reduceMotion ? [] : [1, 2, 3].map((n) => setTimeout(() => setStep(n), STEP_MS * n));
+    const timers = reduceMotion
+      ? []
+      : [1, 2, 3].map((n) =>
+          setTimeout(() => {
+            setStep(n);
+            playSound('select');
+          }, STEP_MS * n),
+        );
     const done = setTimeout(() => router.replace('/onboarding/plan'), reduceMotion ? 1200 : STEP_MS * 3 + 600);
     return () => [...timers, done].forEach(clearTimeout);
   }, [lights, bar, areas.length, reduceMotion]);

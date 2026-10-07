@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
 
+import { playStartSound } from '@/lib/sounds';
 import { useAppStore } from '@/store/useAppStore';
 
 
@@ -48,6 +49,7 @@ export function continueFirstRun(from: 'complete' | 'save' | 'premium' | 'remind
  * so without it the paywall opens first and goes on to this session once bought.
  */
 export function startSession(sessionId: string): void {
+  playStartSound();
   if (!useAppStore.getState().isPremium) {
     router.push({ pathname: '/premium', params: { then: sessionId } });
     return;

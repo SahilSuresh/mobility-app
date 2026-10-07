@@ -1,10 +1,24 @@
 import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
 import * as Speech from 'expo-speech';
 
-/** Short chimes for the session player: `done` when a move ends, `go` when the get-ready pause ends. */
+import { useAppStore } from '@/store/useAppStore';
+
+/**
+ * Short sounds. The session player's chimes: `done` when a move ends, `go` when the rest ends.
+ * Soft pops for picking areas: `pop` as each one appears, `select` and `deselect` as it's tapped.
+ * `build` for "Build my plan": three rising bell notes. `ready` as the plan appears. `start` for every Start button.
+ * `next` for Continue in onboarding: two warm marimba notes.
+ */
 const SOURCES = {
   done: require('../../assets/sounds/done.wav'),
   go: require('../../assets/sounds/go.wav'),
+  pop: require('../../assets/sounds/pop.wav'),
+  select: require('../../assets/sounds/select.wav'),
+  deselect: require('../../assets/sounds/deselect.wav'),
+  build: require('../../assets/sounds/build.wav'),
+  ready: require('../../assets/sounds/ready.wav'),
+  start: require('../../assets/sounds/start.wav'),
+  next: require('../../assets/sounds/next.wav'),
 } as const;
 
 export type Sound = keyof typeof SOURCES;
@@ -23,7 +37,7 @@ function playerFor(sound: Sound): AudioPlayer {
   return players[sound];
 }
 
-/** Load the chimes ahead of time, so the first one plays without a delay. */
+/** Load the sounds ahead of time, so the first one plays without a delay. */
 export function preloadSounds(): void {
   try {
     (Object.keys(SOURCES) as Sound[]).forEach(playerFor);
@@ -32,7 +46,7 @@ export function preloadSounds(): void {
   }
 }
 
-/** Play a chime from the start. */
+/** Play a sound from the start. */
 export function playSound(sound: Sound): void {
   try {
     const player = playerFor(sound);
@@ -41,6 +55,12 @@ export function playSound(sound: Sound): void {
   } catch {
     // Sound is a nice-to-have: the session works the same without it.
   }
+}
+
+/** The sound for every Start button. It goes with the session chimes: turning them off in Sound & timer quiets it too. */
+export function playStartSound(): void {
+  const { sounds } = useAppStore.getState();
+  if (sounds.moveEnd || sounds.readyEnd) playSound('start');
 }
 
 let pending: ReturnType<typeof setTimeout> | null = null;
