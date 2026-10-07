@@ -13,6 +13,7 @@ import { accent, colors, fonts, glass, REGION_COLORS, shadows, tint } from '@/co
 import { AREA_NAMES } from '@/data/areas';
 import { getExercise } from '@/data/exercises';
 import type { Exercise } from '@/data/types';
+import { goBack } from '@/lib/flow';
 import { success, tap } from '@/lib/haptics';
 import { holdFor, moveTime, READY_SECONDS } from '@/lib/holds';
 import { useViewport } from '@/lib/viewport';
@@ -230,7 +231,7 @@ export default function SessionPlayer() {
           {index === 0 ? 'Nothing is saved until you finish.' : `${index} of ${moves.length} moves done. Progress is saved when you finish.`}
         </T>
         <PrimaryButton label="Keep going" style={styles.sheetCta} onPress={() => setLeaving(false)} />
-        <TextButton label="End session" color="#9A3412" onPress={() => router.back()} />
+        <TextButton label="End session" color={colors.flameText} onPress={() => goBack()} />
       </Sheet>
     </Screen>
   );

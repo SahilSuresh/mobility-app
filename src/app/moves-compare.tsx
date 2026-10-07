@@ -9,12 +9,12 @@ import { OptionPill, Screen } from '@/components/ui';
 import { colors, POSE_COLORS, REGION_COLORS } from '@/constants/theme';
 import { AREA_NAMES } from '@/data/areas';
 import { EXERCISES } from '@/data/exercises';
-import { MOTION } from '@/data/poses';
+import { START } from '@/data/poses';
 import type { AreaId, PoseKey } from '@/data/types';
 
 /** One move per pose, so every drawing appears once. */
 const SAMPLES = EXERCISES.filter((e, i, all) => all.findIndex((x) => x.pose === e.pose) === i);
-const ANIMATED = Object.keys(MOTION) as PoseKey[];
+const ANIMATED = Object.keys(START) as PoseKey[];
 const REGIONS: [string, AreaId][] = [
   ['Neck & shoulders', 'neck'],
   ['Elbows & wrists', 'wrists'],

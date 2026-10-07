@@ -1,14 +1,14 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
-import { PoseBubble } from '@/components/PoseBubble';
+import { ProgrammeList } from '@/components/ProgrammeList';
 import { T } from '@/components/T';
 import { Screen } from '@/components/ui';
 import { LOOKS, type LookTokens } from '@/constants/looks';
-import { fonts, REGION_COLORS, shadows } from '@/constants/theme';
-import { GOAL_LABEL, LEVEL_NAME, PROGRAMMES } from '@/data/content';
+import { fonts, shadows } from '@/constants/theme';
+import { GOAL_LABEL, LEVEL_NAME } from '@/data/content';
 import type { PlannedSession } from '@/data/types';
 import { DAY_SHORT, dateOfWeekday, weekdayIndex } from '@/lib/dates';
 import { startSession } from '@/lib/flow';
@@ -21,9 +21,6 @@ import { resolveLook, useLook } from '@/store/useLook';
 export default function PlanTab() {
   const plan = useAppStore((s) => s.plan);
   const history = useAppStore((s) => s.history);
-  const isPremium = useAppStore((s) => s.isPremium);
-  const programmeDays = useAppStore((s) => s.programmeDays);
-  const startProgramme = useAppStore((s) => s.startProgramme);
   const choice = useLook((s) => s.choice);
   const now = useNow();
   const L = LOOKS[resolveLook(choice, now)];
@@ -39,15 +36,6 @@ export default function PlanTab() {
   const doneCount = sessions.filter((s) => done.has(s.id)).length;
   const progress = sessions.length ? doneCount / sessions.length : 0;
   const flat = L.dark && styles.flat;
-
-  const openProgramme = (id: string) => {
-    if (!isPremium) {
-      router.push('/premium');
-      return;
-    }
-    const s = startProgramme(id);
-    if (s) router.push({ pathname: '/preview', params: { id: s.id } });
-  };
 
   return (
     <Screen scroll tabBar backdrop={L.background ? <LinearGradient colors={L.background} style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]} /> : undefined}>
@@ -116,41 +104,7 @@ export default function PlanTab() {
         ) : null}
       </View>
 
-      <View style={styles.sectionHeader}>
-        <T style={[styles.heading, { color: L.ink }]}>Programmes</T>
-        {isPremium ? null : (
-          <View style={styles.premium}>
-            <Icon name="lock" size={11} color={L.muted} strokeWidth={2.6} />
-            <T variant="caption" color={L.muted}>
-              Premium
-            </T>
-          </View>
-        )}
-      </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.programmes} contentContainerStyle={styles.programmesContent}>
-        {PROGRAMMES.map((p) => {
-          const day = Math.min(p.days, (programmeDays[p.id] ?? 0) + 1);
-          return (
-            <Pressable
-              key={p.id}
-              accessibilityRole="button"
-              accessibilityLabel={p.title}
-              onPress={() => openProgramme(p.id)}
-              style={({ pressed }) => [styles.programme, { backgroundColor: L.chip.bg, borderColor: L.chip.border }, flat, pressed && styles.pressed]}
-            >
-              <PoseBubble pose={p.pose} size={48} color={REGION_COLORS[p.areas[0]]} />
-              <View>
-                <T variant="bodyStrong" color={L.ink} style={{ fontSize: 15 }}>
-                  {p.title}
-                </T>
-                <T variant="caption" color={L.muted} style={{ fontSize: 12, marginTop: 1 }}>
-                  {isPremium ? `Day ${day} of ${p.days}` : p.meta}
-                </T>
-              </View>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+      <ProgrammeList L={L} />
     </Screen>
   );
 }
@@ -234,8 +188,4 @@ const styles = StyleSheet.create({
   startText: { fontFamily: fonts.semibold, fontSize: 13.5 },
   empty: { paddingVertical: 20 },
 
-  premium: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  programmes: { marginTop: 12, marginHorizontal: -24 },
-  programmesContent: { paddingHorizontal: 24, paddingBottom: 14, gap: 10 },
-  programme: { width: 150, height: 132, padding: 14, borderRadius: 24, borderWidth: 1, justifyContent: 'space-between', boxShadow: shadows.small },
 });

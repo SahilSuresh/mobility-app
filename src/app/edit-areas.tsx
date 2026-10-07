@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -9,6 +8,7 @@ import { T } from '@/components/T';
 import { IconButton, PrimaryButton, Screen } from '@/components/ui';
 import { AREA_NAMES, sortAreas, VISIBLE } from '@/data/areas';
 import type { AreaId, BodyView } from '@/data/types';
+import { goBack } from '@/lib/flow';
 import { useViewport } from '@/lib/viewport';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -40,7 +40,7 @@ export default function EditAreas() {
   return (
     <Screen modal>
       <View style={styles.header}>
-        <IconButton icon="close" label="Close" onPress={() => router.back()} />
+        <IconButton icon="close" label="Close" onPress={() => goBack()} />
         <T variant="bodyStrong" center style={styles.flex}>
           Your areas
         </T>
@@ -60,7 +60,7 @@ export default function EditAreas() {
           style={styles.cta}
           onPress={() => {
             updatePlan({ areas: selected });
-            router.back();
+            goBack();
           }}
         />
       ) : (

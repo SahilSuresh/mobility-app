@@ -11,6 +11,7 @@ import { accent, colors, fonts, glass, MAX_FONT_SCALE, tint } from '@/constants/
 import { CUSTOM_MINUTES, DAY_OPTIONS, MINUTE_OPTIONS } from '@/data/content';
 import type { DaysPerWeek, Minutes, PlannedSession } from '@/data/types';
 import { DAY_LETTER, DAY_LONG, weekdayIndex } from '@/lib/dates';
+import { goBack } from '@/lib/flow';
 import { tap } from '@/lib/haptics';
 import { generateSessions, planStartDay } from '@/lib/plan';
 import { useAppStore } from '@/store/useAppStore';
@@ -108,7 +109,7 @@ export default function Routine() {
         onPress={() => {
           if (editing) {
             updatePlan({ days, weekdays, minutes });
-            router.back();
+            goBack();
           } else {
             createPlan();
             router.push('/onboarding/building');

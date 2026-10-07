@@ -9,6 +9,7 @@ import { IconButton, PrimaryButton, Screen } from '@/components/ui';
 import { colors } from '@/constants/theme';
 import { AREA_NAMES, FOCUS_TITLES } from '@/data/areas';
 import type { AreaId, BodyView } from '@/data/types';
+import { goBack } from '@/lib/flow';
 import { useViewport } from '@/lib/viewport';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -38,7 +39,7 @@ export default function Focus() {
   return (
     <Screen modal>
       <View style={styles.header}>
-        <IconButton icon="close" label="Close" onPress={() => router.back()} />
+        <IconButton icon="close" label="Close" onPress={() => goBack()} />
       </View>
       <T variant="title" style={styles.title}>
         Where are you stiff today?

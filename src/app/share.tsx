@@ -1,5 +1,4 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -9,8 +8,9 @@ import { IconButton, PrimaryButton, Screen, SecondaryButton } from '@/components
 import { config } from '@/constants/config';
 import { colors, fonts } from '@/constants/theme';
 import type { AreaId } from '@/data/types';
-import { canShareImages, captureCard, saveImage, shareImage } from '@/lib/share';
+import { goBack } from '@/lib/flow';
 import { minutesOf, thisWeek, weekDays, weekNumber } from '@/lib/progress';
+import { canShareImages, captureCard, saveImage, shareImage } from '@/lib/share';
 import { useAppStore } from '@/store/useAppStore';
 
 const MINT = colors.mint;
@@ -56,7 +56,7 @@ export default function Share() {
   return (
     <Screen modal>
       <View style={styles.header}>
-        <IconButton icon="close" label="Close" onPress={() => router.back()} />
+        <IconButton icon="close" label="Close" onPress={() => goBack()} />
         <T variant="bodyStrong" center style={styles.flex}>
           Share your week
         </T>

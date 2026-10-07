@@ -10,7 +10,7 @@ import { config } from '@/constants/config';
 import { accent, colors, fonts, shadows, tint } from '@/constants/theme';
 import { AREA_NAMES, AREA_ORDER, sortAreas } from '@/data/areas';
 import type { AreaId } from '@/data/types';
-import { continueFirstRun } from '@/lib/flow';
+import { continueFirstRun, goBack } from '@/lib/flow';
 import { success, tap } from '@/lib/haptics';
 import { yearlySaving } from '@/lib/paywall';
 import { buy, loadOptions, purchasesLive, restore, type PaywallOption } from '@/lib/purchases';
@@ -49,7 +49,7 @@ export default function Premium() {
     });
   }, [setFlag]);
 
-  const close = () => (inFlow ? continueFirstRun('premium') : router.back());
+  const close = () => (inFlow ? continueFirstRun('premium') : goBack());
   // After buying: on to the session that was waiting, or wherever we came from.
   const unlocked = () => {
     if (then) router.replace({ pathname: '/preview', params: { id: then } });

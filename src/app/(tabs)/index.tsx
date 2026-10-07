@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
-import { PoseBubble } from '@/components/PoseBubble';
+import { ProgrammeList } from '@/components/ProgrammeList';
 import { PremiumSheet } from '@/components/Sheet';
 import { T } from '@/components/T';
 import { ANSWERS, type Answer } from '@/components/today/answers';
@@ -16,8 +16,7 @@ import { streakIcon } from '@/components/today/streak';
 import { OptionPill, Screen } from '@/components/ui';
 import { WeekStrip } from '@/components/WeekStrip';
 import { LOOKS } from '@/constants/looks';
-import { fonts, REGION_COLORS, shadows } from '@/constants/theme';
-import { PROGRAMMES } from '@/data/content';
+import { fonts, shadows } from '@/constants/theme';
 import { DAY_LONG, dayMonth, isSameDay, partOfDay, weekdayIndex } from '@/lib/dates';
 import { startSession } from '@/lib/flow';
 import { adjustSession, type CheckIn } from '@/lib/plan';
@@ -38,8 +37,6 @@ export default function Today() {
   const history = useAppStore((s) => s.history);
   const isPremium = useAppStore((s) => s.isPremium);
   const areaLevels = useAppStore((s) => s.areaLevels);
-  const programmeDays = useAppStore((s) => s.programmeDays);
-  const startProgramme = useAppStore((s) => s.startProgramme);
   const startCustom = useAppStore((s) => s.startCustom);
   const choice = useLook((s) => s.choice);
   const [answer, setAnswer] = useState<Answer | null>(null);
@@ -57,6 +54,7 @@ export default function Today() {
   if (!plan) return null;
 
   const done = thisWeek(history, now).length;
+  const target = weeklyTarget(plan, now);
   const days = weekDays(plan, history, now);
   const run = streak(plan, history, now);
   const adjusted = !!session && session !== planned;
@@ -99,14 +97,6 @@ export default function Today() {
     startSession(session.id);
   };
 
-  const openProgramme = (id: string) => {
-    if (!isPremium) {
-      router.push('/premium');
-      return;
-    }
-    const s = startProgramme(id);
-    if (s) router.push({ pathname: '/preview', params: { id: s.id } });
-  };
 
   return (
     <Screen
@@ -177,9 +167,9 @@ export default function Today() {
         <T style={[styles.heading, { color: L.ink }]} accessibilityRole="header">
           This week
         </T>
-        <T variant="body" color={L.muted} style={styles.tabular}>{`${done} of ${weeklyTarget(plan, now)} done`}</T>
+        <T variant="body" color={L.muted} style={styles.tabular}>{done > target ? `${target} of ${target} done · +${done - target} extra` : `${done} of ${target} done`}</T>
       </View>
-      <Pressable accessibilityRole="button" accessibilityLabel={`This week, ${done} of ${weeklyTarget(plan, now)}`} onPress={() => router.navigate('/progress')} style={styles.week}>
+      <Pressable accessibilityRole="button" accessibilityLabel={`This week, ${done} of ${target} sessions`} onPress={() => router.navigate('/progress')} style={styles.week}>
         <WeekStrip
           days={days}
           size={36}
@@ -189,37 +179,7 @@ export default function Today() {
 
       <View style={[styles.rule, { backgroundColor: L.rule }]} />
 
-      <View style={styles.sectionHead}>
-        <T style={[styles.heading, { color: L.ink }]} accessibilityRole="header">
-          Programmes
-        </T>
-      </View>
-      {/* A grid rather than a sideways scroll, so every programme is visible without a hidden gesture. */}
-      <View style={styles.programmes}>
-        {PROGRAMMES.map((p) => {
-          const meta = isPremium && programmeDays[p.id] ? `Day ${Math.min(p.days, programmeDays[p.id] + 1)} of ${p.days}` : p.meta;
-          return (
-            <Pressable
-              key={p.id}
-              accessibilityRole="button"
-              accessibilityLabel={`${p.title}, ${meta}${isPremium ? '' : ', Premium'}`}
-              onPress={() => openProgramme(p.id)}
-              style={({ pressed }) => [styles.programme, { backgroundColor: L.chip.bg, borderColor: L.chip.border }, pressed && { opacity: 0.8 }]}
-            >
-              <View style={styles.programmeTop}>
-                <PoseBubble pose={p.pose} size={44} color={REGION_COLORS[p.areas[0]]} dot={false} />
-                {isPremium ? null : <Icon name="lock" size={14} color={L.muted} strokeWidth={2.2} />}
-              </View>
-              <T variant="bodyStrong" color={L.ink} numberOfLines={1}>
-                {p.title}
-              </T>
-              <T variant="caption" color={L.muted} numberOfLines={1}>
-                {isPremium ? meta : `${meta}, Premium`}
-              </T>
-            </Pressable>
-          );
-        })}
-      </View>
+      <ProgrammeList L={L} />
 
       <PremiumSheet
         visible={sheet}
@@ -250,7 +210,4 @@ const styles = StyleSheet.create({
   heading: { fontFamily: fonts.serif, fontSize: 20, lineHeight: 26 },
   week: { marginTop: 12 },
   rule: { marginTop: 32, height: StyleSheet.hairlineWidth },
-  programmes: { marginTop: 12, flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  programme: { flexBasis: '47%', flexGrow: 1, padding: 16, gap: 4, borderWidth: 1, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderBottomRightRadius: 24, borderBottomLeftRadius: 10 },
-  programmeTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 },
 });

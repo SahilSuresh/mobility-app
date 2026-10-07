@@ -9,6 +9,7 @@ import { colors, fonts, REGION_COLORS, tint } from '@/constants/theme';
 import { AREA_NAMES, sortAreas } from '@/data/areas';
 import { EQUIPMENT_LABEL, getExercise } from '@/data/exercises';
 import type { Exercise } from '@/data/types';
+import { goBack } from '@/lib/flow';
 import { tap } from '@/lib/haptics';
 import { HOLD, holdFor, moveTime, READY_SECONDS } from '@/lib/holds';
 import { findSession, useAppStore } from '@/store/useAppStore';
@@ -49,7 +50,7 @@ export default function SessionPreview() {
   return (
     <Screen>
       <View style={styles.header}>
-        <IconButton icon="close" label="Close" onPress={() => router.back()} />
+        <IconButton icon="close" label="Close" onPress={() => goBack()} />
       </View>
 
       <T variant="kicker" style={styles.kicker}>
@@ -87,7 +88,7 @@ export default function SessionPreview() {
                 onPress={() => router.push({ pathname: '/exercise/[id]', params: { id: e.id } })}
                 style={({ pressed }) => [styles.move, pressed && styles.pressed]}
               >
-                <PoseBubble pose={e.pose} size={48} color={REGION_COLORS[e.area]} dot={false} />
+                <PoseBubble pose={e.pose} size={48} color={REGION_COLORS[e.area]} dot={false} breathe phase={(i * 0.17) % 1} />
                 <View style={styles.moveText}>
                   <T variant="bodyStrong" numberOfLines={1}>
                     {e.name}

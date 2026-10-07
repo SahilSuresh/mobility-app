@@ -145,6 +145,13 @@ Everything below was built on the `onboarding` branch. It's written so a new cha
 - **Custom hold times:** `holds` (exercise id to seconds per side) is saved in the store via `setHold`. Plans are still **built with the default times**, so lengthening moves makes that session run longer than the chosen length. The preview always shows the real total.
 - **Back button:** `OnboardingHeader` goes to the previous step when there's no history (a page opened by URL or refreshed on web). Onboarding is now **3 steps** (`STEPS`).
 
+### Exercise drawings, programmes and navigation
+
+- **Exercise drawings** (): one character (hair in a bun, deep green top, dark leggings) drawn from joint positions in . Each exercise has two pictures:  (a normal standing, kneeling, sitting or lying position) and  (the exercise). With  on, the bubble **switches between the two pictures** with a short crossfade (start ~1s, fade 0.4s, hold the exercise ~2.6s, fade back) on the native animation thread. Paused or with reduced motion it shows the exercise. Large drawings (120+) show a curved **direction arrow**, worked out from the joint that moves most between the two pictures.  staggers lists (used in the session preview). To fix a drawing that looks wrong, edit its  or  entry; each pair must keep the same path commands.
+- **Programmes** (): one shared section used on Today and Plan, so both always match. Rows show the drawing, length, areas, a "For your plan" tag, progress once started, and Start / Continue / Again / lock.
+- **Back buttons:** always use  from , never . It goes home when there's no previous screen (opened from a link, or refreshed on web), instead of erroring.
+- **Weekly count on Today:** past the target it shows "2 of 2 done · +1 extra" rather than "3 of 2".
+
 ### Open items and known gaps
 
 - **UI UX Pro Max skill** (github.com/nextlevelbuilder/ui-ux-pro-max-skill) was requested but is **not installed**: installing third-party skills was blocked by the permission check. To use it, run in Claude Code: `/plugin marketplace add nextlevelbuilder/ui-ux-pro-max-skill`, then `/plugin install ui-ux-pro-max@ui-ux-pro-max-skill`. Its mobile checklist (44pt targets, pressed feedback, no colour-only states, reduced motion) was applied by hand.

@@ -4,6 +4,15 @@ import { useAppStore } from '@/store/useAppStore';
 
 
 /**
+ * Back to the previous screen. When there isn't one (the screen was opened from a link, or the page was
+ * refreshed on web), go home instead of doing nothing.
+ */
+export function goBack(): void {
+  if (router.canGoBack()) router.back();
+  else router.replace('/');
+}
+
+/**
  * Go to the Today tab with a clean history (no swiping back into onboarding).
  * After the first run the stack starts at Welcome, which is swapped for the tabs;
  * otherwise the tabs are already at the bottom and are simply shown again.

@@ -21,7 +21,7 @@ export const POSES: Record<PoseKey, Pose> = {
   lunge: { torso: 'M46 60 L47 37', back: 'M46 60 L36 80 L18 82', limbs: 'M46 60 L64 62 L66 82 M47 39 L56 51 L62 58', h: [48, 27], d: [45, 60] },
   butterfly: { torso: 'M45 76 L46 52', back: 'M45 77 L33 70 L46 81', limbs: 'M45 77 L61 70 L50 81 M46 54 L50 66 L50 77', h: [47, 42], d: [55, 73] },
   cobra: { torso: 'M46 80 Q58 76 63 62', back: 'M46 80 L30 80 L14 80', limbs: 'M46 81 L30 82 L14 82 M63 63 L65 72 L66 82', h: [68, 53], d: [54, 77] },
-  hug: { torso: 'M25 80 L48 80', back: 'M48 79 L40 63 L54 60', limbs: 'M48 80 L36 63 L50 59 M29 79 L32 69 L38 63', h: [16, 77], d: [45, 79] },
+  hug: { torso: 'M48 80 L25 80', back: 'M48 79 L40 63 L54 60', limbs: 'M48 80 L36 63 L50 59 M29 79 L32 69 L38 63', h: [16, 77], d: [45, 79] },
   seated: { torso: 'M36 79 L53 62', back: 'M36 79 L57 80 L79 81', limbs: 'M36 80 L57 81 L80 82 M53 63 L65 70 L76 77', h: [60, 56], d: [57, 81] },
   neck: { torso: 'M50 58 L50 36', back: '', limbs: 'M46 58 L45 70 L45 82 M54 58 L55 70 L55 82 M44 37 L40 50 L40 62 M56 37 L58 24 L49 17', h: [44, 25], d: [50, 32] },
   chinTuck: { torso: 'M50 57 L50 38', back: 'M53 57 L53 70 L53 82 M48 39 L46 50 L46 60', limbs: 'M47 57 L47 70 L47 82 M52 39 L54 50 L54 60', h: [48, 29], d: [50, 34] },
@@ -30,7 +30,7 @@ export const POSES: Record<PoseKey, Pose> = {
   sideBend: { torso: 'M50 57 Q52 47 46 39', back: 'M53 57 L53 70 L53 82 M45 41 L40 50 L39 58', limbs: 'M47 57 L47 70 L47 82 M47 40 L42 28 L34 22', h: [42, 31], d: [52, 47] },
   thread: { torso: 'M34 53 Q47 52 58 68', back: 'M38 55 L38 82 L24 82 M56 66 L63 82', limbs: 'M34 55 L34 82 L20 82 M58 70 L44 79 L28 81', h: [65, 75], d: [48, 58] },
   twist: { torso: 'M44 77 L46 54', back: 'M44 78 L60 77 L74 79 M45 56 L36 66 L33 77', limbs: 'M44 78 L56 68 L52 80 M47 56 L57 63 L59 70', h: [47, 45], d: [45, 68] },
-  bridge: { torso: 'M26 79 L48 66', back: 'M50 67 L62 60 L67 82 M27 79 L41 82', limbs: 'M48 66 L60 58 L64 82 M30 80 L44 83', h: [17, 77], d: [48, 67] },
+  bridge: { torso: 'M48 66 L26 79', back: 'M50 67 L62 60 L67 82 M27 79 L41 82', limbs: 'M48 66 L60 58 L64 82 M30 80 L44 83', h: [17, 77], d: [48, 67] },
   pigeon: { torso: 'M46 72 L50 50', back: 'M46 74 L30 79 L12 82', limbs: 'M46 74 L61 77 L50 82 M50 52 L56 66 L58 80', h: [52, 41], d: [47, 73] },
   legSwing: { torso: 'M48 57 L48 38', back: 'M50 57 L50 70 L50 82 M46 40 L38 47 L32 50', limbs: 'M47 58 L58 67 L68 74 M50 40 L58 46 L64 48', h: [48, 29], d: [49, 59] },
   squat: { torso: 'M44 70 L50 48', back: 'M46 71 L60 64 L57 82 M49 50 L57 60 L63 59', limbs: 'M43 71 L56 66 L52 82 M50 50 L58 58 L65 55', h: [52, 39], d: [44, 71] },
@@ -53,20 +53,75 @@ export const POSES: Record<PoseKey, Pose> = {
 };
 
 /**
- * The other end of the movement for moves that are best shown moving. Each frame has the same path
- * commands as its pose in POSES, so the player can blend between the two in time with the breath.
+ * Where each move starts from: a normal standing, kneeling, sitting or lying position. The figure moves from here
+ * into the move in POSES, holds it, and comes back. Every frame has the same path commands as its pose in POSES,
+ * so the two blend smoothly.
  */
-export const MOTION: Partial<Record<PoseKey, Pose>> = {
-  // Cat → cow: the spine sags and the head lifts.
-  cat: { torso: 'M34 55 Q48 66 62 55', back: 'M37 56 L37 82 L22 82 M59 56 L59 82', limbs: 'M33 56 L33 82 L17 82 M63 56 L63 82', h: [72, 45], d: [48, 60] },
-  // Forward swing → back swing, arms swapping.
-  legSwing: { torso: 'M48 57 L48 38', back: 'M50 57 L50 70 L50 82 M46 40 L52 48 L58 52', limbs: 'M47 58 L38 68 L30 76 M50 40 L42 48 L36 52', h: [48, 29], d: [49, 59] },
-  // The front knee rocks forward over the toes.
-  ankleRock: { torso: 'M50 62 L53 40', back: 'M50 62 L36 81 L18 82', limbs: 'M50 62 L67 63 L55 82 M53 42 L60 53 L65 59', h: [54, 31], d: [56, 79] },
-  // Up onto the toes.
-  calfRaise: { torso: 'M50 50 L50 31', back: '', limbs: 'M46 50 L45 63 L45 74 L49 82 M54 50 L55 63 L55 74 L61 82 M48 33 L43 46 L41 56 M52 33 L57 46 L59 56', h: [50, 22], d: [52, 80] },
-  // Goalpost arms press overhead.
-  goalpost: { torso: 'M50 57 L50 38', back: 'M53 57 L53 70 L53 82 M48 40 L42 29 L46 18', limbs: 'M47 57 L47 70 L47 82 M52 40 L58 29 L54 18', h: [50, 29], d: [50, 45] },
-  // From standing tall into the side bend.
-  sideBend: { torso: 'M50 57 Q50 47 49 38', back: 'M53 57 L53 70 L53 82 M48 40 L45 50 L45 58', limbs: 'M47 57 L47 70 L47 82 M50 39 L50 28 L49 17', h: [48, 29], d: [52, 47] },
+export const START: Record<PoseKey, Pose> = {
+  // Standing, arms by your sides.
+  reach: { torso: 'M50 57 L50 38', back: 'M53 57 L53 70 L53 82 M49 38 L47 48 L46 57', limbs: 'M47 57 L47 70 L47 82 M51 38 L53 48 L54 57', h: [50, 29], d: [51, 39] },
+  // Standing tall before folding.
+  fold: { torso: 'M46 52 L46 33', back: 'M49 52 L49 67 L49 82', limbs: 'M45 52 L45 67 L45 82 M46 34 L47 44 L48 53', h: [46, 24], d: [46, 63] },
+  // Kneeling upright on your heels.
+  child: { torso: 'M33 70 Q34 60 35 50', back: 'M35 50 L37 60 L38 69', limbs: 'M33 71 L46 81 L25 82 M35 52 L37 62 L38 71', h: [36, 41], d: [41, 66] },
+  // A flat back on hands and knees.
+  cat: { torso: 'M34 55 Q48 55 62 55', back: 'M37 56 L37 82 L22 82 M59 56 L59 82', limbs: 'M33 56 L33 82 L17 82 M63 56 L63 82', h: [70, 49], d: [48, 52] },
+  // Half kneeling, hips back over the back knee.
+  lunge: { torso: 'M40 64 L41 41', back: 'M40 64 L35 80 L18 82', limbs: 'M40 64 L58 63 L62 82 M41 43 L48 54 L54 60', h: [42, 31], d: [40, 64] },
+  // Sitting with the knees up.
+  butterfly: { torso: 'M45 76 L46 52', back: 'M45 77 L38 64 L46 81', limbs: 'M45 77 L56 64 L50 81 M46 54 L50 66 L50 77', h: [47, 42], d: [52, 68] },
+  // Lying flat on your front, hands under your shoulders.
+  cobra: { torso: 'M46 80 Q58 80 68 79', back: 'M46 80 L30 80 L14 80', limbs: 'M46 81 L30 82 L14 82 M68 79 L62 75 L66 82', h: [76, 77], d: [54, 79] },
+  // Lying on your back, legs long.
+  hug: { torso: 'M48 80 L25 80', back: 'M48 79 L62 80 L76 80', limbs: 'M48 80 L62 81 L76 81 M29 79 L34 79 L40 80', h: [16, 77], d: [45, 79] },
+  // Sitting up tall, legs long.
+  seated: { torso: 'M36 79 L38 58', back: 'M36 79 L57 80 L79 81', limbs: 'M36 80 L57 81 L80 82 M38 59 L42 69 L44 78', h: [39, 49], d: [50, 80] },
+  // Standing tall, head level.
+  neck: { torso: 'M50 58 L50 36', back: '', limbs: 'M46 58 L45 70 L45 82 M54 58 L55 70 L55 82 M44 37 L40 50 L40 62 M56 37 L59 48 L60 58', h: [50, 27], d: [50, 32] },
+  // Chin poking forward.
+  chinTuck: { torso: 'M50 57 L50 38', back: 'M53 57 L53 70 L53 82 M48 39 L46 50 L46 60', limbs: 'M47 57 L47 70 L47 82 M52 39 L54 50 L54 60', h: [53, 28], d: [50, 34] },
+  // Standing, arms by your sides.
+  armCross: { torso: 'M50 57 L50 38', back: 'M53 57 L53 70 L53 82 M49 40 L47 49 L46 58', limbs: 'M47 57 L47 70 L47 82 M52 40 L54 49 L55 58', h: [50, 29], d: [54, 39] },
+  goalpost: { torso: 'M50 57 L50 38', back: 'M53 57 L53 70 L53 82 M48 40 L46 49 L45 58', limbs: 'M47 57 L47 70 L47 82 M52 40 L54 49 L55 58', h: [50, 29], d: [50, 45] },
+  // Standing tall, one arm up.
+  sideBend: { torso: 'M50 57 Q50 47 50 38', back: 'M53 57 L53 70 L53 82 M49 40 L47 49 L46 58', limbs: 'M47 57 L47 70 L47 82 M51 39 L52 28 L52 17', h: [50, 29], d: [52, 47] },
+  // On hands and knees.
+  thread: { torso: 'M34 54 Q48 54 62 54', back: 'M38 55 L38 82 L24 82 M60 55 L60 82', limbs: 'M34 55 L34 82 L20 82 M62 55 L62 68 L63 82', h: [71, 49], d: [48, 54] },
+  // Sitting, facing forward.
+  twist: { torso: 'M44 77 L46 54', back: 'M44 78 L60 77 L74 79 M45 56 L42 66 L40 76', limbs: 'M44 78 L56 68 L52 80 M47 56 L50 66 L52 75', h: [49, 45], d: [45, 68] },
+  // Lying on your back, knees bent, hips down.
+  bridge: { torso: 'M46 79 L26 79', back: 'M48 79 L58 64 L67 82 M27 79 L41 82', limbs: 'M46 79 L56 63 L64 82 M30 80 L44 83', h: [17, 77], d: [46, 79] },
+  // Setting up: hips lifted before sinking into pigeon.
+  pigeon: { torso: 'M46 66 L50 46', back: 'M46 68 L30 77 L12 82', limbs: 'M46 68 L60 74 L52 82 M50 48 L57 62 L59 78', h: [52, 37], d: [47, 67] },
+  // Standing on both feet.
+  legSwing: { torso: 'M48 57 L48 38', back: 'M50 57 L50 70 L50 82 M46 40 L44 49 L43 58', limbs: 'M47 58 L47 70 L47 82 M50 40 L52 49 L53 58', h: [48, 29], d: [49, 59] },
+  // Standing, feet apart.
+  squat: { torso: 'M48 57 L49 38', back: 'M50 58 L51 70 L52 82 M48 40 L48 49 L48 58', limbs: 'M47 58 L47 70 L47 82 M50 40 L51 49 L52 58', h: [50, 29], d: [48, 58] },
+  // Standing on both feet.
+  quad: { torso: 'M50 57 L50 38', back: 'M51 40 L57 50 L58 59', limbs: 'M50 57 L50 70 L50 82 M48 58 L47 70 L46 82 M49 40 L47 49 L46 58', h: [50, 29], d: [47, 64] },
+  // Kneeling lunge, back foot on the floor.
+  couch: { torso: 'M48 64 L53 43', back: 'M46 63 L34 82 L18 82', limbs: 'M48 63 L63 63 L64 82 M53 45 L58 55 L62 62', h: [55, 34], d: [40, 73] },
+  // Kneeling up tall.
+  heelSit: { torso: 'M44 60 L45 38', back: 'M44 62 L57 80 L37 82 M44 40 L46 50 L47 60', limbs: 'M45 63 L60 81 L40 83 M45 40 L48 50 L49 60', h: [46, 29], d: [58, 80] },
+  // Half kneeling, weight back.
+  ankleRock: { torso: 'M42 63 L43 41', back: 'M42 63 L33 81 L18 82', limbs: 'M42 63 L58 63 L57 82 M43 43 L51 53 L57 59', h: [44, 32], d: [56, 79] },
+  // On hands and knees, hips low.
+  downDog: { torso: 'M56 60 L36 60', back: 'M57 61 L66 82 M37 61 L31 82', limbs: 'M55 61 L70 82 M35 61 L24 82', h: [29, 58], d: [62, 70] },
+  // Standing upright, hands on the wall.
+  calf: { torso: 'M44 57 L46 38', back: 'M44 58 L41 70 L39 82 M45 40 L58 40 L71 36', limbs: 'M44 58 L49 70 L50 82 M46 40 L59 44 L72 42', h: [47, 29], d: [40, 76] },
+  // Standing, arms by your sides.
+  armsOut: { torso: 'M50 57 L50 38', back: '', limbs: 'M47 57 L47 70 L47 82 M53 57 L53 70 L53 82 M48 40 L46 49 L45 58 M52 40 L54 49 L55 58', h: [50, 29], d: [46, 49] },
+  wristCircle: { torso: 'M50 57 L50 38', back: '', limbs: 'M47 57 L47 70 L47 82 M53 57 L53 70 L53 82 M48 40 L46 49 L45 58 M52 40 L54 49 L55 58', h: [50, 29], d: [55, 58] },
+  prayer: { torso: 'M50 57 L50 38', back: '', limbs: 'M47 57 L47 70 L47 82 M53 57 L53 70 L53 82 M47 40 L45 49 L44 58 M53 40 L55 49 L56 58', h: [50, 29], d: [50, 51] },
+  reversePrayer: { torso: 'M50 57 L50 38', back: 'M48 40 L46 49 L45 58 M52 40 L54 49 L55 58', limbs: 'M47 57 L47 70 L47 82 M53 57 L53 70 L53 82', h: [50, 29], d: [50, 50] },
+  fingerPull: { torso: 'M50 57 L50 38', back: 'M48 40 L46 49 L45 58', limbs: 'M47 57 L47 70 L47 82 M53 57 L53 70 L53 82 M52 40 L54 49 L55 58', h: [50, 29], d: [55, 58] },
+  forearmTurn: { torso: 'M50 57 L50 38', back: '', limbs: 'M47 57 L47 70 L47 82 M53 57 L53 70 L53 82 M48 40 L46 49 L45 58 M52 40 L54 49 L55 58', h: [50, 29], d: [46, 50] },
+  // Standing by the wall, arm down.
+  wallArm: { torso: 'M48 58 L52 38', back: 'M51 40 L49 49 L48 58', limbs: 'M46 58 L45 70 L44 82 M50 58 L53 70 L55 82 M52 40 L60 50 L64 60', h: [53, 29], d: [49, 48] },
+  // On hands and knees, rocked back.
+  tabletop: { torso: 'M30 55 L58 55', back: 'M33 56 L37 82 L22 82 M55 56 L59 82', limbs: 'M29 56 L33 82 L17 82 M59 56 L63 82', h: [67, 50], d: [20, 81] },
+  // Sitting, toes pointed.
+  footFlex: { torso: 'M36 79 L45 60', back: 'M36 79 L57 80 L79 81', limbs: 'M36 80 L57 81 L79 80 L86 82 M45 62 L55 72 L62 78', h: [49, 52], d: [80, 80] },
+  // Standing, feet flat.
+  calfRaise: { torso: 'M50 57 L50 38', back: '', limbs: 'M46 57 L45 70 L45 80 L50 82 M54 57 L55 70 L55 80 L60 82 M48 40 L43 53 L41 63 M52 40 L57 53 L59 63', h: [50, 29], d: [52, 80] },
 };

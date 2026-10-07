@@ -11,6 +11,7 @@ import { AREA_NAMES, AREA_ORDER } from '@/data/areas';
 import { LEVEL_NAME } from '@/data/content';
 import { durationLabel, exercisesForArea } from '@/data/exercises';
 import type { AreaId } from '@/data/types';
+import { goBack } from '@/lib/flow';
 import { useAppStore } from '@/store/useAppStore';
 
 export default function AreaScreen() {
@@ -26,7 +27,7 @@ export default function AreaScreen() {
 
   return (
     <Screen scroll>
-      <IconButton icon="back" label="Back" onPress={() => router.back()} />
+      <IconButton icon="back" label="Back" onPress={() => goBack()} />
       <View style={styles.head}>
         <View style={styles.icon}>
           <AreaGlyph area={area} size={58} />

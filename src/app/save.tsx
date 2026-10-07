@@ -1,5 +1,5 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Linking, Platform, StyleSheet, TextInput, View } from 'react-native';
 
@@ -10,7 +10,7 @@ import { Card, IconButton, PrimaryButton, Screen, SecondaryButton, TextButton } 
 import { config } from '@/constants/config';
 import { colors, fonts, glass, tint } from '@/constants/theme';
 import { appleSignInAvailable, emailAccount, isValidEmail, signInWithApple } from '@/lib/auth';
-import { continueFirstRun } from '@/lib/flow';
+import { continueFirstRun, goBack } from '@/lib/flow';
 import { thisWeek, weekNumber } from '@/lib/progress';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -32,7 +32,7 @@ export default function SaveProgress() {
     if (!editing) setFlag('seenSave');
   }, [editing, setFlag]);
 
-  const done = () => (editing ? router.back() : continueFirstRun('save'));
+  const done = () => (editing ? goBack() : continueFirstRun('save'));
 
   const withApple = async () => {
     try {
@@ -49,7 +49,7 @@ export default function SaveProgress() {
   if (editing && account) {
     return (
       <Screen>
-        <IconButton icon="back" label="Back" onPress={() => router.back()} />
+        <IconButton icon="back" label="Back" onPress={() => goBack()} />
         <T variant="title" style={styles.editTitle}>
           Account
         </T>
@@ -74,7 +74,7 @@ export default function SaveProgress() {
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Screen>
-        {editing ? <IconButton icon="back" label="Back" onPress={() => router.back()} /> : null}
+        {editing ? <IconButton icon="back" label="Back" onPress={() => goBack()} /> : null}
         <View style={styles.stage}>
           {plan && !emailMode ? (
             <Card big style={styles.progressCard}>

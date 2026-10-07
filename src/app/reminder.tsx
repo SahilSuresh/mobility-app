@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -9,7 +9,7 @@ import { IconButton, PrimaryButton, Screen, TextButton } from '@/components/ui';
 import { colors, fonts, glass, shade, shadows, tint } from '@/constants/theme';
 import type { ReminderSlot } from '@/data/types';
 import { timeLabel } from '@/lib/dates';
-import { continueFirstRun } from '@/lib/flow';
+import { continueFirstRun, goBack } from '@/lib/flow';
 import { tap } from '@/lib/haptics';
 import { cancelReminders, scheduleReminders } from '@/lib/notifications';
 import { nextSession } from '@/lib/progress';
@@ -40,7 +40,7 @@ export default function ReminderScreen() {
     if (flow === '1') setFlag('seenReminder');
   }, [flow, setFlag]);
 
-  const next = () => (editing ? router.back() : continueFirstRun('reminder'));
+  const next = () => (editing ? goBack() : continueFirstRun('reminder'));
   const upcoming = plan ? nextSession(plan, history, new Date())?.session : undefined;
 
   const remind = async () => {
@@ -69,7 +69,7 @@ export default function ReminderScreen() {
 
   return (
     <Screen>
-      {editing ? <IconButton icon="back" label="Back" onPress={() => router.back()} /> : <View style={{ height: 44 }} />}
+      {editing ? <IconButton icon="back" label="Back" onPress={() => goBack()} /> : <View style={{ height: 44 }} />}
       <View style={styles.preview}>
         <View style={styles.appIcon}>
           <BodyFigure height={30} fill={colors.cream} />
