@@ -47,49 +47,52 @@ const DARK = {
   white: '#FFFFFF',
 };
 
-/** The original light look: warm cream to sand, dark ink text, deep green accents with white on them. */
+/**
+ * The light look, matching Today's day look: a fresh sage-white background, white cards, ink text,
+ * deep green buttons and selected states with cream text on them (`onGreen`).
+ */
 const LIGHT: typeof DARK = {
-  bgTop: '#FFF8EC',
-  bgMid: '#EFE5D3',
-  bgBottom: '#E3D5BE',
-  card: '#FFFDF9',
-  cardEnd: '#F3E9DA',
-  ink: '#1C1A16',
-  muted: '#574F43',
-  faint: '#7A6F60',
-  chevron: '#9A8E7C',
-  border: 'rgba(90,70,40,0.12)',
-  line: 'rgba(90,70,40,0.16)',
-  track: 'rgba(90,70,40,0.12)',
-  green: '#2F7A56',
-  greenText: '#22644A',
+  bgTop: '#F7F9F4',
+  bgMid: '#F2F6EF',
+  bgBottom: '#EDF2EA',
+  card: '#FFFFFF',
+  cardEnd: '#FAFCF8',
+  ink: '#1A1915',
+  muted: '#5E574B',
+  faint: '#8A8173',
+  chevron: '#A39A8C',
+  border: 'rgba(26,25,21,0.08)',
+  line: 'rgba(31,90,62,0.10)',
+  track: 'rgba(31,90,62,0.10)',
+  green: '#1F5A3E',
+  greenText: '#1F5A3E',
   greenDeep: '#1F5A3E',
-  greenTint: 'rgba(47,122,86,0.12)',
-  onGreen: '#FFFFFF',
+  greenTint: 'rgba(31,90,62,0.08)',
+  onGreen: '#FBF8F3',
   mint: '#A6F2C8',
   cream: '#FFF8EC',
-  sandTop: '#DDCDB0',
-  sandBottom: '#C4B08D',
+  sandTop: '#2A6E4D',
+  sandBottom: '#1F5A3E',
   figure: '#E3D6C0',
   flame: '#E8772A',
   flameText: '#A44E12',
-  sheet: '#FFFCF6',
-  scrim: 'rgba(28,26,22,0.45)',
+  sheet: '#FFFFFF',
+  scrim: 'rgba(26,25,21,0.4)',
   white: '#FFFFFF',
 };
 
 export const colors = isDark ? DARK : LIGHT;
 
-/** Lines and soft fills in the text colour, at some opacity: cream on dark, warm brown on light. */
-export const tint = (opacity: number) => (isDark ? `rgba(244,238,227,${opacity})` : `rgba(90,70,40,${opacity})`);
+/** Lines and soft fills in the text colour, at some opacity: cream on dark, a soft green-grey on light. */
+export const tint = (opacity: number) => (isDark ? `rgba(244,238,227,${opacity})` : `rgba(31,60,45,${opacity})`);
 /** The accent colour at some opacity, for halos, tints and selected backgrounds. */
-export const accent = (opacity: number) => (isDark ? `rgba(166,242,200,${opacity})` : `rgba(47,122,86,${opacity})`);
+export const accent = (opacity: number) => (isDark ? `rgba(166,242,200,${opacity})` : `rgba(31,90,62,${opacity})`);
 /** A frosted surface over the background (chips, pills, glassy cards). */
-export const glass = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,253,249,0.7)';
+export const glass = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.85)';
 /** A fainter frosted surface (card footers). */
-export const glassSoft = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(243,233,218,0.45)';
+export const glassSoft = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(237,242,234,0.6)';
 /** Shadow colour at some opacity. */
-export const shade = (opacity: number) => (isDark ? `rgba(0,0,0,${opacity})` : `rgba(70,50,20,${opacity})`);
+export const shade = (opacity: number) => (isDark ? `rgba(0,0,0,${opacity})` : `rgba(20,40,30,${opacity})`);
 
 /** Large text settings still scale the app, but only so far, so rows and buttons keep their shape. */
 export const MAX_FONT_SCALE = 1.3;
@@ -113,11 +116,11 @@ export const shadows = isDark
       bubble: '0px 8px 18px -8px rgba(0,0,0,0.55)',
     }
   : {
-      card: '0px 1px 2px rgba(70,50,20,0.08), 0px 14px 30px -10px rgba(70,50,20,0.28)',
-      small: '0px 6px 14px -6px rgba(70,50,20,0.22)',
-      button: '0px 12px 24px -12px rgba(28,26,22,0.6)',
-      green: '0px 8px 16px -10px rgba(47,122,86,0.7)',
-      bubble: '0px 8px 18px -8px rgba(70,50,20,0.45)',
+      card: '0px 1px 2px rgba(20,40,30,0.05), 0px 14px 30px -12px rgba(20,40,30,0.16)',
+      small: '0px 6px 14px -6px rgba(20,40,30,0.14)',
+      button: '0px 12px 24px -12px rgba(31,90,62,0.55)',
+      green: '0px 8px 16px -10px rgba(31,90,62,0.6)',
+      bubble: '0px 8px 18px -8px rgba(20,40,30,0.3)',
     };
 
 /** Bubble colours for the pose drawings, used in rotation. */
