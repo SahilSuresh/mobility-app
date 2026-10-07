@@ -12,7 +12,7 @@ import { LEVEL_NAME, PROGRAMMES } from '@/data/content';
 import type { PlannedSession } from '@/data/types';
 import { weekdayIndex } from '@/lib/dates';
 import { startSession } from '@/lib/flow';
-import { doneThisWeek, freeSessionsLeft, nextSession, thisWeek, weekNumber } from '@/lib/progress';
+import { doneForPlan, nextSession, scheduledInWeek, thisWeek, weeklyTarget, weekNumber } from '@/lib/progress';
 import { useNow } from '@/lib/useNow';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -26,21 +26,17 @@ export default function PlanTab() {
   if (!plan) return null;
 
   const today = weekdayIndex(now);
-  const done = doneThisWeek(history, now);
+  const done = doneForPlan(plan, history, now);
   const next = nextSession(plan, history, now);
-  const freeLeft = freeSessionsLeft(history, now);
-
-  // Free plans unlock this week's sessions in order, up to the weekly free limit.
+  // Sessions need Premium: without it they show a lock, and tapping one opens the paywall.
   const rows: { s: PlannedSession; trailing: RowTrailing; meta: string; onPress: () => void }[] = [];
-  let open = 0;
-  for (const s of plan.sessions) {
+  for (const s of scheduledInWeek(plan, now)) {
     const moves = `${s.exerciseIds.length} moves`;
     if (done.has(s.id)) {
       rows.push({ s, trailing: 'done', meta: `${s.minutes} min · ${moves}`, onPress: () => router.push({ pathname: '/exercise/[id]', params: { id: s.exerciseIds[0] } }) });
-    } else if (!isPremium && open >= freeLeft) {
-      rows.push({ s, trailing: 'locked', meta: `${s.minutes} min · ${moves}`, onPress: () => router.push('/limit') });
+    } else if (!isPremium) {
+      rows.push({ s, trailing: 'locked', meta: `${s.minutes} min · ${moves}`, onPress: () => startSession(s.id) });
     } else {
-      open += 1;
       rows.push({
         s,
         trailing: 'start',
@@ -56,7 +52,7 @@ export default function PlanTab() {
       return;
     }
     const s = startProgramme(id);
-    if (s) router.push({ pathname: '/session', params: { id: s.id } });
+    if (s) router.push({ pathname: '/preview', params: { id: s.id } });
   };
 
   return (
@@ -79,7 +75,7 @@ export default function PlanTab() {
 
       <View style={styles.sectionHeader}>
         <T variant="kicker">{`Week ${weekNumber(plan, now)}`}</T>
-        <T variant="caption">{`${thisWeek(history, now).length} of ${plan.days} done`}</T>
+        <T variant="caption">{`${thisWeek(history, now).length} of ${weeklyTarget(plan, now)} done`}</T>
       </View>
       <View style={styles.list}>
         {rows.map(({ s, trailing, meta, onPress }) => (

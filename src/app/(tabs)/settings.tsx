@@ -74,7 +74,7 @@ export default function SettingsTab() {
                 Try Premium free
               </T>
               <T variant="caption" color="#CFC6B6" style={{ marginTop: 2 }}>
-                Unlimited sessions, every area
+                Unlock every session in your plan
               </T>
             </View>
             <View style={styles.arrow}>
@@ -90,7 +90,7 @@ export default function SettingsTab() {
       <View style={styles.group}>
         <Row label="Areas" value={plan.areas.map((a) => AREA_NAMES[a]).join(', ')} href="/edit-areas" />
         <Row label="Days a week" value={plan.days === 7 ? 'Every day' : String(plan.days)} href={{ pathname: '/onboarding/days', params: { edit: '1' } }} />
-        <Row label="Session length" value={`${plan.minutes} min`} href={{ pathname: '/onboarding/length', params: { edit: '1' } }} last />
+        <Row label="Session length" value={`${plan.minutes} min`} href={{ pathname: '/onboarding/days', params: { edit: '1' } }} last />
       </View>
 
       <T variant="kicker" style={styles.section}>

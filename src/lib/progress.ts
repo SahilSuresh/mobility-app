@@ -1,4 +1,3 @@
-import { config } from '@/constants/config';
 import { AREA_ORDER } from '@/data/areas';
 import type { AreaId, CompletedSession, Plan, PlannedSession } from '@/data/types';
 import { addDays, DAY_LETTER, daysBetween, dateOfWeekday, isSameDay, startOfDay, startOfWeek, weekdayIndex } from './dates';
@@ -13,8 +12,12 @@ export function thisWeek(history: CompletedSession[], now: Date): CompletedSessi
   return history.filter((h) => inWeekOf(h.date, now));
 }
 
-export function doneThisWeek(history: CompletedSession[], now: Date): Set<string> {
-  return new Set(thisWeek(history, now).map((h) => h.sessionId));
+/**
+ * Planned sessions done this week, by id. Only sessions finished since the plan was made count:
+ * ids repeat between plans (s0, s1…), so a session from an earlier plan mustn't tick off the new one.
+ */
+export function doneForPlan(plan: Plan, history: CompletedSession[], now: Date): Set<string> {
+  return new Set(thisWeek(history, now).filter((h) => h.date >= plan.createdAt).map((h) => h.sessionId));
 }
 
 /** A session always counts for at least a minute, so quick ones never show as "0 min". */
@@ -26,17 +29,29 @@ export function minutesOf(list: CompletedSession[]): number {
   return list.reduce((sum, h) => sum + sessionMinutes(h), 0);
 }
 
+/**
+ * The plan's sessions that fall in the week of `now`. In the week the plan was made, days before
+ * it started don't count: nothing was missed before you joined, and that week's target is smaller.
+ */
+export function scheduledInWeek(plan: Plan, now: Date): PlannedSession[] {
+  const created = new Date(plan.createdAt);
+  if (startOfWeek(now).getTime() !== startOfWeek(created).getTime()) return plan.sessions;
+  const startDay = weekdayIndex(created);
+  return plan.sessions.filter((s) => s.weekday >= startDay);
+}
+
 export type DayStatus = 'done' | 'today' | 'planned' | 'missed' | 'rest';
 
 export function weekDays(plan: Plan, history: CompletedSession[], now: Date) {
   const today = weekdayIndex(now);
   const week = thisWeek(history, now);
-  const doneIds = doneThisWeek(history, now);
+  const doneIds = doneForPlan(plan, history, now);
+  const scheduled = scheduledInWeek(plan, now);
   return [0, 1, 2, 3, 4, 5, 6].map((weekday) => {
     const date = dateOfWeekday(weekday, now);
     const did = week.some((h) => isSameDay(new Date(h.date), date));
     // A day's session done early (on another day) leaves nothing planned that day.
-    const planned = plan.sessions.some((s) => s.weekday === weekday && !doneIds.has(s.id));
+    const planned = scheduled.some((s) => s.weekday === weekday && !doneIds.has(s.id));
     let status: DayStatus = 'rest';
     if (did) status = 'done';
     else if (planned && weekday === today) status = 'today';
@@ -49,9 +64,9 @@ export type NextSession = { session: PlannedSession; when: 'today' | 'catchup' |
 
 /** The session to show on the Today card. Null when the whole week is done. */
 export function nextSession(plan: Plan, history: CompletedSession[], now: Date): NextSession | null {
-  const done = doneThisWeek(history, now);
+  const done = doneForPlan(plan, history, now);
   const today = weekdayIndex(now);
-  const pending = plan.sessions.filter((s) => !done.has(s.id));
+  const pending = scheduledInWeek(plan, now).filter((s) => !done.has(s.id));
   if (pending.length === 0) return null;
   const todays = pending.find((s) => s.weekday === today);
   if (todays) return { session: todays, when: 'today' };
@@ -65,7 +80,7 @@ export function nextSession(plan: Plan, history: CompletedSession[], now: Date):
 
 /** True when a planned session for that day wasn't done at any point in its week. */
 function openSessionOn(plan: Plan, history: CompletedSession[], day: Date): boolean {
-  return plan.sessions.some((s) => s.weekday === weekdayIndex(day) && !history.some((h) => h.sessionId === s.id && inWeekOf(h.date, day)));
+  return scheduledInWeek(plan, day).some((s) => s.weekday === weekdayIndex(day) && !history.some((h) => h.sessionId === s.id && h.date >= plan.createdAt && inWeekOf(h.date, day)));
 }
 
 /** Days in a row with a session. Rest days don't break the run; a missed planned day does. */
@@ -94,10 +109,15 @@ export function weeksOnTarget(plan: Plan, history: CompletedSession[], now: Date
       const d = new Date(h.date);
       return d >= start && d < end;
     }).length;
-    if (count >= plan.days) weeks += 1;
+    if (count >= weeklyTarget(plan, start)) weeks += 1;
     start = end;
   }
   return weeks;
+}
+
+/** Sessions to aim for in the week of `now`: the plan's days, or fewer in the week it started. */
+export function weeklyTarget(plan: Plan, now: Date): number {
+  return scheduledInWeek(plan, now).length;
 }
 
 export function weekNumber(plan: Plan, now: Date): number {
@@ -108,15 +128,6 @@ export function areaCounts(history: CompletedSession[]): { area: AreaId; count: 
   const counts = new Map<AreaId, number>();
   for (const h of history) for (const a of h.areas) counts.set(a, (counts.get(a) ?? 0) + 1);
   return AREA_ORDER.filter((a) => counts.has(a)).map((area) => ({ area, count: counts.get(area) ?? 0 }));
-}
-
-/** Free users get a few sessions a week; Premium is unlimited. */
-export function canStartSession(isPremium: boolean, history: CompletedSession[], now: Date): boolean {
-  return isPremium || thisWeek(history, now).length < config.freeWeeklySessions;
-}
-
-export function freeSessionsLeft(history: CompletedSession[], now: Date): number {
-  return Math.max(0, config.freeWeeklySessions - thisWeek(history, now).length);
 }
 
 /** When each area was last trained, newest first per area. Areas never trained are left out. */

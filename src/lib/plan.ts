@@ -115,9 +115,11 @@ export function pickExercises({ areas, levels, fallbackLevel, goal, minutes, rec
 
   const picked: string[] = [];
   let used = 0;
+  // Up to 24 moves, or about one a minute for longer sessions, so a custom 30-minute session still fills.
+  const maxMoves = Math.max(24, Math.ceil(budget / 60));
   for (let round = 0; round < 2 && used < budget - 20; round++) {
     for (const e of order) {
-      if (picked.length >= 24) break;
+      if (picked.length >= maxMoves) break;
       // Never the same move twice in a row, and skip moves too long for the time left.
       if (picked[picked.length - 1] === e.id) continue;
       if (picked.length >= 3 && used + cost(e) > budget + 20) continue;
@@ -143,19 +145,31 @@ type PlanInput = {
   days: DaysPerWeek;
   minutes: Minutes;
   levels: AreaLevels;
+  /** Weekday (0 = Monday) the plan starts on. The week's pattern is laid out from here, so the first session lands on it. */
+  startDay?: number;
+  /** Days picked by hand. When set, these replace the preset spread. */
+  weekdays?: number[];
 };
+
+/** The weekday a plan started on. */
+export function planStartDay(plan: Pick<Plan, 'createdAt'>): number {
+  return weekdayIndex(new Date(plan.createdAt));
+}
 
 /**
  * Weekly template: alternate "all your areas" sessions with single-area focus sessions,
  * and finish weeks of 4+ sessions with a gentle recovery flow.
  */
-export function generateSessions({ areas, goal, level, days, minutes, levels }: PlanInput): PlannedSession[] {
+export function generateSessions({ areas, goal, level, days, minutes, levels, startDay = 0, weekdays: picked }: PlanInput): PlannedSession[] {
   const sorted = sortAreas(areas);
-  const weekdays = DAY_PATTERNS[days];
+  // Days picked by hand, or the preset's spacing shifted to begin on the start day (wrapping into the next week).
+  // Either way they're taken in order from the start day, so the week's sequence begins with the first one coming up.
+  const fromStart = (d: number) => (d - startDay + 7) % 7;
+  const weekdays = (picked?.length ? [...new Set(picked)] : DAY_PATTERNS[days].map((offset) => (startDay + offset) % 7)).sort((a, b) => fromStart(a) - fromStart(b));
   const n = weekdays.length;
   let focus = 0;
 
-  return weekdays.map((weekday, i) => {
+  const sessions = weekdays.map((weekday, i) => {
     let kind: SessionKind;
     let sessionAreas: AreaId[];
     if (i === n - 1 && n >= 4) {
@@ -182,17 +196,21 @@ export function generateSessions({ areas, goal, level, days, minutes, levels }: 
       minutes,
     };
   });
+  // Stored in weekday order (Monday first), which the week logic relies on.
+  return sessions.sort((a, b) => a.weekday - b.weekday);
 }
 
 export function buildPlan(input: PlanInput): Plan {
+  const now = new Date();
   return {
     areas: sortAreas(input.areas),
     goal: input.goal,
     level: input.level,
-    days: input.days,
+    days: input.weekdays?.length ?? input.days,
+    weekdays: input.weekdays?.length ? input.weekdays : undefined,
     minutes: input.minutes,
-    sessions: generateSessions(input),
-    createdAt: new Date().toISOString(),
+    sessions: generateSessions({ ...input, startDay: input.startDay ?? weekdayIndex(now) }),
+    createdAt: now.toISOString(),
   };
 }
 

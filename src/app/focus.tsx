@@ -32,7 +32,7 @@ export default function Focus() {
   const start = () => {
     if (!area) return;
     const session = startQuick(area);
-    if (session) router.replace({ pathname: '/session', params: { id: session.id } });
+    if (session) router.replace({ pathname: '/preview', params: { id: session.id } });
   };
 
   return (

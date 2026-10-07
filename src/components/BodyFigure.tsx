@@ -1,20 +1,70 @@
-import { useId } from 'react';
+import { useId, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Ellipse, G, LinearGradient, Path, RadialGradient, Stop } from 'react-native-svg';
 
 import { colors, fonts } from '@/constants/theme';
 import { AREA_NAMES, AREA_ORDER, SPOTS, VISIBLE } from '@/data/areas';
 import { DETAIL, OUTLINE } from '@/data/figure';
+import { DETAILS, HEAD, REGIONS, SEAMS, type Shape } from '@/data/muscles';
 import type { AreaId, BodyView } from '@/data/types';
 import { tap } from '@/lib/haptics';
 
-/** Skin tones (light → shade across the body), edge and hint-line colours for each figure fill. */
-type Palette = { skin: [string, string, string]; edge: string; line: string; lineOpacity: number; shadow: string; shadowOpacity: number };
-const PALETTES: Record<string, Palette> = {
-  [colors.figure]: { skin: ['#EDE3CF', '#E2D5BC', '#D1C0A0'], edge: 'rgba(150,126,88,0.6)', line: '#8E7B5C', lineOpacity: 0.28, shadow: '#6B5636', shadowOpacity: 0.16 },
-  '#3B6351': { skin: ['#4E7B65', '#3B6351', '#2B4B3B'], edge: 'rgba(255,255,255,0.2)', line: '#FFFFFF', lineOpacity: 0.16, shadow: '#0E2419', shadowOpacity: 0.3 },
-  [colors.cream]: { skin: [colors.cream, colors.cream, '#F3E8D3'], edge: 'rgba(255,255,255,0.3)', line: '#8E7B5C', lineOpacity: 0, shadow: '#6B5636', shadowOpacity: 0 },
+/**
+ * Skin tones (light → shade across the body), edge and hint-line colours for each figure fill,
+ * plus the muscle tone (top → bottom), seams and head for the anatomy look.
+ */
+type Palette = {
+  skin: [string, string, string];
+  edge: string;
+  line: string;
+  lineOpacity: number;
+  shadow: string;
+  shadowOpacity: number;
+  muscle: [string, string];
+  seam: string;
+  head: string;
 };
+const PALETTES: Record<string, Palette> = {
+  [colors.figure]: {
+    skin: ['#EDE3CF', '#E2D5BC', '#D1C0A0'],
+    edge: 'rgba(150,126,88,0.6)',
+    line: '#8E7B5C',
+    lineOpacity: 0.28,
+    shadow: '#6B5636',
+    shadowOpacity: 0.16,
+    muscle: ['#D4C2A0', '#C2AC85'],
+    seam: '#F6EFE2',
+    head: '#E5D8C1',
+  },
+  '#3B6351': {
+    skin: ['#4E7B65', '#3B6351', '#2B4B3B'],
+    edge: 'rgba(255,255,255,0.2)',
+    line: '#FFFFFF',
+    lineOpacity: 0.16,
+    shadow: '#0E2419',
+    shadowOpacity: 0.3,
+    muscle: ['#3F6A56', '#2D4F3F'],
+    seam: '#6E9884',
+    head: '#4E7B65',
+  },
+  [colors.cream]: {
+    skin: [colors.cream, colors.cream, '#F3E8D3'],
+    edge: 'rgba(255,255,255,0.3)',
+    line: '#8E7B5C',
+    lineOpacity: 0,
+    shadow: '#6B5636',
+    shadowOpacity: 0,
+    muscle: [colors.cream, colors.cream],
+    seam: colors.cream,
+    head: colors.cream,
+  },
+};
+
+/** Below this height the seams between muscles blur together, so small figures keep the plain look. */
+const ANATOMY_MIN_HEIGHT = 100;
+
+/** Shapes drawn for the left half are flipped onto the right. */
+const MIRROR = 'translate(220, 0) scale(-1, 1)';
 
 /** Soft shadows where the body folds: under the chin, the armpits and the groin. */
 const SHADOWS: [number, number, number, number][] = [
@@ -63,9 +113,19 @@ export function BodyFigure({ height, glows = {}, view, fill = colors.figure, glo
   const glowId = `glow${uid}`;
   const lightId = `light${uid}`;
   const clipId = `clip${uid}`;
+  const muscleId = `muscle${uid}`;
   const palette = PALETTES[fill] ?? PALETTES[colors.figure];
   const side: BodyView = view ?? 'front';
   const lit = AREA_ORDER.filter((a) => (glows[a] ?? 0) > 0 && (!view || VISIBLE[view].includes(a)));
+  const anatomy = height >= ANATOMY_MIN_HEIGHT;
+  /** Draws shapes on the left half, and mirrored onto the right unless they sit on the centre line. */
+  const both = (list: Shape[], draw: (d: string, key: string) => ReactNode) => (
+    <>
+      {list.map((p) => draw(p.d, `l${p.d}`))}
+      <G transform={MIRROR}>{list.filter((p) => !p.mid).map((p) => draw(p.d, `r${p.d}`))}</G>
+    </>
+  );
+  const filled = anatomy ? lit.filter((a) => REGIONS[side][a]) : [];
   // Without a view, back-only areas (upper and lower back) glow at their back spot on the front figure.
   const centres = (a: AreaId) => {
     const own = SPOTS[side].filter(([s]) => s === a);
@@ -93,15 +153,24 @@ export function BodyFigure({ height, glows = {}, view, fill = colors.figure, glo
           <Stop offset="0" stopColor="#FFFFFF" stopOpacity={0.3} />
           <Stop offset="0.6" stopColor="#FFFFFF" stopOpacity={0} />
         </LinearGradient>
+        <LinearGradient id={muscleId} x1={0} y1={60} x2={0} y2={440} gradientUnits="userSpaceOnUse">
+          <Stop offset="0" stopColor={palette.muscle[0]} />
+          <Stop offset="1" stopColor={palette.muscle[1]} />
+        </LinearGradient>
         <ClipPath id={clipId}>
           <Path d={OUTLINE} />
         </ClipPath>
       </Defs>
 
-      {overlay ? null : <Path d={OUTLINE} fill={`url(#${skinId})`} />}
+      {overlay ? null : <Path d={OUTLINE} fill={anatomy ? `url(#${muscleId})` : `url(#${skinId})`} />}
+      {anatomy && !overlay ? (
+        <G clipPath={`url(#${clipId})`}>
+          <Path d={HEAD} fill={palette.head} />
+        </G>
+      ) : null}
       {/* Soft light from above, so the figure has the same volume as the move character. */}
       {palette.shadowOpacity > 0 && !overlay ? <Path d={OUTLINE} fill={`url(#${lightId})`} /> : null}
-      {palette.shadowOpacity > 0 && !overlay ? (
+      {palette.shadowOpacity > 0 && !overlay && !anatomy ? (
         <G clipPath={`url(#${clipId})`}>
           {SHADOWS.map(([cx, cy, rx, ry]) => (
             <Ellipse key={`${cx}${cy}`} cx={cx} cy={cy} rx={rx} ry={ry} fill={`url(#${shadowId})`} />
@@ -112,7 +181,7 @@ export function BodyFigure({ height, glows = {}, view, fill = colors.figure, glo
       {lit.length > 0 ? (
         <G clipPath={`url(#${clipId})`}>
           {lit.map((a) => (
-            <G key={a} opacity={glows[a]}>
+            <G key={a} opacity={(glows[a] ?? 0) * (filled.includes(a) ? 0.35 : 1)}>
               {centres(a).map(([, x, y]) => (
                 <Ellipse key={`${x}${y}`} cx={x} cy={y} rx={GLOW[a][0]} ry={GLOW[a][1]} fill={`url(#${glowId})`} />
               ))}
@@ -121,7 +190,27 @@ export function BodyFigure({ height, glows = {}, view, fill = colors.figure, glo
         </G>
       ) : null}
 
-      {palette.lineOpacity > 0 && !overlay
+      {filled.length > 0 ? (
+        <G clipPath={`url(#${clipId})`}>
+          {filled.map((a) => (
+            <G key={a} opacity={(glows[a] ?? 0) * 0.9}>
+              {both(REGIONS[side][a] ?? [], (d, key) => <Path key={key} d={d} fill={glowColor} />)}
+            </G>
+          ))}
+        </G>
+      ) : null}
+      {anatomy ? (
+        <G clipPath={`url(#${clipId})`}>
+          {both(DETAILS[side], (d, key) => (
+            <Path key={key} d={d} fill="none" stroke={palette.seam} strokeOpacity={0.4} strokeWidth={1.3} strokeLinecap="round" strokeLinejoin="round" />
+          ))}
+          {both(SEAMS[side], (d, key) => (
+            <Path key={key} d={d} fill="none" stroke={palette.seam} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" />
+          ))}
+        </G>
+      ) : null}
+
+      {palette.lineOpacity > 0 && !overlay && !anatomy
         ? DETAIL[side].map((d) => <Path key={d} d={d} fill="none" stroke={palette.line} strokeOpacity={palette.lineOpacity} strokeWidth={1.5} strokeLinecap="round" />)
         : null}
       {overlay ? null : <Path d={OUTLINE} fill="none" stroke={palette.edge} strokeWidth={1} />}
@@ -130,7 +219,10 @@ export function BodyFigure({ height, glows = {}, view, fill = colors.figure, glo
         ? SPOTS[side]
             .filter(([a]) => !lit.includes(a))
             .map(([a, x, y]) => (
-              <Circle key={`${a}${x}${y}`} cx={x} cy={y} r={10} fill="rgba(255,253,249,0.6)" stroke="rgba(70,52,24,0.38)" strokeWidth={1.2} strokeDasharray="3 2.5" />
+              <G key={`${a}${x}${y}`}>
+                <Circle cx={x} cy={y} r={8} fill="rgba(255,253,249,0.92)" stroke="rgba(70,52,24,0.22)" strokeWidth={1} />
+                <Path d={`M${x - 3.2} ${y} H${x + 3.2} M${x} ${y - 3.2} V${y + 3.2}`} stroke={colors.greenText} strokeWidth={1.7} strokeLinecap="round" />
+              </G>
             ))
         : null}
 

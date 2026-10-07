@@ -4,8 +4,10 @@ export type BodyView = 'front' | 'back';
 export type Goal = 'freely' | 'flexibility' | 'stiffness' | 'sport' | 'everyday';
 /** 1 = new to mobility, 2 = some experience, 3 = trains it regularly. */
 export type Level = 1 | 2 | 3;
-export type DaysPerWeek = 2 | 3 | 4 | 5 | 7;
-export type Minutes = 5 | 10 | 15 | 20;
+/** Sessions a week: one of the presets (2, 3, 4, 5, 7), or 1 to 7 when the days are picked by hand. */
+export type DaysPerWeek = number;
+/** Session length in whole minutes: one of the presets, or a custom length in the custom range. */
+export type Minutes = number;
 export type Feedback = 'easy' | 'right' | 'hard';
 export type Equipment = 'none' | 'mat' | 'wall';
 
@@ -85,6 +87,8 @@ export type Plan = {
   goal: Goal;
   level: Level;
   days: DaysPerWeek;
+  /** Days picked by hand (0 = Monday). When set, sessions go on exactly these days instead of the preset spread. */
+  weekdays?: number[];
   minutes: Minutes;
   sessions: PlannedSession[];
   createdAt: string;

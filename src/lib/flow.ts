@@ -2,7 +2,6 @@ import { router } from 'expo-router';
 
 import { useAppStore } from '@/store/useAppStore';
 
-import { canStartSession } from './progress';
 
 /**
  * Go to the Today tab with a clean history (no swiping back into onboarding).
@@ -35,12 +34,14 @@ export function continueFirstRun(from: 'complete' | 'save' | 'premium' | 'remind
   goHome();
 }
 
-/** Start a session, or show the weekly limit sheet when a free user has used this week's sessions. */
+/**
+ * Start a session: its preview, then the player. Every session needs Premium (or its free trial),
+ * so without it the paywall opens first and goes on to this session once bought.
+ */
 export function startSession(sessionId: string): void {
-  const { isPremium, history } = useAppStore.getState();
-  if (!canStartSession(isPremium, history, new Date())) {
-    router.push('/limit');
+  if (!useAppStore.getState().isPremium) {
+    router.push({ pathname: '/premium', params: { then: sessionId } });
     return;
   }
-  router.push({ pathname: '/session', params: { id: sessionId } });
+  router.push({ pathname: '/preview', params: { id: sessionId } });
 }

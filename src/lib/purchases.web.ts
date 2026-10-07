@@ -1,10 +1,7 @@
+import { TEST_OPTIONS, type PlanOption } from './paywall';
+
 /** Web preview only: purchases always run in test mode. */
-export type PaywallOption = {
-  id: 'annual' | 'monthly';
-  title: string;
-  price: string;
-  trial?: string;
-};
+export type PaywallOption = PlanOption;
 
 export function purchasesLive(): boolean {
   return false;
@@ -13,10 +10,7 @@ export function purchasesLive(): boolean {
 export function initPurchases(): void {}
 
 export async function loadOptions(): Promise<PaywallOption[]> {
-  return [
-    { id: 'annual', title: 'Yearly', price: 'Test price', trial: '7 days free' },
-    { id: 'monthly', title: 'Monthly', price: 'Test price' },
-  ];
+  return TEST_OPTIONS;
 }
 
 export async function buy(_option: PaywallOption): Promise<boolean> {

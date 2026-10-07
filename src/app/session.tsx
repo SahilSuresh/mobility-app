@@ -11,14 +11,12 @@ import { T } from '@/components/T';
 import { IconButton, PrimaryButton, Screen, Segments, TextButton } from '@/components/ui';
 import { colors, fonts, REGION_COLORS, shadows } from '@/constants/theme';
 import { AREA_NAMES } from '@/data/areas';
-import { getExercise, moveSeconds } from '@/data/exercises';
+import { getExercise } from '@/data/exercises';
 import type { Exercise } from '@/data/types';
 import { success, tap } from '@/lib/haptics';
+import { holdFor, moveTime, READY_SECONDS } from '@/lib/holds';
 import { useViewport } from '@/lib/viewport';
 import { findSession, useAppStore } from '@/store/useAppStore';
-
-/** A short pause before each move, to read it and get into position. */
-const READY_SECONDS = 5;
 
 function clock(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -34,6 +32,8 @@ export default function SessionPlayer() {
   const ringSize = compact ? 216 : 268;
   const session = useAppStore((s) => findSession(s, id));
   const recordSession = useAppStore((s) => s.recordSession);
+  // Your own hold times from the preview, fixed for the length of the session.
+  const [holds] = useState(() => useAppStore.getState().holds);
 
   const moves: Exercise[] = (session?.exerciseIds ?? []).map((m) => getExercise(m)).filter((e): e is Exercise => !!e);
   const [index, setIndex] = useState(0);
@@ -46,7 +46,7 @@ export default function SessionPlayer() {
   const finished = useRef(false);
 
   const move = moves[index];
-  const total = phase === 'ready' ? READY_SECONDS : move ? moveSeconds(move) : 1;
+  const total = phase === 'ready' ? READY_SECONDS : move ? moveTime(move, holds) : 1;
   const last = index === moves.length - 1;
 
   const goTo = (i: number, skipReady = false) => {
@@ -54,7 +54,7 @@ export default function SessionPlayer() {
     if (!target) return;
     setIndex(i);
     setPhase(skipReady ? 'move' : 'ready');
-    setLeft(skipReady ? moveSeconds(target) : READY_SECONDS);
+    setLeft(skipReady ? moveTime(target, holds) : READY_SECONDS);
     setPlaying(true);
   };
 
@@ -71,14 +71,14 @@ export default function SessionPlayer() {
     elapsed.current += 1;
     if (left > 1) {
       // Halfway through a two-sided move: a nudge to change sides.
-      if (phase === 'move' && move?.eachSide && left - 1 === move.seconds) tap();
+      if (phase === 'move' && move?.eachSide && left - 1 === holdFor(move, holds)) tap();
       setLeft(left - 1);
       return;
     }
     if (phase === 'ready' && move) {
       tap();
       setPhase('move');
-      setLeft(moveSeconds(move));
+      setLeft(moveTime(move, holds));
       return;
     }
     if (last) finish();
@@ -104,7 +104,7 @@ export default function SessionPlayer() {
 
   const next = moves[index + 1];
   const ready = phase === 'ready';
-  const half = !ready && move.eachSide ? (left <= move.seconds ? 'Second side' : 'First side') : null;
+  const half = !ready && move.eachSide ? (left <= holdFor(move, holds) ? 'Second side' : 'First side') : null;
 
   return (
     <Screen>
