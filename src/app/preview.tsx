@@ -5,7 +5,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { PoseBubble } from '@/components/PoseBubble';
 import { T } from '@/components/T';
 import { IconButton, PrimaryButton, Screen, TextButton } from '@/components/ui';
-import { colors, fonts, REGION_COLORS } from '@/constants/theme';
+import { colors, fonts, REGION_COLORS, tint } from '@/constants/theme';
 import { AREA_NAMES, sortAreas } from '@/data/areas';
 import { EQUIPMENT_LABEL, getExercise } from '@/data/exercises';
 import type { Exercise } from '@/data/types';
@@ -120,7 +120,7 @@ export default function SessionPreview() {
 function Fact({ icon, label, strong }: { icon: IconName; label: string; strong?: boolean }) {
   return (
     <View style={[styles.fact, strong && styles.factStrong]}>
-      <Icon name={icon} size={14} color={strong ? colors.white : colors.greenText} strokeWidth={2} />
+      <Icon name={icon} size={14} color={strong ? colors.onGreen : colors.greenText} strokeWidth={2} />
       <T style={[styles.factText, strong && styles.factTextStrong]} numberOfLines={1}>
         {label}
       </T>
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   fact: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 30, paddingHorizontal: 11, borderRadius: 15, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, maxWidth: '100%' },
   factStrong: { backgroundColor: colors.green, borderColor: colors.green },
   factText: { flexShrink: 1, fontFamily: fonts.semibold, fontSize: 13, color: colors.ink },
-  factTextStrong: { color: colors.white },
+  factTextStrong: { color: colors.onGreen },
 
   listHeader: { marginTop: 22, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 28 },
   list: { flex: 1, marginTop: 8, borderRadius: 22, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
   moveText: { flex: 1, gap: 1 },
   pressed: { opacity: 0.7 },
 
-  stepper: { flexDirection: 'row', alignItems: 'center', padding: 3, borderRadius: 20, backgroundColor: 'rgba(90,70,40,0.07)' },
+  stepper: { flexDirection: 'row', alignItems: 'center', padding: 3, borderRadius: 20, backgroundColor: tint(0.07) },
   stepperCustom: { backgroundColor: colors.greenTint },
   stepButton: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.card },
   stepPressed: { transform: [{ scale: 0.92 }] },

@@ -7,14 +7,14 @@ import { BodyFigure } from '@/components/BodyFigure';
 import { Rise } from '@/components/Rise';
 import { SessionRow } from '@/components/SessionRow';
 import { T } from '@/components/T';
-import { PrimaryButton, Screen } from '@/components/ui';
-import { colors, fonts, NATIVE_DRIVER, shadows } from '@/constants/theme';
+import { PrimaryButton, Screen, TextButton } from '@/components/ui';
+import { accent, colors, fonts, glassSoft, NATIVE_DRIVER, shadows } from '@/constants/theme';
 import { AREA_NAMES, sortAreas } from '@/data/areas';
 import { GOAL_LABEL, LEVEL_NAME } from '@/data/content';
 import type { AreaId, BodyView } from '@/data/types';
 import { addDays, startOfDay } from '@/lib/dates';
 import { planStartDay } from '@/lib/plan';
-import { startSession } from '@/lib/flow';
+import { goHome, startSession } from '@/lib/flow';
 import { nextSession } from '@/lib/progress';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -120,6 +120,8 @@ export default function PlanReady() {
           Move gently, within a comfortable range.
         </T>
         <PrimaryButton label="Start first session" icon="play" onPress={start} />
+        {/* A way out for anyone not starting yet: home, with onboarding cleared from the back stack. */}
+        <TextButton label="Go to my home screen" color={colors.muted} onPress={goHome} style={styles.home} />
       </Rise>
     </Screen>
   );
@@ -140,13 +142,13 @@ const styles = StyleSheet.create({
   hero: { marginTop: 16, borderRadius: 24, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, boxShadow: shadows.card, overflow: 'hidden' },
   heroTop: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingTop: 16, paddingHorizontal: 16 },
   bodies: { flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center' },
-  halo: { position: 'absolute', alignSelf: 'center', left: -6, right: -6, top: 4, bottom: 4, borderRadius: 80, backgroundColor: 'rgba(47,122,86,0.07)' },
+  halo: { position: 'absolute', alignSelf: 'center', left: -6, right: -6, top: 4, bottom: 4, borderRadius: 80, backgroundColor: accent(0.07) },
   areas: { flex: 1, gap: 8 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: { paddingHorizontal: 10, height: 28, borderRadius: 14, justifyContent: 'center', backgroundColor: colors.greenTint },
   chipText: { fontFamily: fonts.semibold, fontSize: 13, color: colors.greenDeep },
 
-  stats: { flexDirection: 'row', marginTop: 16, paddingVertical: 14, borderTopWidth: 1, borderTopColor: colors.line, backgroundColor: 'rgba(243,233,218,0.45)' },
+  stats: { flexDirection: 'row', marginTop: 16, paddingVertical: 14, borderTopWidth: 1, borderTopColor: colors.line, backgroundColor: glassSoft },
   stat: { flex: 1, paddingHorizontal: 16, gap: 1 },
   statDivider: { borderLeftWidth: 1, borderLeftColor: colors.line },
   statValue: { fontFamily: fonts.display, fontSize: 24, lineHeight: 28, color: colors.ink },
@@ -156,4 +158,5 @@ const styles = StyleSheet.create({
   list: { flex: 1, marginTop: 10, marginHorizontal: -24 },
   listContent: { gap: 10, paddingHorizontal: 24, paddingBottom: 8 },
   safety: { marginTop: 10, marginBottom: 12 },
+  home: { marginTop: 4 },
 });

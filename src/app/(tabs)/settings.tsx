@@ -7,8 +7,9 @@ import { Icon } from '@/components/Icon';
 import { T } from '@/components/T';
 import { Screen } from '@/components/ui';
 import { config } from '@/constants/config';
-import { colors, fonts, shadows } from '@/constants/theme';
+import { colors, fonts, isDark, shade, shadows, tint } from '@/constants/theme';
 import { AREA_NAMES } from '@/data/areas';
+import { reloadApp, saveAppearance } from '@/lib/appearance';
 import { timeLabel } from '@/lib/dates';
 import { cancelReminders } from '@/lib/notifications';
 import { restore } from '@/lib/purchases';
@@ -22,7 +23,7 @@ function Row({ label, value, href, onPress, last }: RowProps) {
       <Pressable
         accessibilityRole="button"
         onPress={onPress ?? (href ? () => router.push(href) : undefined)}
-        style={({ pressed }) => [styles.row, pressed && { backgroundColor: 'rgba(90,70,40,0.05)' }]}
+        style={({ pressed }) => [styles.row, pressed && { backgroundColor: tint(0.05) }]}
       >
         <T variant="body" style={[styles.flex, { fontFamily: fonts.medium }]}>
           {label}
@@ -47,6 +48,7 @@ export default function SettingsTab() {
   const setPremium = useAppStore((s) => s.setPremium);
   const reset = useAppStore((s) => s.reset);
   const [note, setNote] = useState('');
+  const [darkMode, setDarkMode] = useState(isDark);
   if (!plan) return null;
 
   const restorePurchases = async () => {
@@ -68,7 +70,7 @@ export default function SettingsTab() {
         </View>
       ) : (
         <Pressable accessibilityRole="button" onPress={() => router.push('/premium')} style={({ pressed }) => [pressed && { opacity: 0.92 }]}>
-          <LinearGradient colors={['#2B3A31', colors.ink]} start={{ x: 1, y: 0 }} end={{ x: 0, y: 1 }} style={styles.premiumCard}>
+          <LinearGradient colors={isDark ? ['#2C5541', colors.card] : ['#2B3A31', colors.ink]} start={{ x: 1, y: 0 }} end={{ x: 0, y: 1 }} style={styles.premiumCard}>
             <View style={styles.flex}>
               <T variant="bodyStrong" color={colors.cream} style={{ fontSize: 17, fontFamily: fonts.bold }}>
                 Try Premium free
@@ -78,7 +80,7 @@ export default function SettingsTab() {
               </T>
             </View>
             <View style={styles.arrow}>
-              <Icon name="chevron" size={16} color={colors.white} strokeWidth={2.6} />
+              <Icon name="chevron" size={16} color={colors.onGreen} strokeWidth={2.6} />
             </View>
           </LinearGradient>
         </Pressable>
@@ -91,6 +93,29 @@ export default function SettingsTab() {
         <Row label="Areas" value={plan.areas.map((a) => AREA_NAMES[a]).join(', ')} href="/edit-areas" />
         <Row label="Days a week" value={plan.days === 7 ? 'Every day' : String(plan.days)} href={{ pathname: '/onboarding/days', params: { edit: '1' } }} />
         <Row label="Session length" value={`${plan.minutes} min`} href={{ pathname: '/onboarding/days', params: { edit: '1' } }} last />
+      </View>
+
+      <T variant="kicker" style={styles.section}>
+        Appearance
+      </T>
+      <View style={styles.group}>
+        <View style={styles.row}>
+          <Icon name="moon" size={18} color={colors.greenText} />
+          <T variant="body" style={[styles.flex, { fontFamily: fonts.medium }]}>
+            Dark mode
+          </T>
+          <Switch
+            accessibilityLabel="Dark mode"
+            value={darkMode}
+            onValueChange={(on) => {
+              setDarkMode(on);
+              saveAppearance(on ? 'dark' : 'light');
+              // The whole app is drawn in one palette, picked at start-up, so it reloads to switch.
+              if (!reloadApp()) setNote('Restart the app to see the new look.');
+            }}
+            trackColor={{ true: colors.green, false: colors.line }}
+          />
+        </View>
       </View>
 
       <T variant="kicker" style={styles.section}>
@@ -145,14 +170,14 @@ export default function SettingsTab() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   title: { minHeight: 44, textAlignVertical: 'center' },
-  premiumCard: { marginTop: 12, height: 76, borderRadius: 24, paddingLeft: 20, paddingRight: 16, flexDirection: 'row', alignItems: 'center', gap: 12, boxShadow: '0px 14px 28px -14px rgba(28,26,22,0.7)' },
+  premiumCard: { marginTop: 12, height: 76, borderRadius: 24, paddingLeft: 20, paddingRight: 16, flexDirection: 'row', alignItems: 'center', gap: 12, boxShadow: `0px 14px 28px -14px ${shade(0.6)}` },
   arrow: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center' },
   premiumOn: { marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 18 },
   section: { marginTop: 26 },
   group: {
     marginTop: 10,
     borderRadius: 22,
-    backgroundColor: '#FFFBF4',
+    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border,
     overflow: 'hidden',
@@ -160,5 +185,5 @@ const styles = StyleSheet.create({
   },
   row: { minHeight: 52, paddingHorizontal: 16, paddingRight: 14, flexDirection: 'row', alignItems: 'center', gap: 8 },
   value: { maxWidth: 170 },
-  hairline: { marginLeft: 16, height: 1, backgroundColor: 'rgba(90,70,40,0.10)' },
+  hairline: { marginLeft: 16, height: 1, backgroundColor: tint(0.10) },
 });

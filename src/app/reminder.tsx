@@ -6,7 +6,7 @@ import { BodyFigure } from '@/components/BodyFigure';
 import { Icon, type IconName } from '@/components/Icon';
 import { T } from '@/components/T';
 import { IconButton, PrimaryButton, Screen, TextButton } from '@/components/ui';
-import { colors, fonts, shadows } from '@/constants/theme';
+import { colors, fonts, glass, shade, shadows, tint } from '@/constants/theme';
 import type { ReminderSlot } from '@/data/types';
 import { timeLabel } from '@/lib/dates';
 import { continueFirstRun } from '@/lib/flow';
@@ -157,13 +157,13 @@ const styles = StyleSheet.create({
     padding: 14,
     paddingRight: 16,
     borderRadius: 24,
-    backgroundColor: 'rgba(255,253,249,0.85)',
+    backgroundColor: glass,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.8)',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    boxShadow: '0px 18px 34px -18px rgba(70,50,20,0.4)',
+    boxShadow: `0px 18px 34px -18px ${shade(0.4)}`,
   },
   appIcon: { width: 42, height: 42, borderRadius: 11, backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center' },
   previewTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
@@ -176,9 +176,9 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     padding: 16,
     justifyContent: 'space-between',
-    backgroundColor: '#FFFBF4',
+    backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: 'rgba(90,70,40,0.14)',
+    borderColor: tint(0.14),
   },
   tileCompact: { height: 84, padding: 14 },
   tileOn: { borderWidth: 2, borderColor: colors.green, boxShadow: shadows.small },
@@ -188,9 +188,9 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#FFFBF4',
+    backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: 'rgba(90,70,40,0.16)',
+    borderColor: tint(0.16),
     alignItems: 'center',
     justifyContent: 'center',
   },

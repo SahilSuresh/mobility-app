@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "mobilityapp",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/images/icon.png",
       "bundleIdentifier": "com.CHANGEME.mobility",
@@ -32,7 +32,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#FFF8EC",
+          "backgroundColor": "#15241D",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 120
         }
@@ -45,7 +45,8 @@
         }
       ],
       "expo-sharing",
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": false,

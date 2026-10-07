@@ -9,7 +9,7 @@ import { Ring } from '@/components/Ring';
 import { Sheet } from '@/components/Sheet';
 import { T } from '@/components/T';
 import { IconButton, PrimaryButton, Screen, Segments, TextButton } from '@/components/ui';
-import { colors, fonts, REGION_COLORS, shadows } from '@/constants/theme';
+import { accent, colors, fonts, glass, REGION_COLORS, shadows, tint } from '@/constants/theme';
 import { AREA_NAMES } from '@/data/areas';
 import { getExercise } from '@/data/exercises';
 import type { Exercise } from '@/data/types';
@@ -133,7 +133,7 @@ export default function SessionPlayer() {
       </View>
 
       <View style={[styles.stage, compact && styles.stageCompact]}>
-        <Ring size={ringSize} stroke={6} progress={left / total} color={ready ? 'rgba(47,122,86,0.35)' : colors.green}>
+        <Ring size={ringSize} stroke={6} progress={left / total} color={ready ? accent(0.35) : colors.green}>
           <PoseBubble pose={move.pose} size={ringSize - 44} color={REGION_COLORS[move.area]} shadow breathe={playing && !ready} />
         </Ring>
       </View>
@@ -175,11 +175,11 @@ export default function SessionPlayer() {
           }}
           style={({ pressed }) => [styles.play, pressed && styles.pressed]}
         >
-          {playing ? <Icon name="pause" size={28} color={colors.cream} strokeWidth={2.6} /> : <Icon name="play" size={28} color={colors.cream} />}
+          {playing ? <Icon name="pause" size={28} color={colors.onGreen} strokeWidth={2.6} /> : <Icon name="play" size={28} color={colors.onGreen} />}
         </Pressable>
         {last ? (
           <Pressable accessibilityRole="button" accessibilityLabel="Finish session" onPress={finish} style={({ pressed }) => [styles.round, styles.finish, pressed && styles.pressed]}>
-            <Icon name="check" size={24} color={colors.white} strokeWidth={2.6} />
+            <Icon name="check" size={24} color={colors.onGreen} strokeWidth={2.6} />
           </Pressable>
         ) : (
           <Pressable
@@ -259,14 +259,14 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 28,
     borderWidth: 1,
-    borderColor: 'rgba(90,70,40,0.14)',
-    backgroundColor: '#FFFBF4',
+    borderColor: tint(0.14),
+    backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
     boxShadow: shadows.small,
   },
   finish: { backgroundColor: colors.green, borderColor: colors.green },
-  play: { width: 80, height: 80, borderRadius: 40, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center', boxShadow: shadows.button },
+  play: { width: 80, height: 80, borderRadius: 40, backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center', boxShadow: shadows.button },
   pressed: { transform: [{ scale: 0.96 }] },
   upNext: {
     marginTop: 22,
@@ -277,9 +277,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: 'rgba(255,253,249,0.62)',
+    backgroundColor: glass,
     borderWidth: 1,
-    borderColor: 'rgba(90,70,40,0.10)',
+    borderColor: tint(0.10),
   },
   upNextCompact: { marginTop: 14 },
   upNextName: { fontSize: 15, maxWidth: 170 },

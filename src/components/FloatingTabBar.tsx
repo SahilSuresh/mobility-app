@@ -3,10 +3,8 @@ import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, fonts } from '@/constants/theme';
+import { accent, colors, fonts, isDark, shade, tint } from '@/constants/theme';
 import { tap } from '@/lib/haptics';
-import { useNow } from '@/lib/useNow';
-import { resolveLook, useLook } from '@/store/useLook';
 
 import { Icon, type IconName } from './Icon';
 
@@ -18,16 +16,13 @@ const TABS: Record<string, { label: string; icon: IconName }> = {
 };
 
 const DARK_ACCENT = '#A6F2C8';
-const DARK_MUTED = 'rgba(244,238,227,0.6)';
+const DARK_MUTED = tint(0.6);
 
 /** Floating, frosted pill tab bar. */
 export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const choice = useLook((s) => s.choice);
-  const now = useNow();
-  // The bar turns dark with the evening look on the tabs drawn in the looks (Today and Plan).
-  const themed = ['index', 'plan'].includes(state.routes[state.index]?.name ?? '');
-  const dark = themed && resolveLook(choice, now) === 'evening';
+  // Dark when the app is in dark mode (Settings → Appearance).
+  const dark = isDark;
   return (
     <View style={[styles.wrap, { bottom: Math.max(insets.bottom, 12) + 4 }]}>
       <View style={styles.shadow}>
@@ -71,7 +66,7 @@ export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
 
 const styles = StyleSheet.create({
   wrap: { position: 'absolute', left: 16, right: 16, pointerEvents: 'box-none' },
-  shadow: { borderRadius: 32, boxShadow: '0px 14px 30px -12px rgba(70,50,20,0.35)' },
+  shadow: { borderRadius: 32, boxShadow: `0px 14px 30px -12px ${shade(0.35)}` },
   bar: {
     height: 64,
     borderRadius: 32,
@@ -84,9 +79,9 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   tab: { flex: 1, borderRadius: 26, alignItems: 'center', justifyContent: 'center', gap: 2 },
-  tabOn: { backgroundColor: 'rgba(47,122,86,0.10)' },
+  tabOn: { backgroundColor: accent(0.10) },
   barDark: { backgroundColor: 'rgba(16,30,23,0.86)', borderColor: 'rgba(255,255,255,0.08)' },
-  tabOnDark: { backgroundColor: 'rgba(166,242,200,0.12)' },
+  tabOnDark: { backgroundColor: accent(0.12) },
   labelOnDark: { fontFamily: fonts.bold, color: DARK_ACCENT },
   label: { fontFamily: fonts.semibold, fontSize: 11, color: colors.muted },
   labelOn: { fontFamily: fonts.bold, color: colors.greenText },

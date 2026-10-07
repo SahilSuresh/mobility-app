@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
-import { colors } from '@/constants/theme';
+import { accent, colors } from '@/constants/theme';
 import type { AreaId } from '@/data/types';
 
 /**
@@ -66,5 +66,5 @@ export function AreaIcon({ area, size = 36, color = colors.green }: { area: Area
 }
 
 const styles = StyleSheet.create({
-  ring: { borderWidth: 1.5, borderColor: colors.green, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(47,122,86,0.06)' },
+  ring: { borderWidth: 1.5, borderColor: colors.green, alignItems: 'center', justifyContent: 'center', backgroundColor: accent(0.06) },
 });

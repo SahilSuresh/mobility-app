@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
-import { colors, fonts, REGION_COLORS } from '@/constants/theme';
+import { colors, fonts, REGION_COLORS, tint } from '@/constants/theme';
 import { getExercise } from '@/data/exercises';
 import type { Exercise, PlannedSession } from '@/data/types';
 import { DAY_SHORT, dateOfWeekday } from '@/lib/dates';
@@ -53,7 +53,7 @@ export function SessionRow({ session, now, meta, highlight, trailing, onPress, d
       ) : null}
       {trailing === 'done' ? (
         <View style={styles.done} accessibilityLabel="Done">
-          <Icon name="check" size={15} color={colors.white} strokeWidth={3} />
+          <Icon name="check" size={15} color={colors.onGreen} strokeWidth={3} />
         </View>
       ) : null}
       {trailing === 'start' ? <SandPill small /> : null}
@@ -75,5 +75,5 @@ const styles = StyleSheet.create({
   stack: { flexDirection: 'row' },
   overlap: { marginLeft: -9 },
   done: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center' },
-  locked: { width: 32, height: 32, borderRadius: 16, borderWidth: 1.5, borderColor: 'rgba(90,70,40,0.22)', alignItems: 'center', justifyContent: 'center' },
+  locked: { width: 32, height: 32, borderRadius: 16, borderWidth: 1.5, borderColor: tint(0.22), alignItems: 'center', justifyContent: 'center' },
 });

@@ -1,7 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { router, useFocusEffect } from 'expo-router';
-import { setStatusBarStyle } from 'expo-status-bar';
-import { useCallback } from 'react';
+import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
@@ -30,13 +28,6 @@ export default function PlanTab() {
   const now = useNow();
   const L = LOOKS[resolveLook(choice, now)];
 
-  // Light status bar text on the dark look, while this tab is showing.
-  useFocusEffect(
-    useCallback(() => {
-      setStatusBarStyle(L.dark ? 'light' : 'dark');
-      return () => setStatusBarStyle('dark');
-    }, [L.dark]),
-  );
 
   if (!plan) return null;
 

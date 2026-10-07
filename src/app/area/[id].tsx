@@ -6,7 +6,7 @@ import { Icon } from '@/components/Icon';
 import { PoseBubble } from '@/components/PoseBubble';
 import { T } from '@/components/T';
 import { Card, IconButton, Screen, Segments } from '@/components/ui';
-import { colors, REGION_COLORS } from '@/constants/theme';
+import { colors, glass, REGION_COLORS } from '@/constants/theme';
 import { AREA_NAMES, AREA_ORDER } from '@/data/areas';
 import { LEVEL_NAME } from '@/data/content';
 import { durationLabel, exercisesForArea } from '@/data/exercises';
@@ -72,7 +72,7 @@ export default function AreaScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   head: { marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 18 },
-  icon: { width: 104, height: 104, borderRadius: 52, borderWidth: 1.5, borderColor: colors.green, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', backgroundColor: 'rgba(255,253,249,0.6)' },
+  icon: { width: 104, height: 104, borderRadius: 52, borderWidth: 1.5, borderColor: colors.green, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', backgroundColor: glass },
   level: { marginTop: 12, flexDirection: 'row', width: 120 },
   section: { marginTop: 28 },
   list: { marginTop: 12, gap: 10 },

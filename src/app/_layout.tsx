@@ -13,7 +13,7 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { LaunchIntro } from '@/components/LaunchIntro';
-import { colors } from '@/constants/theme';
+import { colors, isDark, shade } from '@/constants/theme';
 import { setupNotifications } from '@/lib/notifications';
 import { fetchPremium, initPurchases } from '@/lib/purchases';
 import { frameFor } from '@/lib/viewport';
@@ -58,7 +58,7 @@ export default function RootLayout() {
   return (
     <DesktopFrame>
       <View style={styles.fill}>
-        <StatusBar style="dark" />
+        <StatusBar style={isDark ? 'light' : 'dark'} />
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bgTop } }}>
           <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
           <Stack.Screen name="welcome" options={{ animation: 'fade' }} />
@@ -101,6 +101,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.12)',
     backgroundColor: colors.bgTop,
-    boxShadow: '0px 30px 80px -20px rgba(0,0,0,0.8), 0px 0px 0px 8px #26231D',
+    boxShadow: `0px 30px 80px -20px ${shade(0.8)}, 0px 0px 0px 8px #26231D`,
   },
 });

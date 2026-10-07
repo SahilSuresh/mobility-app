@@ -7,7 +7,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { OnboardingHeader } from '@/components/OnboardingHeader';
 import { T } from '@/components/T';
 import { PrimaryButton, Screen } from '@/components/ui';
-import { colors, fonts, MAX_FONT_SCALE } from '@/constants/theme';
+import { accent, colors, fonts, glass, MAX_FONT_SCALE, tint } from '@/constants/theme';
 import { CUSTOM_MINUTES, DAY_OPTIONS, MINUTE_OPTIONS } from '@/data/content';
 import type { DaysPerWeek, Minutes, PlannedSession } from '@/data/types';
 import { DAY_LETTER, DAY_LONG, weekdayIndex } from '@/lib/dates';
@@ -328,26 +328,26 @@ const styles = StyleSheet.create({
   kind: { fontSize: 12, lineHeight: 15 },
   minutes: { fontFamily: fonts.semibold, color: colors.muted },
   iconDot: { width: 28, height: 28, borderRadius: 14, backgroundColor: colors.greenTint, alignItems: 'center', justifyContent: 'center' },
-  restDot: { backgroundColor: 'rgba(90,70,40,0.07)' },
+  restDot: { backgroundColor: tint(0.07) },
 
   note: { marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4 },
   noteText: { flex: 1 },
 
   pickerLabel: { marginTop: 4, marginBottom: 8 },
   pickerGap: { marginTop: 10 },
-  segments: { flexDirection: 'row', gap: 4, padding: 4, borderRadius: 18, backgroundColor: 'rgba(90,70,40,0.08)' },
+  segments: { flexDirection: 'row', gap: 4, padding: 4, borderRadius: 18, backgroundColor: tint(0.08) },
   segment: { flex: 1, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  segmentOn: { backgroundColor: colors.green, boxShadow: '0px 6px 12px -8px rgba(47,122,86,0.8)' },
-  pressed: { backgroundColor: 'rgba(255,253,249,0.6)' },
+  segmentOn: { backgroundColor: colors.green, boxShadow: `0px 6px 12px -8px ${accent(0.8)}` },
+  pressed: { backgroundColor: glass },
   segmentText: { fontFamily: fonts.display, fontSize: 18, color: colors.ink },
-  segmentTextOn: { color: colors.white },
+  segmentTextOn: { color: colors.onGreen },
   segmentTextSmall: { fontFamily: fonts.semibold, fontSize: 14 },
 
   dayToggles: { marginTop: 8, flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 2 },
   dayToggle: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
   dayToggleOn: { backgroundColor: colors.green, borderColor: colors.green },
   dayToggleText: { fontFamily: fonts.bold, fontSize: 15, color: colors.muted },
-  dayToggleTextOn: { color: colors.white },
+  dayToggleTextOn: { color: colors.onGreen },
 
   stepper: { marginTop: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 4 },
   stepButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },

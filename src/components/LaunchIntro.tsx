@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
 
-import { colors, fonts, NATIVE_DRIVER } from '@/constants/theme';
+import { accent, colors, fonts, NATIVE_DRIVER } from '@/constants/theme';
 
 import { T } from './T';
 
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     height: RING,
     borderRadius: RING / 2,
     borderWidth: 2.5,
-    borderColor: 'rgba(47,122,86,0.35)',
+    borderColor: accent(0.35),
   },
   mark: { width: MARK, height: MARK },
   text: { position: 'absolute', top: MARK + 26, alignItems: 'center', width: 320 },

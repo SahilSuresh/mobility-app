@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, fonts } from '@/constants/theme';
+import { accent, colors, fonts } from '@/constants/theme';
 import type { DayStatus } from '@/lib/progress';
 
 import { Icon } from './Icon';
@@ -20,7 +20,7 @@ export function WeekStrip({ days, size = 34, tone }: { days: Day[]; size?: numbe
           d.status === 'today' || (d.isToday && !done)
             ? { borderWidth: 2, borderColor: tone?.ink ?? colors.ink }
             : d.status === 'planned'
-              ? { borderWidth: 1.5, borderColor: 'rgba(47,122,86,0.65)', borderStyle: 'dashed' as const }
+              ? { borderWidth: 1.5, borderColor: accent(0.65), borderStyle: 'dashed' as const }
               : d.status === 'missed'
                 ? { borderWidth: 1.5, borderColor: colors.line }
                 : null;
@@ -38,7 +38,7 @@ export function WeekStrip({ days, size = 34, tone }: { days: Day[]; size?: numbe
               ring,
             ]}
           >
-            {done ? <Icon name="check" size={14} color={tone?.onDone ?? colors.white} strokeWidth={3} /> : <Text style={[styles.letter, { color: ink }]}>{d.letter}</Text>}
+            {done ? <Icon name="check" size={14} color={tone?.onDone ?? colors.onGreen} strokeWidth={3} /> : <Text style={[styles.letter, { color: ink }]}>{d.letter}</Text>}
           </View>
         );
       })}

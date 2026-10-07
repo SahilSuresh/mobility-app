@@ -9,7 +9,7 @@ import { PoseBubble } from '@/components/PoseBubble';
 import { T } from '@/components/T';
 import { Card, SandPill, Screen } from '@/components/ui';
 import { WeekStrip } from '@/components/WeekStrip';
-import { colors, fonts, POSE_COLORS, shadows } from '@/constants/theme';
+import { colors, fonts, glass, POSE_COLORS, shadows, tint } from '@/constants/theme';
 import { AREA_NAMES } from '@/data/areas';
 import { PROGRAMMES } from '@/data/content';
 import { getExercise } from '@/data/exercises';
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
     height: 38,
     paddingHorizontal: 13,
     borderRadius: 19,
-    backgroundColor: '#FFFBF4',
+    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border,
     flexDirection: 'row',
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#FFFBF4',
+    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.green,
     alignItems: 'center',
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: '#FFFBF4',
+    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border,
     boxShadow: shadows.small,
@@ -266,8 +266,8 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderColor: 'rgba(90,70,40,0.25)',
-    backgroundColor: 'rgba(255,253,249,0.5)',
+    borderColor: tint(0.25),
+    backgroundColor: glass,
     justifyContent: 'space-between',
   },
   addIcon: { width: 36, height: 36, borderRadius: 18, borderWidth: 1.5, borderColor: colors.green, alignItems: 'center', justifyContent: 'center' },

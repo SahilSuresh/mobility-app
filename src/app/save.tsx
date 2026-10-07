@@ -8,7 +8,7 @@ import { Ring } from '@/components/Ring';
 import { T } from '@/components/T';
 import { Card, IconButton, PrimaryButton, Screen, SecondaryButton, TextButton } from '@/components/ui';
 import { config } from '@/constants/config';
-import { colors, fonts } from '@/constants/theme';
+import { colors, fonts, glass, tint } from '@/constants/theme';
 import { appleSignInAvailable, emailAccount, isValidEmail, signInWithApple } from '@/lib/auth';
 import { continueFirstRun } from '@/lib/flow';
 import { thisWeek, weekNumber } from '@/lib/progress';
@@ -90,7 +90,7 @@ export default function SaveProgress() {
               {last ? (
                 <View style={styles.lastRow}>
                   <View style={styles.tick}>
-                    <Icon name="check" size={12} color={colors.white} strokeWidth={3.2} />
+                    <Icon name="check" size={12} color={colors.onGreen} strokeWidth={3.2} />
                   </View>
                   <T variant="smallStrong" numberOfLines={1}>
                     {last.title}
@@ -189,9 +189,9 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 28,
     paddingHorizontal: 22,
-    backgroundColor: 'rgba(255,253,249,0.9)',
+    backgroundColor: glass,
     borderWidth: 1,
-    borderColor: 'rgba(90,70,40,0.18)',
+    borderColor: tint(0.18),
     fontFamily: fonts.medium,
     fontSize: 17,
     color: colors.ink,

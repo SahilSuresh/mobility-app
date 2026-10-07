@@ -8,7 +8,7 @@ import { BodyFigure } from '@/components/BodyFigure';
 import { Icon } from '@/components/Icon';
 import { T } from '@/components/T';
 import { Screen } from '@/components/ui';
-import { colors, fonts, NATIVE_DRIVER } from '@/constants/theme';
+import { accent, colors, fonts, NATIVE_DRIVER, tint } from '@/constants/theme';
 import { areasLabel, sortAreas, VISIBLE } from '@/data/areas';
 import { LEVEL_NAME } from '@/data/content';
 import type { BodyView } from '@/data/types';
@@ -134,7 +134,7 @@ function StepMark({ state }: { state: 'done' | 'active' | 'pending' }) {
   if (state === 'done') {
     return (
       <View style={[styles.mark, styles.markDone]}>
-        <Icon name="check" size={14} color={colors.white} strokeWidth={3} />
+        <Icon name="check" size={14} color={colors.onGreen} strokeWidth={3} />
       </View>
     );
   }
@@ -152,7 +152,7 @@ function StepMark({ state }: { state: 'done' | 'active' | 'pending' }) {
 const styles = StyleSheet.create({
   stage: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   bodies: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 28 },
-  halo: { position: 'absolute', alignSelf: 'center', backgroundColor: 'rgba(47,122,86,0.07)' },
+  halo: { position: 'absolute', alignSelf: 'center', backgroundColor: accent(0.07) },
   side: { alignItems: 'center' },
   sideLabel: { marginTop: 10 },
   layer: { position: 'absolute', left: 0, top: 0 },
@@ -168,8 +168,8 @@ const styles = StyleSheet.create({
   markDone: { borderRadius: 13, backgroundColor: colors.green },
 
   week: { flexDirection: 'row', gap: 3 },
-  day: { width: 15, height: 15, borderRadius: 7.5, backgroundColor: 'rgba(90,70,40,0.08)', alignItems: 'center', justifyContent: 'center' },
+  day: { width: 15, height: 15, borderRadius: 7.5, backgroundColor: tint(0.08), alignItems: 'center', justifyContent: 'center' },
   dayOn: { backgroundColor: colors.green },
   dayLetter: { fontFamily: fonts.bold, fontSize: 8, color: colors.faint },
-  dayLetterOn: { color: colors.white },
+  dayLetterOn: { color: colors.onGreen },
 });

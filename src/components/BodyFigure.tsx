@@ -2,7 +2,7 @@ import { useId, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Ellipse, G, LinearGradient, Path, RadialGradient, Stop } from 'react-native-svg';
 
-import { colors, fonts } from '@/constants/theme';
+import { colors, fonts, isDark, shade, tint } from '@/constants/theme';
 import { AREA_NAMES, AREA_ORDER, SPOTS, VISIBLE } from '@/data/areas';
 import { DETAIL, OUTLINE } from '@/data/figure';
 import { DETAILS, HEAD, REGIONS, SEAMS, type Shape } from '@/data/muscles';
@@ -25,7 +25,7 @@ type Palette = {
   head: string;
 };
 const PALETTES: Record<string, Palette> = {
-  [colors.figure]: {
+  '#E3D6C0': {
     skin: ['#EDE3CF', '#E2D5BC', '#D1C0A0'],
     edge: 'rgba(150,126,88,0.6)',
     line: '#8E7B5C',
@@ -220,7 +220,7 @@ export function BodyFigure({ height, glows = {}, view, fill = colors.figure, glo
             .filter(([a]) => !lit.includes(a))
             .map(([a, x, y]) => (
               <G key={`${a}${x}${y}`}>
-                <Circle cx={x} cy={y} r={8} fill="rgba(255,253,249,0.92)" stroke="rgba(70,52,24,0.22)" strokeWidth={1} />
+                <Circle cx={x} cy={y} r={8} fill={isDark ? 'rgba(16,32,26,0.85)' : 'rgba(255,253,249,0.92)'} stroke={isDark ? 'rgba(166,242,200,0.55)' : 'rgba(70,52,24,0.22)'} strokeWidth={1} />
                 <Path d={`M${x - 3.2} ${y} H${x + 3.2} M${x} ${y - 3.2} V${y + 3.2}`} stroke={colors.greenText} strokeWidth={1.7} strokeLinecap="round" />
               </G>
             ))
@@ -231,8 +231,8 @@ export function BodyFigure({ height, glows = {}, view, fill = colors.figure, glo
             .filter(([a]) => (glows[a] ?? 0) >= 1)
             .map(([a, x, y]) => (
               <G key={`${a}${x}`}>
-                <Circle cx={x} cy={y} r={8.5} fill="#FFFDF9" />
-                <Path d={`M${x - 3.8} ${y} L${x - 1.1} ${y + 2.8} L${x + 4} ${y - 3.2}`} fill="none" stroke={glowColor} strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round" />
+                <Circle cx={x} cy={y} r={8.5} fill={glowColor} stroke={colors.onGreen} strokeWidth={1.2} />
+                <Path d={`M${x - 3.8} ${y} L${x - 1.1} ${y + 2.8} L${x + 4} ${y - 3.2}`} fill="none" stroke={colors.onGreen} strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round" />
               </G>
             ))
         : null}
@@ -302,11 +302,11 @@ const styles = StyleSheet.create({
     width: 220,
     padding: 4,
     borderRadius: 22,
-    backgroundColor: 'rgba(90,70,40,0.08)',
+    backgroundColor: tint(0.08),
     flexDirection: 'row',
     gap: 4,
   },
   toggleItem: { flex: 1, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  toggleOn: { backgroundColor: '#FFFDF9', boxShadow: '0px 2px 8px -2px rgba(70,50,20,0.25)' },
+  toggleOn: { backgroundColor: colors.card, boxShadow: `0px 2px 8px -2px ${shade(0.5)}` },
   toggleLabel: { fontFamily: fonts.semibold, fontSize: 15, color: colors.muted },
 });

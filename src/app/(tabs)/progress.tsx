@@ -7,7 +7,7 @@ import { PoseBubble } from '@/components/PoseBubble';
 import { Ring } from '@/components/Ring';
 import { T } from '@/components/T';
 import { Card, IconButton, Screen } from '@/components/ui';
-import { colors, fonts, POSE_COLORS, REGION_COLORS } from '@/constants/theme';
+import { colors, fonts, glass, POSE_COLORS, REGION_COLORS, tint } from '@/constants/theme';
 import { AREA_NAMES } from '@/data/areas';
 import type { AreaId } from '@/data/types';
 import { relativeDay } from '@/lib/dates';
@@ -148,19 +148,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: 'rgba(255,253,249,0.72)',
+    backgroundColor: glass,
     borderWidth: 1,
-    borderColor: 'rgba(90,70,40,0.10)',
+    borderColor: tint(0.10),
   },
   areasCard: { marginTop: 16, padding: 18, gap: 12 },
   areasTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  lockChip: { height: 24, paddingHorizontal: 10, borderRadius: 12, backgroundColor: 'rgba(28,26,22,0.07)', flexDirection: 'row', alignItems: 'center', gap: 4 },
+  lockChip: { height: 24, paddingHorizontal: 10, borderRadius: 12, backgroundColor: tint(0.08), flexDirection: 'row', alignItems: 'center', gap: 4 },
   lockText: { fontFamily: fonts.bold, fontSize: 12, color: colors.ink },
   areasBody: { flexDirection: 'row', alignItems: 'center', gap: 18 },
   bars: { flex: 1, gap: 10 },
   barRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   barLabel: { width: 82, fontSize: 13 },
-  track: { flex: 1, height: 6, borderRadius: 3, backgroundColor: 'rgba(90,70,40,0.10)', overflow: 'hidden' },
+  track: { flex: 1, height: 6, borderRadius: 3, backgroundColor: tint(0.10), overflow: 'hidden' },
   fill: { height: 6, borderRadius: 3, backgroundColor: colors.green },
   barValue: { width: 18, textAlign: 'right' },
 });

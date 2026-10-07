@@ -9,7 +9,7 @@ import { Rise } from '@/components/Rise';
 import { T } from '@/components/T';
 import { IconButton, OptionPill, PrimaryButton, Screen } from '@/components/ui';
 import { WeekStrip } from '@/components/WeekStrip';
-import { colors, fonts, NATIVE_DRIVER, shadows } from '@/constants/theme';
+import { accent, colors, fonts, NATIVE_DRIVER, shadows } from '@/constants/theme';
 import { AREA_NAMES, sortAreas } from '@/data/areas';
 import type { AreaId, CompletedSession, Feedback } from '@/data/types';
 import { continueFirstRun } from '@/lib/flow';
@@ -118,7 +118,7 @@ export default function Complete() {
               );
             })}
             <Animated.View style={[styles.badge, { transform: [{ scale: pop.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] }) }] }]}>
-              <Icon name="check" size={26} color={colors.white} strokeWidth={3.2} />
+              <Icon name="check" size={26} color={colors.onGreen} strokeWidth={3.2} />
             </Animated.View>
           </View>
         </View>
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
   scroll: { paddingTop: 4, paddingBottom: 16 },
 
   hero: { alignItems: 'center', justifyContent: 'center' },
-  halo: { position: 'absolute', alignSelf: 'center', backgroundColor: 'rgba(47,122,86,0.09)' },
+  halo: { position: 'absolute', alignSelf: 'center', backgroundColor: accent(0.09) },
   bodies: { flexDirection: 'row', gap: 10 },
   badgeSpot: { position: 'absolute', alignSelf: 'center', bottom: -14, width: 52, height: 52, alignItems: 'center', justifyContent: 'center' },
   piece: { position: 'absolute' },
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
     borderRadius: 26,
     backgroundColor: colors.green,
     borderWidth: 3,
-    borderColor: colors.cream,
+    borderColor: colors.bgTop,
     alignItems: 'center',
     justifyContent: 'center',
     boxShadow: shadows.green,
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
 
   tiles: { marginTop: 20, flexDirection: 'row', gap: 8 },
   tile: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: 12, borderRadius: 18, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
-  tileAccent: { backgroundColor: '#FFF6EC' },
+  tileAccent: { backgroundColor: 'rgba(240,138,69,0.12)' },
   tileValue: { marginTop: 4, fontFamily: fonts.display, fontSize: 24, lineHeight: 28, color: colors.ink },
 
   week: { marginTop: 10, padding: 14, gap: 12, borderRadius: 18, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },

@@ -1,7 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { router, useFocusEffect } from 'expo-router';
-import { setStatusBarStyle } from 'expo-status-bar';
-import { useCallback, useState } from 'react';
+import { router } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
@@ -49,13 +48,6 @@ export default function Today() {
   const look = resolveLook(choice, now);
   const L = LOOKS[look];
 
-  // Light status bar text on the dark look, while this tab is showing.
-  useFocusEffect(
-    useCallback(() => {
-      setStatusBarStyle(L.dark ? 'light' : 'dark');
-      return () => setStatusBarStyle('dark');
-    }, [L.dark]),
-  );
 
   const checkIn: CheckIn | null = answer === 'sore' || answer === 'short' ? answer : null;
   const next = plan ? nextSession(plan, history, now) : null;

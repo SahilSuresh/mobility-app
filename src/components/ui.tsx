@@ -3,13 +3,13 @@ import type { ReactNode } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, fonts, MAX_FONT_SCALE, SCREEN_PADDING, shadows, TAB_BAR_SPACE } from '@/constants/theme';
+import { accent, colors, fonts, glass, MAX_FONT_SCALE, SCREEN_PADDING, shade, shadows, TAB_BAR_SPACE, tint } from '@/constants/theme';
 import { tap } from '@/lib/haptics';
 
 import { Icon, type IconName } from './Icon';
 import { T } from './T';
 
-/** Warm cream-to-sand page background. */
+/** The dark green page background. */
 export function Backdrop() {
   return <LinearGradient colors={[colors.bgTop, colors.bgMid, colors.bgBottom]} locations={[0, 0.5, 1]} style={styles.backdrop} />;
 }
@@ -22,7 +22,7 @@ type ScreenProps = {
   tabBar?: boolean;
   /** Shown as an iOS sheet, which already sits below the status bar. */
   modal?: boolean;
-  /** Replaces the cream-to-sand background. */
+  /** Replaces the dark green background. */
   backdrop?: ReactNode;
   /** Floats above the content, such as a docked action bar. */
   overlay?: ReactNode;
@@ -115,7 +115,7 @@ export function PrimaryButton({ label, onPress, disabled, icon, style }: ButtonP
       }}
       style={({ pressed }) => [styles.primary, disabled ? styles.primaryDisabled : styles.primaryShadow, pressed && styles.pressed, style]}
     >
-      {icon ? <Icon name={icon} size={16} color={disabled ? 'rgba(28,26,22,0.45)' : colors.cream} strokeWidth={2.4} /> : null}
+      {icon ? <Icon name={icon} size={16} color={disabled ? tint(0.4) : colors.onGreen} strokeWidth={2.4} /> : null}
       <Text maxFontSizeMultiplier={MAX_FONT_SCALE} style={[styles.primaryLabel, disabled && styles.primaryLabelDisabled]}>
         {label}
       </Text>
@@ -151,11 +151,11 @@ export function TextButton({ label, onPress, color = colors.muted, style }: Butt
   );
 }
 
-/** The sand "Start" pill used inside session cards. */
+/** The mint "Start" pill used inside session cards. */
 export function SandPill({ label = 'Start', small }: { label?: string; small?: boolean }) {
   return (
     <LinearGradient colors={[colors.sandTop, colors.sandBottom]} style={[styles.sand, small ? styles.sandSmall : styles.sandShadow]}>
-      <Icon name="play" size={small ? 11 : 13} color={colors.ink} />
+      <Icon name="play" size={small ? 11 : 13} color={colors.onGreen} />
       {small ? null : (
         <Text maxFontSizeMultiplier={MAX_FONT_SCALE} style={styles.sandLabel}>
           {label}
@@ -213,8 +213,8 @@ export function OptionPill({ label, selected, onPress, style, display, accessibi
       }}
       style={({ pressed }) => [styles.option, icon && styles.optionWithIcon, selected && styles.optionOn, pressed && styles.pressed, style]}
     >
-      {icon ? <Icon name={icon} size={17} color={selected ? colors.white : colors.green} strokeWidth={1.9} active={selected} /> : null}
-      <Text maxFontSizeMultiplier={MAX_FONT_SCALE} style={[display ? styles.optionDisplay : styles.optionLabel, selected && { color: colors.white }]}>
+      {icon ? <Icon name={icon} size={17} color={selected ? colors.onGreen : colors.green} strokeWidth={1.9} active={selected} /> : null}
+      <Text maxFontSizeMultiplier={MAX_FONT_SCALE} style={[display ? styles.optionDisplay : styles.optionLabel, selected && { color: colors.onGreen }]}>
         {label}
       </Text>
     </Pressable>
@@ -227,7 +227,7 @@ export function Segments({ count, filled, active }: { count: number; filled: num
       {Array.from({ length: count }, (_, i) => (
         <View
           key={i}
-          style={[styles.segment, { backgroundColor: i < filled ? colors.green : i === active ? 'rgba(47,122,86,0.45)' : colors.line }]}
+          style={[styles.segment, { backgroundColor: i < filled ? colors.green : i === active ? accent(0.45) : colors.line }]}
         />
       ))}
     </View>
@@ -262,22 +262,22 @@ const styles = StyleSheet.create({
   primary: {
     height: 56,
     borderRadius: 28,
-    backgroundColor: colors.ink,
+    backgroundColor: colors.green,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
   },
   primaryShadow: { boxShadow: shadows.button },
-  primaryDisabled: { backgroundColor: 'rgba(28,26,22,0.14)' },
-  primaryLabel: { fontFamily: fonts.semibold, fontSize: 17, color: colors.cream },
-  primaryLabelDisabled: { color: 'rgba(28,26,22,0.45)' },
+  primaryDisabled: { backgroundColor: tint(0.12) },
+  primaryLabel: { fontFamily: fonts.semibold, fontSize: 17, color: colors.onGreen },
+  primaryLabelDisabled: { color: tint(0.4) },
   secondary: {
     height: 56,
     borderRadius: 28,
-    backgroundColor: 'rgba(255,253,249,0.85)',
+    backgroundColor: glass,
     borderWidth: 1,
-    borderColor: 'rgba(90,70,40,0.18)',
+    borderColor: tint(0.18),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -291,21 +291,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 26,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: 'rgba(90,70,40,0.18)',
+    borderColor: tint(0.18),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
     alignSelf: 'flex-start',
   },
-  sandShadow: { boxShadow: '0px 6px 14px -6px rgba(70,50,20,0.4)' },
+  sandShadow: { boxShadow: `0px 6px 14px -6px ${shade(0.4)}` },
   sandSmall: { width: 34, height: 34, paddingHorizontal: 0, borderRadius: 17 },
-  sandLabel: { fontFamily: fonts.bold, fontSize: 16, color: colors.ink },
+  sandLabel: { fontFamily: fonts.bold, fontSize: 16, color: colors.onGreen },
   iconButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255,253,249,0.7)',
+    backgroundColor: glass,
     borderWidth: 1,
     borderColor: colors.border,
     alignItems: 'center',
@@ -315,22 +315,22 @@ const styles = StyleSheet.create({
     height: 32,
     paddingHorizontal: 12,
     borderRadius: 16,
-    backgroundColor: 'rgba(255,253,249,0.82)',
+    backgroundColor: glass,
     borderWidth: 1,
-    borderColor: 'rgba(90,70,40,0.14)',
+    borderColor: tint(0.14),
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  chipGreen: { backgroundColor: 'rgba(47,122,86,0.10)', borderColor: 'transparent' },
+  chipGreen: { backgroundColor: accent(0.10), borderColor: 'transparent' },
   chipLabel: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ink },
   option: {
     minHeight: 46,
     paddingHorizontal: 18,
     borderRadius: 23,
     borderWidth: 1,
-    borderColor: 'rgba(90,70,40,0.16)',
-    backgroundColor: 'rgba(255,253,249,0.82)',
+    borderColor: tint(0.16),
+    backgroundColor: glass,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -343,5 +343,5 @@ const styles = StyleSheet.create({
   stat: { flex: 1 },
   statDivider: { borderLeftWidth: 1, borderLeftColor: colors.line, paddingLeft: 18 },
   statCenter: { alignItems: 'center', paddingLeft: 0 },
-  divider: { height: 1, backgroundColor: 'rgba(90,70,40,0.14)' },
+  divider: { height: 1, backgroundColor: tint(0.14) },
 });

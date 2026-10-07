@@ -6,7 +6,7 @@ import { OnboardingHeader } from '@/components/OnboardingHeader';
 import { PoseBubble } from '@/components/PoseBubble';
 import { T } from '@/components/T';
 import { PrimaryButton, Screen } from '@/components/ui';
-import { colors, fonts, POSE_COLORS, REGION_COLORS, shadows } from '@/constants/theme';
+import { accent, colors, fonts, glass, POSE_COLORS, REGION_COLORS, shade, shadows, tint } from '@/constants/theme';
 import { GOALS, LEVELS } from '@/data/content';
 import { getExercise } from '@/data/exercises';
 import type { Exercise, Goal, Level, PoseKey } from '@/data/types';
@@ -74,7 +74,7 @@ export default function GoalAndExperience() {
                   </T>
                 </View>
                 <View style={[styles.check, on ? styles.checkOn : styles.checkOff, !wide && styles.checkCorner]}>
-                  {on ? <Icon name="check" size={12} color={colors.white} strokeWidth={3} /> : null}
+                  {on ? <Icon name="check" size={12} color={colors.onGreen} strokeWidth={3} /> : null}
                 </View>
               </Pressable>
             );
@@ -105,7 +105,7 @@ export default function GoalAndExperience() {
               >
                 <View style={styles.bars}>
                   {[7, 11, 15].map((h, i) => (
-                    <View key={h} style={[styles.bar, { height: h, backgroundColor: i < l.id ? (on ? colors.green : colors.chevron) : 'rgba(90,70,40,0.16)' }]} />
+                    <View key={h} style={[styles.bar, { height: h, backgroundColor: i < l.id ? (on ? colors.green : colors.chevron) : tint(0.16) }]} />
                   ))}
                 </View>
                 <T variant="smallStrong" color={on ? colors.ink : colors.muted} numberOfLines={1}>
@@ -151,22 +151,22 @@ const styles = StyleSheet.create({
   goal: { borderRadius: 20, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
   goalHalf: { width: '48.5%', minHeight: 118, padding: 13, gap: 8 },
   goalWide: { width: '100%', flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingLeft: 12, paddingRight: 16 },
-  goalOn: { borderWidth: 2, borderColor: colors.green, backgroundColor: '#F6FAF4', boxShadow: shadows.small },
+  goalOn: { borderWidth: 2, borderColor: colors.green, backgroundColor: accent(0.08), boxShadow: shadows.small },
   goalText: { gap: 2 },
   goalTextWide: { flex: 1, gap: 2 },
   check: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   checkCorner: { position: 'absolute', top: 12, right: 12 },
   checkOn: { backgroundColor: colors.green },
-  checkOff: { borderWidth: 1.5, borderColor: 'rgba(90,70,40,0.25)' },
+  checkOff: { borderWidth: 1.5, borderColor: tint(0.25) },
 
   h2: { marginTop: 24 },
-  segments: { marginTop: 14, flexDirection: 'row', gap: 4, padding: 4, borderRadius: 18, backgroundColor: 'rgba(90,70,40,0.08)' },
+  segments: { marginTop: 14, flexDirection: 'row', gap: 4, padding: 4, borderRadius: 18, backgroundColor: tint(0.08) },
   segment: { flex: 1, height: 48, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
-  segmentOn: { backgroundColor: colors.card, boxShadow: '0px 2px 8px -2px rgba(70,50,20,0.25)' },
+  segmentOn: { backgroundColor: colors.card, boxShadow: `0px 2px 8px -2px ${shade(0.25)}` },
   bars: { height: 15, flexDirection: 'row', alignItems: 'flex-end', gap: 2 },
   bar: { width: 3.5, borderRadius: 2 },
 
-  detail: { marginTop: 10, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 18, backgroundColor: 'rgba(255,253,249,0.7)', borderWidth: 1, borderColor: colors.border },
+  detail: { marginTop: 10, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 18, backgroundColor: glass, borderWidth: 1, borderColor: colors.border },
   detailTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   detailText: { flex: 1, gap: 2 },
   stack: { flexDirection: 'row' },

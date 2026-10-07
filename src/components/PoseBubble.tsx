@@ -2,7 +2,7 @@ import { useEffect, useId, useState } from 'react';
 import { Animated, Easing, View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Defs, Ellipse, G, LinearGradient, Mask, Path, RadialGradient, Stop } from 'react-native-svg';
 
-import { colors, NATIVE_DRIVER, shadows } from '@/constants/theme';
+import { colors, NATIVE_DRIVER, shade, shadows } from '@/constants/theme';
 import { MOTION, POSES, type Pose } from '@/data/poses';
 import { mix } from '@/lib/color';
 import type { PoseKey } from '@/data/types';
@@ -240,7 +240,7 @@ export function PoseBubble({ pose, size, color, dot = true, outline, shadow, bre
     <Animated.View
       style={[
         { width: size, height: size, borderRadius: size / 2, transform: [{ scale }] },
-        shadow && { boxShadow: size > 120 ? '0px 18px 34px -16px rgba(70,50,20,0.5)' : shadows.bubble },
+        shadow && { boxShadow: size > 120 ? `0px 18px 34px -16px ${shade(0.5)}` : shadows.bubble },
         style,
       ]}
     >
@@ -252,7 +252,7 @@ export function PoseBubble({ pose, size, color, dot = true, outline, shadow, bre
           backgroundColor: mix(color, colors.cream, 0.55),
           overflow: 'hidden',
           borderWidth: outline ? 2 : 0,
-          borderColor: '#FFFDF9',
+          borderColor: colors.card,
         }}
       >
         <Svg width="100%" height="100%" viewBox="6 10 88 88">

@@ -7,7 +7,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { T } from '@/components/T';
 import { IconButton, PrimaryButton, Screen } from '@/components/ui';
 import { config } from '@/constants/config';
-import { colors, fonts, shadows } from '@/constants/theme';
+import { accent, colors, fonts, shadows, tint } from '@/constants/theme';
 import { AREA_NAMES, AREA_ORDER, sortAreas } from '@/data/areas';
 import type { AreaId } from '@/data/types';
 import { continueFirstRun } from '@/lib/flow';
@@ -183,7 +183,7 @@ export default function Premium() {
                 }}
                 style={[styles.plan, on && styles.planOn]}
               >
-                <View style={[styles.radio, on && styles.radioOn]}>{on ? <Icon name="check" size={12} color={colors.white} strokeWidth={3} /> : null}</View>
+                <View style={[styles.radio, on && styles.radioOn]}>{on ? <Icon name="check" size={12} color={colors.onGreen} strokeWidth={3} /> : null}</View>
                 <View style={styles.planInfo}>
                   <View style={styles.planTitleRow}>
                     <T variant="bodyStrong">{o.title}</T>
@@ -207,7 +207,7 @@ export default function Premium() {
 
       {busy ? (
         <View style={styles.busy}>
-          <ActivityIndicator color={colors.cream} />
+          <ActivityIndicator color={colors.onGreen} />
         </View>
       ) : (
         <PrimaryButton label={cta} onPress={purchase} disabled={!option} />
@@ -241,7 +241,7 @@ function Step({ icon, title, body, first }: { icon: IconName; title: string; bod
   return (
     <View style={styles.step}>
       <View style={[styles.stepDot, first && styles.stepDotFirst]}>
-        <Icon name={icon} size={13} color={first ? colors.white : colors.green} strokeWidth={2.4} />
+        <Icon name={icon} size={13} color={first ? colors.onGreen : colors.green} strokeWidth={2.4} />
       </View>
       <View style={styles.stepText}>
         <T variant="smallStrong">{title}</T>
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
   title: { marginTop: 6 },
 
   planCard: { marginTop: 16, flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, borderRadius: 20, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
-  bodies: { flexDirection: 'row', gap: 2, paddingHorizontal: 6, borderRadius: 14, backgroundColor: 'rgba(47,122,86,0.07)' },
+  bodies: { flexDirection: 'row', gap: 2, paddingHorizontal: 6, borderRadius: 14, backgroundColor: accent(0.07) },
   planText: { flex: 1, gap: 2 },
 
   benefits: { marginTop: 18, gap: 10 },
@@ -275,20 +275,20 @@ const styles = StyleSheet.create({
 
   plans: { marginTop: 20, gap: 10 },
   plan: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 68, paddingHorizontal: 14, paddingVertical: 12, borderRadius: 20, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
-  planOn: { borderWidth: 2, borderColor: colors.green, boxShadow: shadows.small, backgroundColor: '#F6FAF4' },
-  radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: 'rgba(90,70,40,0.3)', alignItems: 'center', justifyContent: 'center' },
+  planOn: { borderWidth: 2, borderColor: colors.green, boxShadow: shadows.small, backgroundColor: accent(0.08) },
+  radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: tint(0.3), alignItems: 'center', justifyContent: 'center' },
   radioOn: { backgroundColor: colors.green, borderColor: colors.green },
   planInfo: { flex: 1, gap: 2 },
   planTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   badge: { height: 20, paddingHorizontal: 8, borderRadius: 10, backgroundColor: colors.green, justifyContent: 'center' },
-  badgeText: { fontFamily: fonts.bold, fontSize: 11, color: colors.white },
+  badgeText: { fontFamily: fonts.bold, fontSize: 11, color: colors.onGreen },
   planPrice: { alignItems: 'flex-end' },
   priceBig: { fontFamily: fonts.display, fontSize: 18, lineHeight: 22, color: colors.ink },
 
-  busy: { height: 56, borderRadius: 28, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
+  busy: { height: 56, borderRadius: 28, backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center' },
   links: { marginTop: 6, flexDirection: 'row', justifyContent: 'center', gap: 16 },
   link: { fontSize: 12, textDecorationLine: 'underline' },
   activeStage: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   activeFigure: { width: 220, height: 220, alignItems: 'center', justifyContent: 'center' },
-  activeHalo: { position: 'absolute', width: 220, height: 220, borderRadius: 110, backgroundColor: 'rgba(47,122,86,0.09)' },
+  activeHalo: { position: 'absolute', width: 220, height: 220, borderRadius: 110, backgroundColor: accent(0.09) },
 });

@@ -11,7 +11,7 @@ import { PoseBubble } from '@/components/PoseBubble';
 import { Rise } from '@/components/Rise';
 import { T } from '@/components/T';
 import { PrimaryButton, Screen } from '@/components/ui';
-import { colors, fonts, NATIVE_DRIVER, REGION_COLORS, shadows } from '@/constants/theme';
+import { accent, colors, fonts, glass, NATIVE_DRIVER, REGION_COLORS, shadows, tint } from '@/constants/theme';
 import { AREA_NAMES } from '@/data/areas';
 import { durationLabel, getExercise } from '@/data/exercises';
 import type { AreaId, Exercise } from '@/data/types';
@@ -98,7 +98,7 @@ export default function Welcome() {
       <Rise intro={intro} order={0}>
         <View style={styles.brand}>
           <View style={styles.mark}>
-            <Icon name="sprout" size={15} color={colors.cream} strokeWidth={2.2} />
+            <Icon name="sprout" size={15} color={colors.onGreen} strokeWidth={2.2} />
           </View>
           <T variant="bodyStrong" style={styles.wordmark}>
             Mobility
@@ -109,7 +109,7 @@ export default function Welcome() {
       <Rise intro={intro} order={1} style={styles.stageWrap}>
         <View style={styles.stage} onLayout={onLayout} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           <View style={styles.arch} pointerEvents="none">
-            <LinearGradient colors={[colors.card, 'rgba(255,253,249,0)']} locations={[0, 1]} style={StyleSheet.absoluteFill} />
+            <LinearGradient colors={[colors.card, glass]} locations={[0, 1]} style={StyleSheet.absoluteFill} />
           </View>
 
           {stage.width > 0 && figureHeight > 120 ? (
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderBottomWidth: 0,
-    borderColor: 'rgba(90,70,40,0.07)',
+    borderColor: tint(0.07),
   },
   layer: { position: 'absolute', left: 0, top: 0 },
   scenery: { opacity: 0.78 },
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
     borderRadius: (BUBBLE + 10) / 2,
     borderWidth: 2,
     borderColor: colors.green,
-    backgroundColor: 'rgba(47,122,86,0.08)',
+    backgroundColor: accent(0.08),
   },
 
   captionSlot: { position: 'absolute', left: 0, right: 0, height: 52, alignItems: 'center' },
@@ -273,12 +273,12 @@ const styles = StyleSheet.create({
     borderRadius: 26,
     backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: 'rgba(90,70,40,0.10)',
+    borderColor: tint(0.10),
     boxShadow: shadows.card,
   },
   captionText: { gap: 1 },
   captionKicker: { fontSize: 10, lineHeight: 13, letterSpacing: 0.9 },
-  captionTime: { flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: 4, paddingHorizontal: 8, height: 24, borderRadius: 12, backgroundColor: 'rgba(90,70,40,0.07)' },
+  captionTime: { flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: 4, paddingHorizontal: 8, height: 24, borderRadius: 12, backgroundColor: tint(0.07) },
   captionTimeLabel: { fontFamily: fonts.semibold, fontSize: 12, color: colors.muted },
 
   headline: { marginTop: 20, fontSize: 44, lineHeight: 46 },

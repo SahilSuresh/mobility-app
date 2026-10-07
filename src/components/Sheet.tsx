@@ -3,7 +3,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Animated, Easing, Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, NATIVE_DRIVER } from '@/constants/theme';
+import { accent, colors, NATIVE_DRIVER, shade, tint } from '@/constants/theme';
 import type { AreaId } from '@/data/types';
 import { frameFor } from '@/lib/viewport';
 
@@ -96,11 +96,11 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingHorizontal: 24,
     alignItems: 'stretch',
-    boxShadow: '0px -20px 40px -20px rgba(28,26,22,0.4)',
+    boxShadow: `0px -20px 40px -20px ${shade(0.5)}`,
   },
-  grabber: { alignSelf: 'center', width: 36, height: 5, borderRadius: 3, backgroundColor: 'rgba(90,70,40,0.25)' },
+  grabber: { alignSelf: 'center', width: 36, height: 5, borderRadius: 3, backgroundColor: tint(0.25) },
   figure: { alignSelf: 'center', width: 200, height: 200, marginTop: 18, alignItems: 'center' },
-  halo: { position: 'absolute', width: 200, height: 200, borderRadius: 100, backgroundColor: 'rgba(47,122,86,0.08)' },
+  halo: { position: 'absolute', width: 200, height: 200, borderRadius: 100, backgroundColor: accent(0.08) },
   title: { marginTop: 18, fontSize: 28, lineHeight: 32 },
   body: { marginTop: 10, alignSelf: 'center', maxWidth: 300 },
   cta: { marginTop: 26 },
