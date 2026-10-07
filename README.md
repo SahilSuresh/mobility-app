@@ -107,7 +107,8 @@ Everything below was built on the `onboarding` branch. It's written so a new cha
 - The competitor we benchmark against is **Bend**. The aim on every screen: clearer than Bend, built from the user's real data.
 - **Honesty rules:** no invented awards, ratings, press logos or "was" prices. Every number on screen comes from real data (the plan generator, the exercise library, store prices).
 - Accessibility on every screen: tap targets of at least 44pt, selection never shown by colour alone (ticks too), screen-reader labels and roles, and **reduced motion** respected by every animation.
-- A dark green "evening" look with Lora serif headings exists on the unmerged `origin/feature/today-page` branch (the Today screen redesign). Onboarding was **not** moved to it. That's an open decision (see below).
+- **Looks that follow the time of day:** `feature/today-page` (the Today redesign: garden, check-in, Lora serif headings) is merged into `main`. `LOOKS` in `src/constants/looks.ts` has dawn, day (`vision`), dusk and a dark green night look (`evening`), and `resolveLook(choice, now)` in `src/store/useLook.ts` picks one. **Today and Plan** are drawn in the look (backdrop, serif headings, look colours, light status bar and dark tab bar at night). Onboarding and the other screens still use the cream theme. That's an open decision (see below).
+- **Plan tab** (`src/app/(tabs)/plan.tsx`): deliberately simple. Header "Your plan" with level and goal, one tappable summary pill (days · minutes · areas, opens the routine editor), "Week N" with a thin progress bar, then one card listing the week's sessions (Start on the next one, a tick on done ones, a chevron on the rest), then Programmes. The done count only counts this week's planned sessions, so it always matches the ticks.
 
 ### The body figure (used on about 15 screens)
 
@@ -146,7 +147,7 @@ Everything below was built on the `onboarding` branch. It's written so a new cha
 ### Open items and known gaps
 
 - **UI UX Pro Max skill** (github.com/nextlevelbuilder/ui-ux-pro-max-skill) was requested but is **not installed**: installing third-party skills was blocked by the permission check. To use it, run in Claude Code: `/plugin marketplace add nextlevelbuilder/ui-ux-pro-max-skill`, then `/plugin install ui-ux-pro-max@ui-ux-pro-max-skill`. Its mobile checklist (44pt targets, pressed feedback, no colour-only states, reduced motion) was applied by hand.
-- **Dark "evening" look:** decide whether onboarding should match the Today redesign on `origin/feature/today-page` (dark green, Lora serif, looks that follow the sun). If so, merge that branch in first, so both share the `LOOKS` tokens and the Lora font.
+- **Looks on the remaining screens:** Today and Plan follow the time-of-day looks; decide whether Progress, Settings and onboarding should too. To move a screen over, copy what `plan.tsx` does: `const L = LOOKS[resolveLook(choice, now)]`, pass `L.background` as the `Screen` backdrop, use `fonts.serif` for headings and `L.*` colours, set the status bar in `useFocusEffect`, and add the route name to `themed` in `src/components/FloatingTabBar.tsx`.
 - **Welcome's "Grows with you"** isn't backed yet: levels don't go up on their own (only through "Too easy" / "Too hard" feedback, for Premium). Either build progression or change the copy.
 - **Store setup still needed:** yearly and monthly subscriptions with a 7-day free-trial introductory offer in App Store Connect and Google Play, a RevenueCat offering with Annual and Monthly packages, and the keys in `.env`. Replace the example.com Terms and Privacy links in `config.ts`.
 - **Plans saved before this branch** keep their Monday-based sessions until edited (their first-week target is still worked out from `createdAt`).

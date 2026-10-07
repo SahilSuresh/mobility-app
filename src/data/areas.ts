@@ -81,3 +81,10 @@ export function areasLabel(areas: AreaId[]): string {
   return `${AREA_NAMES[sorted[0]]} + ${sorted.length - 1} more`;
 }
 
+/** Areas as a phrase in a sentence: "hips", "lower back and hips", "neck, hips and knees", or "5 areas". */
+export function areasPhrase(areas: AreaId[]): string {
+  const names = sortAreas(areas).map((a) => AREA_NAMES[a].toLowerCase());
+  if (names.length === 0) return 'mobility';
+  if (names.length > 3) return `${names.length} areas`;
+  return names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+}

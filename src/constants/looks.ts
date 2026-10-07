@@ -1,6 +1,6 @@
 import { colors } from './theme';
 
-/** Colours and accents for each Today screen look (prototype). */
+/** Colours and accents for each Today screen look. */
 export type LookTokens = {
   dark: boolean;
   /** Page background, top to bottom. Null keeps the standard cream-to-sand backdrop. */
@@ -29,9 +29,11 @@ export type LookTokens = {
   figureFill: string;
   glow: string;
   weekGlow: boolean;
+  /** The garden at the top of Today: sky (top to bottom), soil, the sun (or moon) and plant stems. */
+  garden: { sky: [string, string]; soil: string; sun: string; stem: string };
 };
 
-export const LOOKS: Record<'current' | 'vision' | 'evening', LookTokens> = {
+export const LOOKS: Record<'current' | 'dawn' | 'vision' | 'dusk' | 'evening', LookTokens> = {
   current: {
     dark: false,
     background: null,
@@ -52,10 +54,35 @@ export const LOOKS: Record<'current' | 'vision' | 'evening', LookTokens> = {
     figureFill: colors.figure,
     glow: colors.green,
     weekGlow: false,
+    garden: { sky: ['#EAF2EA', colors.card], soil: colors.figure, sun: '#F2C14E', stem: '#4F7A5E' },
+  },
+  // Light that follows the sun: dawn → day → dusk → night (evening).
+  dawn: {
+    dark: false,
+    background: ['#FCF3EA', '#F6EBDD'],
+    ink: '#1E1A16',
+    muted: '#5E5246',
+    faint: '#8C7F70',
+    accent: '#1F5A3E',
+    bright: '#A6F2C8',
+    onBright: '#1F5A3E',
+    rule: 'rgba(120,80,40,0.12)',
+    chip: { bg: '#FFFFFF', border: 'rgba(30,26,22,0.08)', text: '#1E1A16', icon: '#1F5A3E', onBg: '#1F5A3E', onText: '#FBF8F3' },
+    hero: 'region',
+    heroBase: '#FFFFFF',
+    heroTint: 0.42,
+    heroBorder: 'rgba(255,255,255,0.9)',
+    start: 'hold',
+    button: { bg: '#1F5A3E', text: '#FBF8F3', halo: '#F4B98A' },
+    figureFill: colors.figure,
+    glow: colors.green,
+    weekGlow: true,
+    garden: { sky: ['#FCDDC6', '#FFF6EC'], soil: '#E6D3BC', sun: '#F09A5E', stem: '#4F7A5E' },
   },
   vision: {
     dark: false,
-    background: ['#FCFAF6', '#F6F1E8'],
+    // A fresh sage-white rather than cream: daytime in the garden.
+    background: ['#F7F9F4', '#EDF2EA'],
     ink: '#1A1915',
     muted: '#5E574B',
     faint: '#8A8173',
@@ -73,6 +100,29 @@ export const LOOKS: Record<'current' | 'vision' | 'evening', LookTokens> = {
     figureFill: colors.figure,
     glow: colors.green,
     weekGlow: true,
+    garden: { sky: ['#DCEEE1', '#FBFDF9'], soil: '#E3D6C0', sun: '#F2C14E', stem: '#4F7A5E' },
+  },
+  dusk: {
+    dark: false,
+    background: ['#F9EBDD', '#F0DCC6'],
+    ink: '#1F1812',
+    muted: '#5C4A3B',
+    faint: '#8A7562',
+    accent: '#1F5A3E',
+    bright: '#A6F2C8',
+    onBright: '#1F5A3E',
+    rule: 'rgba(120,70,30,0.14)',
+    chip: { bg: '#FFFBF6', border: 'rgba(31,24,18,0.09)', text: '#1F1812', icon: '#1F5A3E', onBg: '#1F5A3E', onText: '#FBF8F3' },
+    hero: 'region',
+    heroBase: '#FFFBF6',
+    heroTint: 0.4,
+    heroBorder: 'rgba(255,255,255,0.8)',
+    start: 'hold',
+    button: { bg: '#1F5A3E', text: '#FBF8F3', halo: '#F2B36B' },
+    figureFill: colors.figure,
+    glow: colors.green,
+    weekGlow: true,
+    garden: { sky: ['#F4C9A0', '#FDF0E2'], soil: '#DCC2A2', sun: '#E2793A', stem: '#4F7A5E' },
   },
   evening: {
     dark: true,
@@ -94,5 +144,6 @@ export const LOOKS: Record<'current' | 'vision' | 'evening', LookTokens> = {
     figureFill: '#3B6351',
     glow: '#A6F2C8',
     weekGlow: true,
+    garden: { sky: ['#1E3A2E', '#17271F'], soil: '#2C4237', sun: '#EDE6D2', stem: '#8FCFA9' },
   },
 };

@@ -43,6 +43,21 @@ export function headerDate(now: Date): string {
   return `${now.getDate()} ${MONTHS[now.getMonth()].toUpperCase()}`;
 }
 
+/** "Tuesday 6 October" */
+export function longDate(now: Date): string {
+  return `${DAY_LONG[weekdayIndex(now)]} ${now.getDate()} ${MONTHS[now.getMonth()]}`;
+}
+
+/** "6 October" */
+export function dayMonth(now: Date): string {
+  return `${now.getDate()} ${MONTHS[now.getMonth()]}`;
+}
+
+/** "6 Oct" */
+export function shortDate(now: Date): string {
+  return `${now.getDate()} ${MONTHS[now.getMonth()].slice(0, 3)}`;
+}
+
 /** "Today", "Yesterday", "Wednesday" or "2 Oct". */
 export function relativeDay(iso: string, now: Date): string {
   const d = new Date(iso);

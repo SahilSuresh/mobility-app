@@ -25,8 +25,9 @@ export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const choice = useLook((s) => s.choice);
   const now = useNow();
-  // Prototype: the bar turns dark with the evening look on the Today tab.
-  const dark = state.routes[state.index]?.name === 'index' && resolveLook(choice, now) === 'evening';
+  // The bar turns dark with the evening look on the tabs drawn in the looks (Today and Plan).
+  const themed = ['index', 'plan'].includes(state.routes[state.index]?.name ?? '');
+  const dark = themed && resolveLook(choice, now) === 'evening';
   return (
     <View style={[styles.wrap, { bottom: Math.max(insets.bottom, 12) + 4 }]}>
       <View style={styles.shadow}>
