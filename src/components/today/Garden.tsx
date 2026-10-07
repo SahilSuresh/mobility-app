@@ -121,7 +121,8 @@ export function Garden({ L, areas, history, now }: Props) {
   const t = night ? 0.82 : Math.min(1, Math.max(0, (hours - 5) / 15));
   const sunLeft = `${8 + t * 78}%` as const;
   const sunTop = (1 - Math.sin(Math.PI * t)) * 30;
-  const perRow = plants.length <= 5 ? Math.max(plants.length, 3) : Math.ceil(plants.length / 2);
+  // Up to four plants share a row; five or more go over two rows so names like "Upper back" never touch.
+  const perRow = plants.length <= 4 ? Math.max(plants.length, 3) : Math.min(4, Math.ceil(plants.length / 2));
 
   return (
     <View style={[styles.card, { borderColor: L.chip.border }]}>
@@ -211,6 +212,6 @@ const styles = StyleSheet.create({
   plant: { alignItems: 'center', minHeight: 44, paddingTop: 4 },
   pressed: { opacity: 0.7 },
   mound: { marginTop: -6 },
-  name: { marginTop: 4, fontFamily: fonts.semibold, fontSize: 13, lineHeight: 17 },
+  name: { marginTop: 4, paddingHorizontal: 2, textAlign: 'center', fontFamily: fonts.semibold, fontSize: 13, lineHeight: 17 },
   when: { fontSize: 12, lineHeight: 16 },
 });

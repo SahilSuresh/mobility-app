@@ -1,63 +1,72 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
-import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
 import { ProgrammeList } from '@/components/ProgrammeList';
-import { PremiumSheet } from '@/components/Sheet';
 import { T } from '@/components/T';
-import { ANSWERS, type Answer } from '@/components/today/answers';
-import { DoneStage } from '@/components/today/DoneStage';
-import { Garden } from '@/components/today/Garden';
-import { LookChip } from '@/components/today/LookChip';
-import { SessionHero } from '@/components/today/SessionHero';
+import { BodyPartGrid } from '@/components/today/BodyPartGrid';
+import { DoneBanner, DoneStage } from '@/components/today/DoneStage';
+import { ExerciseGroups } from '@/components/today/ExerciseGroups';
+import { QuickProgrammes } from '@/components/today/QuickProgrammes';
+import { START_BAR_SPACE, StartBar } from '@/components/today/StartBar';
 import { streakIcon } from '@/components/today/streak';
-import { OptionPill, Screen } from '@/components/ui';
-import { WeekStrip } from '@/components/WeekStrip';
+import { Screen } from '@/components/ui';
 import { LOOKS } from '@/constants/looks';
-import { fonts, shadows } from '@/constants/theme';
-import { DAY_LONG, dayMonth, isSameDay, partOfDay, weekdayIndex } from '@/lib/dates';
+import { fonts, shadows, TAB_BAR_SPACE } from '@/constants/theme';
+import { AREA_NAMES } from '@/data/areas';
+import { getExercise } from '@/data/exercises';
+import type { AreaId } from '@/data/types';
+import { DAY_LONG, isSameDay, longDate } from '@/lib/dates';
 import { startSession } from '@/lib/flow';
-import { adjustSession, type CheckIn } from '@/lib/plan';
-import { nextSession, streak, thisWeek, weekDays, weeklyTarget } from '@/lib/progress';
-import { useCountTo } from '@/lib/useCountTo';
+import { areaSession } from '@/lib/plan';
+import { nextSession, streak } from '@/lib/progress';
 import { useNow } from '@/lib/useNow';
 import { useAppStore } from '@/store/useAppStore';
 import { resolveLook, useLook } from '@/store/useLook';
 
-const CHECK_IN_NOTE: Record<CheckIn, string | null> = {
-  good: null,
-  sore: 'Gentler moves, same areas',
-  short: 'A 5-minute version',
-};
+/** How long the done card stays open after you train before folding into the slim bar. */
+const DONE_CARD_MS = 6000;
 
+/** The day the done card was last folded, so it stays folded when you come back to this tab. */
+let foldedOn = '';
+
+/**
+ * Training first. Today's session leads (what it is, its areas, Start), then ways to train something else:
+ * one body part, a quick 2 to 10 minutes, or a programme.
+ */
 export default function Today() {
   const plan = useAppStore((s) => s.plan);
   const history = useAppStore((s) => s.history);
-  const isPremium = useAppStore((s) => s.isPremium);
   const areaLevels = useAppStore((s) => s.areaLevels);
   const startCustom = useAppStore((s) => s.startCustom);
   const choice = useLook((s) => s.choice);
-  const [answer, setAnswer] = useState<Answer | null>(null);
-  const [sheet, setSheet] = useState(false);
+  const [chosenArea, setChosenArea] = useState<AreaId | 'all'>('all');
+  const insets = useSafeAreaInsets();
   const now = useNow();
-  const look = resolveLook(choice, now);
-  const L = LOOKS[look];
-
-
-  const checkIn: CheckIn | null = answer === 'sore' || answer === 'short' ? answer : null;
-  const next = plan ? nextSession(plan, history, now) : null;
-  const planned = next?.session;
-  const session = plan && planned && checkIn ? adjustSession(planned, checkIn, plan, areaLevels) : planned;
-  const minutes = useCountTo(session?.minutes ?? 0);
+  const L = LOOKS[resolveLook(choice, now)];
+  const dayKey = now.toDateString();
+  const trained = history.some((h) => isSameDay(new Date(h.date), now));
+  const [cardOpen, setCardOpen] = useState(() => foldedOn !== dayKey);
+  const fold = () => {
+    foldedOn = dayKey;
+    setCardOpen(false);
+  };
+  // The done card is a moment, not a wall: it folds itself away after a few seconds.
+  useEffect(() => {
+    if (!trained || !cardOpen) return;
+    const timer = setTimeout(() => {
+      foldedOn = dayKey;
+      setCardOpen(false);
+    }, DONE_CARD_MS);
+    return () => clearTimeout(timer);
+  }, [trained, cardOpen, dayKey]);
   if (!plan) return null;
 
-  const done = thisWeek(history, now).length;
-  const target = weeklyTarget(plan, now);
-  const days = weekDays(plan, history, now);
+  const next = nextSession(plan, history, now);
+  const session = next?.session;
   const run = streak(plan, history, now);
-  const adjusted = !!session && session !== planned;
   const level = session ? Math.max(...session.areas.map((a) => areaLevels[a] ?? plan.level)) : plan.level;
   const when = !session
     ? ''
@@ -66,128 +75,78 @@ export default function Today() {
       : next?.when === 'catchup'
         ? `Catch-up from ${DAY_LONG[session.weekday]}`
         : 'Today';
-  const note = checkIn ? CHECK_IN_NOTE[checkIn] : null;
   const todays = history.filter((h) => isSameDay(new Date(h.date), now));
   const daysShownUp = new Set(history.map((h) => new Date(h.date).toDateString())).size;
-
-  const pick = (key: Answer) => {
-    if (answer === key) {
-      setAnswer(null);
-      return;
-    }
-    if (key === 'stiff') {
-      router.push('/focus');
-      return;
-    }
-    setAnswer(key);
-  };
+  // Training once doesn't hide the rest: whatever's still to do stays here, with Start.
+  const showStart = !!session;
+  // Checked against the moves themselves: a session can borrow moves from a neighbouring area.
+  const focus = session && chosenArea !== 'all' && session.exerciseIds.some((id) => getExercise(id)?.area === chosenArea) ? chosenArea : 'all';
+  // Exactly what Start trains: the whole session, or just the chosen area's moves.
+  const target = session && focus !== 'all' ? areaSession(session, focus) : session;
+  const startLabel = !target ? '' : focus === 'all' ? `${target.minutes} min` : `${AREA_NAMES[focus]}, ${target.minutes} min`;
 
   const start = () => {
-    if (!session) return;
-    if (!adjusted) {
-      startSession(session.id);
-      return;
-    }
-    // Adjusting today's session to how you feel is a Premium feature.
-    if (!isPremium) {
-      setSheet(true);
-      return;
-    }
-    startCustom(session);
-    startSession(session.id);
+    if (!target) return;
+    // The planned session as it is needs nothing extra; one area of it is set up first.
+    if (target !== session) startCustom(target);
+    startSession(target.id);
   };
-
 
   return (
     <Screen
       scroll
       tabBar
+      // Room under the list for the fixed Start bar.
+      style={showStart ? { paddingBottom: TAB_BAR_SPACE + insets.bottom + START_BAR_SPACE } : undefined}
       backdrop={L.background ? <LinearGradient colors={L.background} style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]} /> : undefined}
+      overlay={showStart ? <StartBar L={L} onStart={start} what={startLabel} /> : null}
     >
       <View style={styles.header}>
-        <View style={styles.flex}>
-          {/* One line at any width or text size: shrinks a little first, then truncates. */}
-          <T variant="title" color={L.ink} style={styles.day} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} accessibilityRole="header">
-            {`${DAY_LONG[weekdayIndex(now)]} ${partOfDay(now)}`}
-          </T>
-          <T variant="body" color={L.muted}>
-            {dayMonth(now)}
-          </T>
-        </View>
-        <View style={styles.headerRight}>
-          <View
-            accessible
-            accessibilityLabel={`${run} day streak`}
-            style={[styles.streak, { backgroundColor: L.chip.bg, borderColor: L.chip.border }, L.dark && styles.flat]}
-          >
-            <Icon name={streakIcon(run)} size={17} color={L.accent} strokeWidth={1.9} />
-            <T style={[styles.streakText, { color: L.accent }]}>{String(run)}</T>
-          </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Settings"
-            onPress={() => router.navigate('/settings')}
-            style={[styles.profile, { backgroundColor: L.chip.bg, borderColor: L.accent }, L.dark && styles.flat]}
-          >
-            <Icon name="user" size={17} color={L.accent} />
-          </Pressable>
+        <T variant="bodyStrong" color={L.muted} style={styles.flex}>
+          {longDate(now)}
+        </T>
+        <View
+          accessible
+          accessibilityLabel={`${run} day streak`}
+          style={[styles.streak, { backgroundColor: L.chip.bg, borderColor: L.chip.border }, L.dark && styles.flat]}
+        >
+          <Icon name={streakIcon(run)} size={17} color={L.accent} strokeWidth={1.9} />
+          <T style={[styles.streakText, { color: L.accent }]}>{String(run)}</T>
         </View>
       </View>
 
-      {todays.length > 0 ? (
-        // Once you've trained today, show what you did instead of asking again.
-        <DoneStage L={L} today={todays} run={run} next={planned} now={now} dayNumber={daysShownUp} />
-      ) : (
-        <>
-          {session ? (
-            <>
-              <T variant="bodyStrong" color={L.ink} style={styles.ask}>
-                How&apos;s your body today?
-              </T>
-              <View style={styles.chips}>
-                {ANSWERS.map((c) =>
-                  look === 'current' ? (
-                    <OptionPill key={c.key} label={c.label} icon={c.icon} selected={answer === c.key} onPress={() => pick(c.key)} style={styles.chip} />
-                  ) : (
-                    <LookChip key={c.key} L={L} label={c.label} icon={c.icon} selected={answer === c.key} onPress={() => pick(c.key)} />
-                  ),
-                )}
-              </View>
-            </>
-          ) : null}
+      {trained ? (
+        cardOpen ? (
+          <DoneStage L={L} today={todays} run={run} now={now} dayNumber={daysShownUp} weekDone={!session} onClose={fold} />
+        ) : (
+          <DoneBanner L={L} today={todays} onOpen={() => setCardOpen(true)} />
+        )
+      ) : null}
 
-          <SessionHero L={L} session={session} when={when} minutes={minutes} level={level} note={note} onStart={start} />
+      {session ? (
+        <>
+          <T style={[styles.title, { color: L.ink }]} accessibilityRole="header">
+            {session.title}
+          </T>
+          <T variant="body" color={L.muted} style={styles.details}>
+            {`${when}, ${session.minutes} minutes, ${session.exerciseIds.length} moves at level ${level}`}
+          </T>
+          <ExerciseGroups L={L} session={session} focus={focus} onFocus={setChosenArea} onStart={start} startLabel={startLabel} />
+        </>
+      ) : trained ? null : (
+        <>
+          <T style={[styles.title, { color: L.ink }]} accessibilityRole="header">
+            Week complete
+          </T>
+          <T variant="body" color={L.muted} style={styles.details}>
+            Your next plan starts on Monday.
+          </T>
         </>
       )}
 
-      {/* The session comes first so Start sits in thumb reach; the garden follows and shows what today grew. */}
-      <Garden L={L} areas={plan.areas} history={history} now={now} />
-
-      <View style={styles.sectionHead}>
-        <T style={[styles.heading, { color: L.ink }]} accessibilityRole="header">
-          This week
-        </T>
-        <T variant="body" color={L.muted} style={styles.tabular}>{done > target ? `${target} of ${target} done · +${done - target} extra` : `${done} of ${target} done`}</T>
-      </View>
-      <Pressable accessibilityRole="button" accessibilityLabel={`This week, ${done} of ${target} sessions`} onPress={() => router.navigate('/progress')} style={styles.week}>
-        <WeekStrip
-          days={days}
-          size={36}
-          tone={look === 'current' ? undefined : { ink: L.ink, muted: L.faint, done: L.bright, onDone: L.onBright, glow: L.weekGlow }}
-        />
-      </Pressable>
-
-      <View style={[styles.rule, { backgroundColor: L.rule }]} />
-
-      <ProgrammeList L={L} />
-
-      <PremiumSheet
-        visible={sheet}
-        onClose={() => setSheet(false)}
-        title="Adjust today’s session?"
-        body="Premium reshapes today’s session to how you feel: gentler when you’re sore, shorter when you’re busy."
-        highlight={session?.areas[0]}
-      />
+      <BodyPartGrid L={L} planAreas={plan.areas} />
+      <QuickProgrammes L={L} />
+      <ProgrammeList L={L} hideFree />
     </Screen>
   );
 }
@@ -195,19 +154,9 @@ export default function Today() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   flat: { boxShadow: 'none' },
-  tabular: { fontVariant: ['tabular-nums'] },
-  header: { marginTop: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, minHeight: 56 },
-  day: { fontFamily: fonts.serif, fontSize: 30, lineHeight: 36 },
-  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  header: { marginTop: 4, flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 44 },
   streak: { height: 44, paddingHorizontal: 14, borderRadius: 22, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 6, boxShadow: shadows.small },
   streakText: { fontFamily: fonts.bold, fontSize: 16, fontVariant: ['tabular-nums'] },
-  profile: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center', boxShadow: shadows.small },
-  ask: { marginTop: 24 },
-  chips: { marginTop: 12, flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { minHeight: 44, paddingHorizontal: 16 },
-  // More space above a heading than below it.
-  sectionHead: { marginTop: 32, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-  heading: { fontFamily: fonts.serif, fontSize: 20, lineHeight: 26 },
-  week: { marginTop: 12 },
-  rule: { marginTop: 32, height: StyleSheet.hairlineWidth },
+  title: { marginTop: 16, fontFamily: fonts.serif, fontSize: 30, lineHeight: 36 },
+  details: { marginTop: 6 },
 });

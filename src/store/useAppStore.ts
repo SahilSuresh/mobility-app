@@ -21,7 +21,7 @@ import type {
 } from '@/data/types';
 import { scheduleReminders } from '@/lib/notifications';
 import { READY_SECONDS, type Holds } from '@/lib/holds';
-import { buildPlan, generateSessions, makeProgrammeSession, makeQuickSession, planStartDay, type AreaLevels } from '@/lib/plan';
+import { buildPlan, generateSessions, makeProgrammeSession, planStartDay, type AreaLevels } from '@/lib/plan';
 
 /** Device storage that never blocks the app: if saving or loading fails, it carries on without it. */
 const safeStorage = {
@@ -52,6 +52,8 @@ type Data = {
   sounds: SoundSettings;
   /** Seconds of get-ready before each move (0 = none). */
   readySeconds: number;
+  /** How long to train one body part from Today's "Explore by body part", remembered between visits. */
+  areaMinutes: number;
 };
 
 type Actions = {
@@ -60,7 +62,6 @@ type Actions = {
   updatePlan: (patch: Partial<Pick<Plan, 'areas' | 'days' | 'weekdays' | 'minutes'>>) => void;
   recordSession: (session: PlannedSession, seconds: number, moves: number) => string;
   setFeedback: (recordId: string, feedback: Feedback) => void;
-  startQuick: (area: AreaId) => PlannedSession | null;
   /** Keep a one-off session (such as an adjusted version of today's) so the player can open it. */
   startCustom: (session: PlannedSession) => void;
   startProgramme: (programmeId: string) => PlannedSession | null;
@@ -72,6 +73,7 @@ type Actions = {
   setHold: (exerciseId: string, seconds: number | null) => void;
   setSound: (key: keyof SoundSettings, on: boolean) => void;
   setReadySeconds: (seconds: number) => void;
+  setAreaMinutes: (minutes: number) => void;
   reset: () => void;
 };
 
@@ -91,6 +93,7 @@ const initialData: Data = {
   holds: {},
   sounds: { moveEnd: true, readyEnd: true, voice: true },
   readySeconds: READY_SECONDS,
+  areaMinutes: 5,
 };
 
 const newId = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
@@ -177,14 +180,6 @@ export const useAppStore = create<AppState>()(
         set({ areaLevels: levels, plan: { ...plan, sessions: generateSessions({ ...plan, levels, startDay: planStartDay(plan) }) } });
       },
 
-      startQuick: (area) => {
-        const { plan, areaLevels } = get();
-        if (!plan) return null;
-        const session = makeQuickSession(area, plan, areaLevels);
-        set({ extra: session });
-        return session;
-      },
-
       startCustom: (session) => set({ extra: session }),
 
       startProgramme: (programmeId) => {
@@ -203,6 +198,7 @@ export const useAppStore = create<AppState>()(
       setFlag: (flag) => set((s) => ({ flags: { ...s.flags, [flag]: true } })),
       setSound: (key, on) => set((s) => ({ sounds: { ...s.sounds, [key]: on } })),
       setReadySeconds: (seconds) => set({ readySeconds: seconds }),
+      setAreaMinutes: (minutes) => set({ areaMinutes: minutes }),
       setHold: (exerciseId, seconds) =>
         set((s) => {
           const holds = { ...s.holds };
@@ -230,6 +226,7 @@ export const useAppStore = create<AppState>()(
         holds: s.holds,
         sounds: s.sounds,
         readySeconds: s.readySeconds,
+        areaMinutes: s.areaMinutes,
       }),
     },
   ),
