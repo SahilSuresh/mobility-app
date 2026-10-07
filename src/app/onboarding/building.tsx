@@ -99,19 +99,19 @@ export default function Building() {
                 <T variant="caption" numberOfLines={1}>
                   {s.detail}
                 </T>
+                {i === 2 ? (
+                  <View style={styles.week} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+                    {DAY_LETTER.map((letter, d) => {
+                      const on = state === 'done' && pattern.includes(d);
+                      return (
+                        <View key={d} style={[styles.day, on && styles.dayOn]}>
+                          <T style={[styles.dayLetter, on && styles.dayLetterOn]}>{letter}</T>
+                        </View>
+                      );
+                    })}
+                  </View>
+                ) : null}
               </View>
-              {i === 2 ? (
-                <View style={styles.week}>
-                  {DAY_LETTER.map((letter, d) => {
-                    const on = state === 'done' && pattern.includes(d);
-                    return (
-                      <View key={d} style={[styles.day, on && styles.dayOn]}>
-                        <T style={[styles.dayLetter, on && styles.dayLetterOn]}>{letter}</T>
-                      </View>
-                    );
-                  })}
-                </View>
-              ) : null}
             </View>
           );
         })}
@@ -167,9 +167,9 @@ const styles = StyleSheet.create({
   mark: { width: 26, height: 26, alignItems: 'center', justifyContent: 'center' },
   markDone: { borderRadius: 13, backgroundColor: colors.green },
 
-  week: { flexDirection: 'row', gap: 3 },
-  day: { width: 15, height: 15, borderRadius: 7.5, backgroundColor: tint(0.08), alignItems: 'center', justifyContent: 'center' },
+  week: { marginTop: 8, flexDirection: 'row', gap: 5 },
+  day: { width: 22, height: 22, borderRadius: 11, backgroundColor: tint(0.08), alignItems: 'center', justifyContent: 'center' },
   dayOn: { backgroundColor: colors.green },
-  dayLetter: { fontFamily: fonts.bold, fontSize: 8, color: colors.faint },
+  dayLetter: { fontFamily: fonts.bold, fontSize: 11, lineHeight: 14, color: colors.faint },
   dayLetterOn: { color: colors.onGreen },
 });

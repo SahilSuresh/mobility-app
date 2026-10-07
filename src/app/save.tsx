@@ -150,7 +150,7 @@ export default function SaveProgress() {
             </>
           )}
           {error ? (
-            <T variant="caption" center color="#9A3412">
+            <T variant="caption" center color={colors.flameText}>
               {error}
             </T>
           ) : null}

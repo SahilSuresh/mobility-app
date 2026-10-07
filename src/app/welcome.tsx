@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
     boxShadow: shadows.card,
   },
   captionText: { gap: 1 },
-  captionKicker: { fontSize: 10, lineHeight: 13, letterSpacing: 0.9 },
+  captionKicker: { fontSize: 11, lineHeight: 14, letterSpacing: 0.9 },
   captionTime: { flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: 4, paddingHorizontal: 8, height: 24, borderRadius: 12, backgroundColor: tint(0.07) },
   captionTimeLabel: { fontFamily: fonts.semibold, fontSize: 12, color: colors.muted },
 

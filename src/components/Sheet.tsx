@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { accent, colors, NATIVE_DRIVER, shade, tint } from '@/constants/theme';
 import type { AreaId } from '@/data/types';
+import { useReduceMotion } from '@/lib/useReduceMotion';
 import { frameFor } from '@/lib/viewport';
 
 import { BodyFigure } from './BodyFigure';
@@ -19,13 +20,17 @@ export function Sheet({ visible, onClose, children }: SheetProps) {
   const [rise] = useState(() => new Animated.Value(0));
   // On a desktop browser the sheet rises inside the phone frame, not across the whole page.
   const frame = frameFor(useWindowDimensions());
+  const reduceMotion = useReduceMotion();
 
   useEffect(() => {
-    if (visible) {
+    if (visible && reduceMotion) {
+      // No slide with reduced motion: the sheet simply fades in with the backdrop.
+      rise.setValue(1);
+    } else if (visible) {
       rise.setValue(0);
       Animated.timing(rise, { toValue: 1, duration: 320, easing: Easing.out(Easing.cubic), useNativeDriver: NATIVE_DRIVER }).start();
     }
-  }, [visible, rise]);
+  }, [visible, rise, reduceMotion]);
 
   const translateY = rise.interpolate({ inputRange: [0, 1], outputRange: [400, 0] });
 

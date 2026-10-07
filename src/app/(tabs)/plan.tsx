@@ -65,6 +65,7 @@ export default function PlanTab() {
         accessibilityRole="button"
         accessibilityLabel={`${plan.days} days a week, ${plan.minutes} minutes, ${plan.areas.length} areas. Change your routine`}
         onPress={() => router.push({ pathname: '/onboarding/days', params: { edit: '1' } })}
+        hitSlop={4}
         style={({ pressed }) => [styles.pill, styles.summary, { backgroundColor: L.chip.bg, borderColor: L.chip.border }, flat, pressed && styles.pressed]}
       >
         <Icon name="calendar" size={14} color={L.accent} strokeWidth={2} />
@@ -179,7 +180,7 @@ const styles = StyleSheet.create({
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 70, paddingHorizontal: 18 },
   day: { width: 34, alignItems: 'center' },
-  dayName: { fontFamily: fonts.bold, fontSize: 10.5, letterSpacing: 0.8 },
+  dayName: { fontFamily: fonts.bold, fontSize: 11, letterSpacing: 0.8 },
   dayNum: { fontFamily: fonts.serif, fontSize: 20, lineHeight: 25 },
   rowTitle: { fontFamily: fonts.semibold, fontSize: 16, lineHeight: 21 },
   label: { fontFamily: fonts.semibold },

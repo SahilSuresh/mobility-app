@@ -3,6 +3,7 @@ import { Animated, Easing, Pressable, StyleSheet, Text, View, type StyleProp, ty
 
 import { fonts, MAX_FONT_SCALE, NATIVE_DRIVER } from '@/constants/theme';
 import { success, tap } from '@/lib/haptics';
+import { useReduceMotion } from '@/lib/useReduceMotion';
 
 import { Icon } from './Icon';
 
@@ -30,8 +31,14 @@ export function HoldToStart({ label, onStart, bg, text, halo, compact, style }: 
   const [breath] = useState(() => new Animated.Value(0));
   const [holding, setHolding] = useState(false);
   const done = useRef(false);
+  const reduceMotion = useReduceMotion();
 
+  // The halo breathes slowly; with reduced motion it stays still.
   useEffect(() => {
+    if (reduceMotion) {
+      breath.setValue(0.5);
+      return;
+    }
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(breath, { toValue: 1, duration: BREATH_MS / 2, easing: Easing.inOut(Easing.sin), useNativeDriver: NATIVE_DRIVER }),
@@ -40,7 +47,7 @@ export function HoldToStart({ label, onStart, bg, text, halo, compact, style }: 
     );
     loop.start();
     return () => loop.stop();
-  }, [breath]);
+  }, [breath, reduceMotion]);
 
   const press = () => {
     tap();
@@ -89,6 +96,7 @@ export function HoldToStart({ label, onStart, bg, text, halo, compact, style }: 
         }}
         onPressIn={press}
         onPressOut={release}
+        hitSlop={compact ? 4 : undefined}
         style={[styles.button, compact && styles.buttonCompact, { backgroundColor: bg }]}
       >
         <Animated.View

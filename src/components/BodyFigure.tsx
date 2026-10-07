@@ -285,7 +285,8 @@ export function ViewToggle({ view, onChange }: { view: BodyView; onChange: (v: B
               tap();
               onChange(v);
             }}
-            style={[styles.toggleItem, on && styles.toggleOn]}
+            hitSlop={{ top: 4, bottom: 4 }}
+            style={({ pressed }) => [styles.toggleItem, on && styles.toggleOn, pressed && !on && styles.togglePressed]}
           >
             <Text style={[styles.toggleLabel, on && { color: colors.ink }]}>{v === 'front' ? 'Front' : 'Back'}</Text>
           </Pressable>
@@ -307,6 +308,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   toggleItem: { flex: 1, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  togglePressed: { opacity: 0.6 },
   toggleOn: { backgroundColor: colors.card, boxShadow: `0px 2px 8px -2px ${shade(0.5)}` },
   toggleLabel: { fontFamily: fonts.semibold, fontSize: 15, color: colors.muted },
 });

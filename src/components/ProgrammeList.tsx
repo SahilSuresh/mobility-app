@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
   title: { fontFamily: fonts.semibold, fontSize: 16, lineHeight: 21 },
   tag: { height: 20, paddingHorizontal: 7, borderRadius: 10, borderWidth: 1, justifyContent: 'center' },
-  tagText: { fontFamily: fonts.bold, fontSize: 10.5, letterSpacing: 0.3 },
+  tagText: { fontFamily: fonts.bold, fontSize: 11, letterSpacing: 0.3 },
   areas: { marginTop: 1 },
   progress: { marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 8 },
   track: { flex: 1, height: 4, borderRadius: 2, overflow: 'hidden' },
