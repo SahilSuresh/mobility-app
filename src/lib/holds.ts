@@ -30,7 +30,14 @@ export function holdFor(e: Exercise, holds: Holds): number {
   return holds[e.id] ?? e.seconds;
 }
 
-/** Total seconds a move takes (both sides when needed), using your own time if you've set one. */
+/** The short break in the middle of a two-sided move, to change to the other side. */
+export const SWITCH_SECONDS = 3;
+
+/** The voice counts down the last this-many seconds of every hold: "5, 4, 3, 2, 1". */
+export const COUNTDOWN = 5;
+
+/** Total seconds a move takes (both sides and the switch between them when needed), using your own time if you've set one. */
 export function moveTime(e: Exercise, holds: Holds): number {
-  return holdFor(e, holds) * (e.eachSide ? 2 : 1);
+  const hold = holdFor(e, holds);
+  return e.eachSide ? hold * 2 + SWITCH_SECONDS : hold;
 }

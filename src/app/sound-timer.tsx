@@ -62,7 +62,7 @@ export default function SoundTimer() {
         <SettingRow
           icon="person"
           label="Voice guide"
-          hint="Talks you through rests, what's next, how long to hold and when to switch sides"
+          hint="Talks you through rests, what's next, how long to hold and when to switch sides, and counts down the last 5 seconds"
           on={sounds.voice}
           onChange={(on) => setSound('voice', on)}
           onPreview={() => speak(`Rest for ${readySeconds} seconds. Next: Child's pose. Hold for 1 minute.`)}
