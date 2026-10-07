@@ -11,7 +11,7 @@ import { EQUIPMENT_LABEL, getExercise } from '@/data/exercises';
 import type { Exercise } from '@/data/types';
 import { goBack } from '@/lib/flow';
 import { tap } from '@/lib/haptics';
-import { HOLD, holdFor, moveTime, READY_SECONDS } from '@/lib/holds';
+import { HOLD, holdFor, moveTime, restSeconds } from '@/lib/holds';
 import { findSession, useAppStore } from '@/store/useAppStore';
 
 function clock(seconds: number): string {
@@ -28,6 +28,7 @@ export default function SessionPreview() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const session = useAppStore((s) => findSession(s, id));
   const holds = useAppStore((s) => s.holds);
+  const readySeconds = useAppStore((s) => restSeconds(s.readySeconds));
   const setHold = useAppStore((s) => s.setHold);
   if (!session) return <Redirect href="/" />;
 
@@ -35,7 +36,7 @@ export default function SessionPreview() {
   // Each move once, in the order it first comes up, with how many rounds it's done.
   const moves = all.filter((e, i) => all.findIndex((x) => x.id === e.id) === i);
   const rounds = (e: Exercise) => all.filter((x) => x.id === e.id).length;
-  const totalSeconds = all.reduce((t, e) => t + moveTime(e, holds) + READY_SECONDS, 0);
+  const totalSeconds = all.reduce((t, e) => t + moveTime(e, holds) + readySeconds, 0);
   const totalMinutes = Math.max(1, Math.round(totalSeconds / 60));
   const changed = moves.filter((e) => holds[e.id] !== undefined);
   const equipment = [...new Set(all.map((e) => e.equipment))].filter((q) => q !== 'none');

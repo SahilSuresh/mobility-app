@@ -20,7 +20,7 @@ import type {
   Reminder,
 } from '@/data/types';
 import { scheduleReminders } from '@/lib/notifications';
-import type { Holds } from '@/lib/holds';
+import { READY_SECONDS, type Holds } from '@/lib/holds';
 import { buildPlan, generateSessions, makeProgrammeSession, makeQuickSession, planStartDay, type AreaLevels } from '@/lib/plan';
 
 /** Device storage that never blocks the app: if saving or loading fails, it carries on without it. */
@@ -31,6 +31,7 @@ const safeStorage = {
 };
 
 type Draft = { areas: AreaId[]; goal: Goal; level: Level; days: DaysPerWeek; weekdays?: number[]; minutes: Minutes };
+export type SoundSettings = { moveEnd: boolean; readyEnd: boolean; voice: boolean };
 type Flags = { seenSave: boolean; seenPaywall: boolean; seenReminder: boolean };
 
 type Data = {
@@ -47,6 +48,10 @@ type Data = {
   programmeDays: Record<string, number>;
   /** Your own hold times per move, set on the session preview. */
   holds: Holds;
+  /** Session sounds, set in Sound & timer: chimes when each move ends and when the get-ready pause ends, and the move's name said aloud. */
+  sounds: SoundSettings;
+  /** Seconds of get-ready before each move (0 = none). */
+  readySeconds: number;
 };
 
 type Actions = {
@@ -65,6 +70,8 @@ type Actions = {
   setFlag: (flag: keyof Flags) => void;
   /** Set your own hold for a move (seconds per side), or null to go back to its default. */
   setHold: (exerciseId: string, seconds: number | null) => void;
+  setSound: (key: keyof SoundSettings, on: boolean) => void;
+  setReadySeconds: (seconds: number) => void;
   reset: () => void;
 };
 
@@ -82,6 +89,8 @@ const initialData: Data = {
   flags: { seenSave: false, seenPaywall: false, seenReminder: false },
   programmeDays: {},
   holds: {},
+  sounds: { moveEnd: true, readyEnd: true, voice: true },
+  readySeconds: READY_SECONDS,
 };
 
 const newId = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
@@ -192,6 +201,8 @@ export const useAppStore = create<AppState>()(
       setAccount: (account) => set({ account }),
       setReminder: (reminder) => set({ reminder }),
       setFlag: (flag) => set((s) => ({ flags: { ...s.flags, [flag]: true } })),
+      setSound: (key, on) => set((s) => ({ sounds: { ...s.sounds, [key]: on } })),
+      setReadySeconds: (seconds) => set({ readySeconds: seconds }),
       setHold: (exerciseId, seconds) =>
         set((s) => {
           const holds = { ...s.holds };
@@ -217,6 +228,8 @@ export const useAppStore = create<AppState>()(
         flags: s.flags,
         programmeDays: s.programmeDays,
         holds: s.holds,
+        sounds: s.sounds,
+        readySeconds: s.readySeconds,
       }),
     },
   ),

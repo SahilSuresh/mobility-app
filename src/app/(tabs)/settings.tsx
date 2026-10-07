@@ -11,6 +11,7 @@ import { colors, fonts, isDark, shade, shadows, tint } from '@/constants/theme';
 import { AREA_NAMES } from '@/data/areas';
 import { reloadApp, saveAppearance } from '@/lib/appearance';
 import { timeLabel } from '@/lib/dates';
+import { restSeconds } from '@/lib/holds';
 import { cancelReminders } from '@/lib/notifications';
 import { restore } from '@/lib/purchases';
 import { useAppStore } from '@/store/useAppStore';
@@ -46,6 +47,12 @@ export default function SettingsTab() {
   const reminder = useAppStore((s) => s.reminder);
   const isPremium = useAppStore((s) => s.isPremium);
   const setPremium = useAppStore((s) => s.setPremium);
+  const sounds = useAppStore((s) => s.sounds);
+  const readySeconds = useAppStore((s) => s.readySeconds);
+  // Short enough to fit beside the label: "Voice & chimes · 5s rest", "Chimes · 10s rest", "Silent · 5s rest".
+  const chimes = sounds.moveEnd || sounds.readyEnd;
+  const audio = chimes && sounds.voice ? 'Voice & chimes' : chimes ? 'Chimes' : sounds.voice ? 'Voice' : 'Silent';
+  const soundSummary = `${audio} · ${restSeconds(readySeconds)}s rest`;
   const reset = useAppStore((s) => s.reset);
   const [note, setNote] = useState('');
   const [darkMode, setDarkMode] = useState(isDark);
@@ -116,6 +123,13 @@ export default function SettingsTab() {
             trackColor={{ true: colors.green, false: colors.line }}
           />
         </View>
+      </View>
+
+      <T variant="kicker" style={styles.section}>
+        Sessions
+      </T>
+      <View style={styles.group}>
+        <Row label="Sound & timer" value={soundSummary} href="/sound-timer" last />
       </View>
 
       <T variant="kicker" style={styles.section}>

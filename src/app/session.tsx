@@ -15,7 +15,8 @@ import { getExercise } from '@/data/exercises';
 import type { Exercise } from '@/data/types';
 import { goBack } from '@/lib/flow';
 import { success, tap } from '@/lib/haptics';
-import { holdFor, moveTime, READY_SECONDS } from '@/lib/holds';
+import { holdFor, moveTime, restSeconds, spokenTime } from '@/lib/holds';
+import { playSound, preloadSounds, speak, stopSpeaking } from '@/lib/sounds';
 import { useViewport } from '@/lib/viewport';
 import { findSession, useAppStore } from '@/store/useAppStore';
 
@@ -35,27 +36,30 @@ export default function SessionPlayer() {
   const recordSession = useAppStore((s) => s.recordSession);
   // Your own hold times from the preview, fixed for the length of the session.
   const [holds] = useState(() => useAppStore.getState().holds);
+  // The rest before each stretch, from Sound & timer, also fixed for the session.
+  const [readySeconds] = useState(() => restSeconds(useAppStore.getState().readySeconds));
 
   const moves: Exercise[] = (session?.exerciseIds ?? []).map((m) => getExercise(m)).filter((e): e is Exercise => !!e);
   const [index, setIndex] = useState(0);
   // Each move starts with a "get ready" pause, then the hold itself.
-  const [phase, setPhase] = useState<'ready' | 'move'>('ready');
-  const [left, setLeft] = useState(READY_SECONDS);
+  const [phase, setPhase] = useState<'ready' | 'move'>(readySeconds > 0 ? 'ready' : 'move');
+  const [left, setLeft] = useState(() => (readySeconds > 0 ? readySeconds : moves[0] ? moveTime(moves[0], holds) : 1));
   const [playing, setPlaying] = useState(true);
   const [leaving, setLeaving] = useState(false);
   const elapsed = useRef(0);
   const finished = useRef(false);
 
   const move = moves[index];
-  const total = phase === 'ready' ? READY_SECONDS : move ? moveTime(move, holds) : 1;
+  const total = phase === 'ready' ? readySeconds : move ? moveTime(move, holds) : 1;
   const last = index === moves.length - 1;
 
   const goTo = (i: number, skipReady = false) => {
     const target = moves[i];
     if (!target) return;
+    const straightIn = skipReady || readySeconds === 0;
     setIndex(i);
-    setPhase(skipReady ? 'move' : 'ready');
-    setLeft(skipReady ? moveTime(target, holds) : READY_SECONDS);
+    setPhase(straightIn ? 'move' : 'ready');
+    setLeft(straightIn ? moveTime(target, holds) : readySeconds);
     setPlaying(true);
   };
 
@@ -63,25 +67,59 @@ export default function SessionPlayer() {
     if (!session || finished.current) return;
     finished.current = true;
     success();
+    if (useAppStore.getState().sounds.voice) speak('Well done. Session complete.', 900);
     const recordId = recordSession(session, elapsed.current, moves.length);
     router.replace({ pathname: '/complete', params: { id: recordId } });
   };
+
+  // Load the chimes up front, so the first one plays without a delay. Leaving early stops the voice;
+  // finishing lets "Session complete" play out.
+  useEffect(() => {
+    preloadSounds();
+    return () => {
+      if (!finished.current) stopSpeaking();
+    };
+  }, []);
+
+  // The voice guide (Sound & timer → Voice): the rest and what's next, then how long to hold.
+  // It starts just after the chime that marks each change, so the two don't talk over each other.
+  const restedFor = useRef(-1);
+  // Runs only when the move or its stage changes, never on the timer's every-second updates.
+  const announce = useEffectEvent(() => {
+    if (!move || !useAppStore.getState().sounds.voice) return;
+    const hold = holdFor(move, holds);
+    const holdLine = move.eachSide ? `Hold for ${spokenTime(hold)} on each side.` : `Hold for ${spokenTime(hold)}.`;
+    if (phase === 'ready') {
+      restedFor.current = index;
+      speak(index === 0 ? `Get ready. First: ${move.name}.` : `Rest for ${readySeconds} seconds. Next: ${move.name}.`, index === 0 ? 0 : 900);
+    } else {
+      // Straight into a move (skipped the rest): say its name too.
+      speak(restedFor.current === index ? holdLine : `${move.name}. ${holdLine}`, 500);
+    }
+  });
+  useEffect(() => announce(), [index, phase]);
 
   // One tick a second while playing: ready → move → next move, or finish after the last.
   const tick = useEffectEvent(() => {
     elapsed.current += 1;
     if (left > 1) {
       // Halfway through a two-sided move: a nudge to change sides.
-      if (phase === 'move' && move?.eachSide && left - 1 === holdFor(move, holds)) tap();
+      if (phase === 'move' && move?.eachSide && left - 1 === holdFor(move, holds)) {
+        tap();
+        if (useAppStore.getState().sounds.voice) speak('Switch sides.');
+      }
       setLeft(left - 1);
       return;
     }
     if (phase === 'ready' && move) {
       tap();
+      if (useAppStore.getState().sounds.readyEnd) playSound('go');
       setPhase('move');
       setLeft(moveTime(move, holds));
       return;
     }
+    // The move's time is up.
+    if (useAppStore.getState().sounds.moveEnd) playSound('done');
     if (last) finish();
     else goTo(index + 1);
   });
@@ -140,7 +178,7 @@ export default function SessionPlayer() {
       </View>
 
       <T variant="kicker" center style={[styles.kicker, compact && styles.kickerCompact]}>
-        {ready ? 'Get ready' : AREA_NAMES[move.area]}
+        {ready ? (index === 0 ? 'Get ready' : 'Rest') : AREA_NAMES[move.area]}
         {half ? <T variant="caption" style={styles.side}>{`  ·  ${half}`}</T> : null}
       </T>
       <T variant="title" center style={styles.name}>

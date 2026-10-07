@@ -69,6 +69,7 @@ export default function RootLayout() {
           <Stack.Screen name="save" options={{ gestureEnabled: false }} />
           <Stack.Screen name="premium" options={{ presentation: 'modal' }} />
           <Stack.Screen name="reminder" />
+          <Stack.Screen name="sound-timer" />
           <Stack.Screen name="edit-areas" options={{ presentation: 'modal' }} />
           <Stack.Screen name="focus" options={{ presentation: 'modal' }} />
           <Stack.Screen name="share" options={{ presentation: 'modal' }} />
