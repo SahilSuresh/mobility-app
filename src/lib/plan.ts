@@ -1,4 +1,4 @@
-import { AREA_NAMES, FOCUS_TITLES, sortAreas } from '@/data/areas';
+import { AREA_NAMES, areasLabel, FOCUS_TITLES, sortAreas } from '@/data/areas';
 import { DAY_PATTERNS, type Programme } from '@/data/content';
 import { EXERCISES, moveSeconds } from '@/data/exercises';
 import type { AreaId, DaysPerWeek, Exercise, Goal, Level, Minutes, Plan, PlannedSession, SessionKind } from '@/data/types';
@@ -214,47 +214,98 @@ export function buildPlan(input: PlanInput): Plan {
   };
 }
 
-/** A one-off session for "Where are you stiff today?" (Premium). */
-export function makeQuickSession(area: AreaId, plan: Plan, levels: AreaLevels): PlannedSession {
-  return {
-    id: 'quick',
-    weekday: weekdayIndex(new Date()),
-    title: FOCUS_TITLES[area],
-    kind: 'quick',
-    areas: [area],
-    exerciseIds: pickExercises({ areas: [area], levels, fallbackLevel: plan.level, goal: plan.goal, minutes: plan.minutes, recovery: false, seed: Date.now() % 997 }),
-    minutes: plan.minutes,
-  };
-}
-
-/** The answer to "How's your body today?" on the Today screen. */
-export type CheckIn = 'good' | 'sore' | 'short';
+/** How long you can choose to train one body part for, in minutes. */
+export const AREA_MINUTES = [2, 5, 10, 15] as const;
 
 /**
- * Today's session reshaped by the check-in: sore keeps the areas but uses only gentle (level 1) moves,
- * short on time makes a 5-minute version. Finishing it counts as the planned session.
+ * The body parts you choose, for as long as you choose. Moves suit your level for each area, alternate between
+ * the areas (like a planned session) and are trimmed to fit the time. The same moves come up all day, so what
+ * the picker shows is exactly what starts.
  */
-export function adjustSession(base: PlannedSession, checkIn: CheckIn, plan: Plan, levels: AreaLevels): PlannedSession {
-  if (checkIn === 'good') return base;
-  const minutes: Minutes = checkIn === 'short' ? 5 : base.minutes;
+export function makeAreasSession(areas: AreaId[], minutes: number, plan: Plan, levels: AreaLevels): PlannedSession {
+  const sorted = sortAreas(areas);
+  const seed = Math.floor(Date.now() / 86_400_000) % 997;
+  const picked = pickExercises({ areas: sorted, levels, fallbackLevel: plan.level, goal: plan.goal, minutes, recovery: false, seed });
+  const name = sorted.length === 1 ? AREA_NAMES[sorted[0]] : areasLabel(sorted);
   return {
-    ...base,
-    id: `${base.id}-${checkIn}`,
+    id: `train-${sorted.join('-')}-${minutes}`,
+    weekday: weekdayIndex(new Date()),
+    title: `${name}, ${minutes} min`,
+    kind: 'focus',
+    areas: sorted,
+    exerciseIds: fitToMinutes(picked, minutes),
     minutes,
-    exerciseIds: pickExercises({ areas: base.areas, levels, fallbackLevel: plan.level, goal: plan.goal, minutes, recovery: checkIn === 'sore', seed: hash(base.id) % 997 }),
-    replaces: base.id,
   };
 }
 
-/** Today's session for a Premium programme. */
+/** One body part, for as long as you choose. */
+export function makeAreaSession(area: AreaId, minutes: number, plan: Plan, levels: AreaLevels): PlannedSession {
+  return makeAreasSession([area], minutes, plan, levels);
+}
+
+/** How long a list of moves takes, rounded to whole minutes (at least one), counting the pause between moves. */
+export function minutesForMoves(ids: string[]): number {
+  const seconds = ids.reduce((t, id) => {
+    const e = EXERCISES.find((x) => x.id === id);
+    return e ? t + moveSeconds(e) + TRANSITION : t;
+  }, 0);
+  return Math.max(1, Math.round(seconds / 60));
+}
+
+/**
+ * Just one area's moves from a session, in the same order, to train that area on its own. It doesn't stand in
+ * for the planned session, so finishing it is recorded but doesn't tick the full session off.
+ */
+export function areaSession(base: PlannedSession, area: AreaId): PlannedSession {
+  const exerciseIds = base.exerciseIds.filter((id) => EXERCISES.find((e) => e.id === id)?.area === area);
+  return {
+    id: `area-${area}`,
+    weekday: base.weekday,
+    title: `${AREA_NAMES[area]} only`,
+    kind: 'focus',
+    areas: [area],
+    exerciseIds,
+    minutes: minutesForMoves(exerciseIds),
+  };
+}
+
+/**
+ * Drops moves from the end until a session fits its minutes, keeping at least two. Normal sessions always
+ * start with three moves, which would turn a 2-minute programme into nearly four.
+ */
+function fitToMinutes(ids: string[], minutes: number): string[] {
+  const budget = minutes * 60 + 20;
+  const out: string[] = [];
+  let used = 0;
+  for (const id of ids) {
+    const e = EXERCISES.find((x) => x.id === id);
+    if (!e) continue;
+    const cost = moveSeconds(e) + TRANSITION;
+    if (out.length >= 2 && used + cost > budget) break;
+    out.push(id);
+    used += cost;
+  }
+  return out;
+}
+
+/** Today's session for a programme. Easy programmes use beginner moves only. */
 export function makeProgrammeSession(programme: Programme, day: number, plan: Plan, levels: AreaLevels): PlannedSession {
+  const picked = pickExercises({
+    areas: programme.areas,
+    levels,
+    fallbackLevel: plan.level,
+    goal: plan.goal,
+    minutes: programme.minutes,
+    recovery: !!programme.easy,
+    seed: day * 31,
+  });
   return {
     id: `prog-${programme.id}`,
     weekday: weekdayIndex(new Date()),
     title: `${programme.title} · Day ${day}`,
     kind: 'programme',
     areas: programme.areas,
-    exerciseIds: pickExercises({ areas: programme.areas, levels, fallbackLevel: plan.level, goal: plan.goal, minutes: programme.minutes, recovery: false, seed: day * 31 }),
+    exerciseIds: fitToMinutes(picked, programme.minutes),
     minutes: programme.minutes,
     programmeId: programme.id,
   };

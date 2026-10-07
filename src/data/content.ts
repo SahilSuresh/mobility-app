@@ -41,10 +41,56 @@ export type Programme = {
   minutes: Minutes;
   pose: PoseKey;
   color: string;
+  /** Open to everyone, without Premium. */
+  free?: boolean;
+  /** Beginner moves only (level 1), whatever the user's level. */
+  easy?: boolean;
+  /** A shorter name for tight spaces, like the quick tiles on Today. */
+  short?: string;
 };
 
-/** Premium programmes. Each day builds a session for these areas. */
+/** Programmes. Each day builds a session for these areas. The quick ones are free; the rest are Premium. */
 export const PROGRAMMES: Programme[] = [
+  // Quick, easy and free: a ready-made session for however much time you have.
+  {
+    id: 'quick-2',
+    title: '2-minute unwind',
+    short: 'Unwind',
+    meta: '2 min a day',
+    areas: ['neck', 'shoulders'],
+    days: 7,
+    minutes: 2,
+    pose: 'chinTuck',
+    color: '#93A9BC',
+    free: true,
+    easy: true,
+  },
+  {
+    id: 'quick-5',
+    title: '5-minute reset',
+    short: 'Reset',
+    meta: '5 min a day',
+    areas: ['upperBack', 'lowerBack', 'hips'],
+    days: 7,
+    minutes: 5,
+    pose: 'cat',
+    color: '#9FBFA8',
+    free: true,
+    easy: true,
+  },
+  {
+    id: 'quick-10',
+    title: '10-minute flow',
+    short: 'Flow',
+    meta: '10 min a day',
+    areas: ['shoulders', 'upperBack', 'lowerBack', 'hips', 'knees'],
+    days: 7,
+    minutes: 10,
+    pose: 'twist',
+    color: '#D9BE93',
+    free: true,
+    easy: true,
+  },
   { id: 'hips-14', title: '14-day hips', meta: '14 days', areas: ['hips'], days: 14, minutes: 10, pose: 'lunge', color: '#9FBFA8' },
   { id: 'desk', title: 'Desk reset', meta: '5 min a day', areas: ['neck', 'shoulders', 'upperBack'], days: 7, minutes: 5, pose: 'reach', color: '#93A9BC' },
   { id: 'morning', title: 'Morning flow', meta: '7 days', areas: ['upperBack', 'lowerBack', 'hips'], days: 7, minutes: 10, pose: 'cat', color: '#D9BE93' },

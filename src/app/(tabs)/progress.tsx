@@ -6,7 +6,9 @@ import { Icon } from '@/components/Icon';
 import { PoseBubble } from '@/components/PoseBubble';
 import { Ring } from '@/components/Ring';
 import { T } from '@/components/T';
+import { Garden } from '@/components/today/Garden';
 import { Card, IconButton, Screen } from '@/components/ui';
+import { LOOKS } from '@/constants/looks';
 import { colors, fonts, glass, POSE_COLORS, REGION_COLORS, tint } from '@/constants/theme';
 import { AREA_NAMES } from '@/data/areas';
 import type { AreaId } from '@/data/types';
@@ -14,13 +16,16 @@ import { relativeDay } from '@/lib/dates';
 import { areaCounts, minutesOf, sessionMinutes, streak, thisWeek, weeklyTarget, weeksOnTarget } from '@/lib/progress';
 import { useNow } from '@/lib/useNow';
 import { useAppStore } from '@/store/useAppStore';
+import { resolveLook, useLook } from '@/store/useLook';
 
 export default function ProgressTab() {
   const plan = useAppStore((s) => s.plan);
   const history = useAppStore((s) => s.history);
   const isPremium = useAppStore((s) => s.isPremium);
+  const choice = useLook((s) => s.choice);
   const now = useNow();
   if (!plan) return null;
+  const L = LOOKS[resolveLook(choice, now)];
 
   const week = thisWeek(history, now);
   const counts = areaCounts(history);
@@ -69,6 +74,9 @@ export default function ProgressTab() {
           </T>
         </Card>
       </View>
+
+      {/* The garden lives here, with the rest of "how am I doing": each area grows with training. */}
+      <Garden L={L} areas={plan.areas} history={history} now={now} />
 
       <T variant="kicker" style={styles.section}>
         Recent
