@@ -27,7 +27,7 @@ import { DAY_LONG, daysBetween, headerDate, isSameDay, partOfDay, relativeDay, w
 import { startSession } from '@/lib/flow';
 import { insightLine } from '@/lib/insight';
 import { adjustSession, type CheckIn } from '@/lib/plan';
-import { lastTrained, nextSession, recencyGlow, streak, thisWeek, weekDays } from '@/lib/progress';
+import { lastTrained, nextSession, recencyGlow, streak, thisWeek, weekDays, weeklyTarget } from '@/lib/progress';
 import { useCountTo } from '@/lib/useCountTo';
 import { useNow } from '@/lib/useNow';
 import { useAppStore } from '@/store/useAppStore';
@@ -136,7 +136,7 @@ export default function Today() {
       return;
     }
     const s = startProgramme(id);
-    if (s) router.push({ pathname: '/session', params: { id: s.id } });
+    if (s) router.push({ pathname: '/preview', params: { id: s.id } });
   };
 
   const answered = ANSWERS.find((a) => a.key === answer);
@@ -205,7 +205,7 @@ export default function Today() {
               L={L}
               variant="done"
               done={done}
-              target={plan.days}
+              target={weeklyTarget(plan, now)}
               run={run}
               areas={plan.areas}
               last={last}
@@ -222,7 +222,7 @@ export default function Today() {
             <Bento
               L={L}
               done={done}
-              target={plan.days}
+              target={weeklyTarget(plan, now)}
               run={run}
               areas={plan.areas}
               last={last}
@@ -266,9 +266,9 @@ export default function Today() {
             <T variant="kicker" color={L.accent}>
               This week
             </T>
-            <T variant="smallStrong" color={L.ink} style={styles.tabular}>{`${done} of ${plan.days} done`}</T>
+            <T variant="smallStrong" color={L.ink} style={styles.tabular}>{`${done} of ${weeklyTarget(plan, now)} done`}</T>
           </View>
-          <Pressable accessibilityRole="button" accessibilityLabel={`This week, ${done} of ${plan.days}`} onPress={() => router.navigate('/progress')} style={styles.week}>
+          <Pressable accessibilityRole="button" accessibilityLabel={`This week, ${done} of ${weeklyTarget(plan, now)}`} onPress={() => router.navigate('/progress')} style={styles.week}>
             <WeekStrip
               days={days}
               size={36}

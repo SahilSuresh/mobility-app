@@ -20,6 +20,8 @@ export const LEVEL_NAME: Record<Level, string> = { 1: 'Beginner', 2: 'Intermedia
 
 export const DAY_OPTIONS: DaysPerWeek[] = [2, 3, 4, 5, 7];
 export const MINUTE_OPTIONS: Minutes[] = [5, 10, 15, 20];
+/** Range for a custom session length. */
+export const CUSTOM_MINUTES = { min: 3, max: 30, start: 25 } as const;
 
 /** Which weekdays (0 = Monday) each weekly target uses. */
 export const DAY_PATTERNS: Record<DaysPerWeek, number[]> = {

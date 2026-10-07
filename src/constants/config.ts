@@ -5,9 +5,6 @@ export const config = {
   /** Working name. Also change "name" in app.json when you pick the real one. */
   appName: 'Mobility',
 
-  /** Free users can complete this many sessions per week (Monday to Sunday). */
-  freeWeeklySessions: 3,
-
   /** RevenueCat entitlement that unlocks Premium. */
   premiumEntitlement: 'premium',
 

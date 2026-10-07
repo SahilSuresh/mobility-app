@@ -58,7 +58,7 @@ export default function TodayClassic() {
       return;
     }
     const s = startProgramme(programme.id);
-    if (s) router.push({ pathname: '/session', params: { id: s.id } });
+    if (s) router.push({ pathname: '/preview', params: { id: s.id } });
   };
 
   return (

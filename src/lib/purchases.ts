@@ -3,17 +3,13 @@ import Purchases, { PACKAGE_TYPE, type PurchasesPackage } from 'react-native-pur
 
 import { config } from '@/constants/config';
 
+import { TEST_OPTIONS, type PlanOption } from './paywall';
+
 /**
  * Premium through RevenueCat. Without a key (see .env.example) the app runs in test mode:
  * buying unlocks Premium on this device with no payment, so the whole flow can be tried in Expo Go.
  */
-export type PaywallOption = {
-  id: 'annual' | 'monthly';
-  title: string;
-  price: string;
-  trial?: string;
-  pkg?: PurchasesPackage;
-};
+export type PaywallOption = PlanOption & { pkg?: PurchasesPackage };
 
 let configured = false;
 
@@ -32,16 +28,11 @@ export function initPurchases(): void {
   configured = true;
 }
 
-const TEST_OPTIONS: PaywallOption[] = [
-  { id: 'annual', title: 'Yearly', price: 'Test price', trial: '7 days free' },
-  { id: 'monthly', title: 'Monthly', price: 'Test price' },
-];
-
 function trialText(pkg: PurchasesPackage): string | undefined {
   const intro = pkg.product.introPrice;
   if (!intro || intro.price !== 0) return undefined;
   const unit = intro.periodUnit.toLowerCase();
-  return `${intro.periodNumberOfUnits} ${unit}${intro.periodNumberOfUnits === 1 ? '' : 's'} free`;
+  return `${intro.periodNumberOfUnits} ${unit}${intro.periodNumberOfUnits === 1 ? '' : 's'}`;
 }
 
 export async function loadOptions(): Promise<PaywallOption[]> {
@@ -52,8 +43,19 @@ export async function loadOptions(): Promise<PaywallOption[]> {
     const options: PaywallOption[] = [];
     const annual = packages.find((p) => p.packageType === PACKAGE_TYPE.ANNUAL);
     const monthly = packages.find((p) => p.packageType === PACKAGE_TYPE.MONTHLY);
-    if (annual) options.push({ id: 'annual', title: 'Yearly', price: annual.product.priceString, trial: trialText(annual), pkg: annual });
-    if (monthly) options.push({ id: 'monthly', title: 'Monthly', price: monthly.product.priceString, trial: trialText(monthly), pkg: monthly });
+    if (annual)
+      options.push({
+        id: 'annual',
+        title: 'Yearly',
+        price: annual.product.priceString,
+        period: 'year',
+        perMonth: annual.product.pricePerMonthString ?? undefined,
+        amount: annual.product.price,
+        trial: trialText(annual),
+        pkg: annual,
+      });
+    if (monthly)
+      options.push({ id: 'monthly', title: 'Monthly', price: monthly.product.priceString, period: 'month', amount: monthly.product.price, trial: trialText(monthly), pkg: monthly });
     return options.length ? options : TEST_OPTIONS;
   } catch {
     return TEST_OPTIONS;

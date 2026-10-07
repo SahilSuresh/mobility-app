@@ -2,12 +2,12 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { AreaChips } from '@/components/AreaChips';
 import { BodyMap, ViewToggle } from '@/components/BodyFigure';
 import { PremiumSheet } from '@/components/Sheet';
 import { T } from '@/components/T';
 import { IconButton, PrimaryButton, Screen } from '@/components/ui';
-import { colors } from '@/constants/theme';
-import { AREA_NAMES, selectionLabel, sortAreas } from '@/data/areas';
+import { AREA_NAMES, sortAreas, VISIBLE } from '@/data/areas';
 import type { AreaId, BodyView } from '@/data/types';
 import { useViewport } from '@/lib/viewport';
 import { useAppStore } from '@/store/useAppStore';
@@ -20,7 +20,7 @@ export default function EditAreas() {
   const [selected, setSelected] = useState<AreaId[]>(plan?.areas ?? []);
   const [sheet, setSheet] = useState<{ area: AreaId; adding: boolean } | null>(null);
   const { height } = useViewport();
-  const mapHeight = Math.max(240, Math.min(470, height - 370));
+  const mapHeight = Math.max(240, Math.min(440, height - 420));
   if (!plan) return null;
 
   const changed = sortAreas(selected).join() !== sortAreas(plan.areas).join();
@@ -33,6 +33,8 @@ export default function EditAreas() {
       return;
     }
     setSelected(adding ? [...selected, area] : selected.filter((a) => a !== area));
+    // Picking an area from the list turns the body round if it can only be seen from the other side.
+    if (adding && !VISIBLE[view].includes(area)) setView(view === 'front' ? 'back' : 'front');
   };
 
   return (
@@ -50,9 +52,7 @@ export default function EditAreas() {
       <View style={styles.stage}>
         <BodyMap view={view} selected={selected} onToggle={toggle} height={mapHeight} />
       </View>
-      <T variant="smallStrong" center color={selected.length ? colors.greenText : colors.muted} style={styles.label}>
-        {selectionLabel(selected)}
-      </T>
+      <AreaChips selected={selected} onToggle={toggle} />
       {isPremium ? (
         <PrimaryButton
           label="Save"
@@ -85,6 +85,5 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   toggle: { marginTop: 18 },
   stage: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  label: { fontSize: 15, minHeight: 22 },
   cta: { marginTop: 16 },
 });

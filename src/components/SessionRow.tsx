@@ -19,10 +19,12 @@ type Props = {
   highlight?: boolean;
   trailing: RowTrailing;
   onPress?: () => void;
+  /** The session's date, when it isn't in the week of `now` (such as a first week that runs into the next). */
+  date?: Date;
 };
 
 /** One session in a week list: day, name, details, and a status on the right. */
-export function SessionRow({ session, now, meta, highlight, trailing, onPress }: Props) {
+export function SessionRow({ session, now, meta, highlight, trailing, onPress, date }: Props) {
   const moves = session.exerciseIds
     .map((id) => getExercise(id))
     .filter((e, i, all): e is Exercise => !!e && all.findIndex((x) => x?.pose === e.pose) === i)
@@ -32,7 +34,7 @@ export function SessionRow({ session, now, meta, highlight, trailing, onPress }:
     <Card onPress={onPress} highlight={highlight} style={styles.row} accessibilityLabel={`${session.title}, ${meta}`}>
       <View style={styles.day}>
         <T style={[styles.dayName, highlight && { color: colors.greenText }]}>{DAY_SHORT[session.weekday]}</T>
-        <T style={styles.dayNum}>{String(dateOfWeekday(session.weekday, now).getDate())}</T>
+        <T style={styles.dayNum}>{String((date ?? dateOfWeekday(session.weekday, now)).getDate())}</T>
       </View>
       <View style={styles.text}>
         <T variant="bodyStrong" numberOfLines={1}>

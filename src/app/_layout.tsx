@@ -8,9 +8,10 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
+import { LaunchIntro } from '@/components/LaunchIntro';
 import { colors } from '@/constants/theme';
 import { setupNotifications } from '@/lib/notifications';
 import { fetchPremium, initPurchases } from '@/lib/purchases';
@@ -29,6 +30,9 @@ export default function RootLayout() {
   });
   const hydrated = useHydrated();
   const ready = fontsLoaded && hydrated;
+  // The launch animation plays once, over the first screen, after the native splash hides.
+  const [intro, setIntro] = useState(true);
+  const endIntro = useCallback(() => setIntro(false), []);
 
   useEffect(() => {
     setupNotifications();
@@ -51,23 +55,26 @@ export default function RootLayout() {
 
   return (
     <DesktopFrame>
-      <StatusBar style="dark" />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bgTop } }}>
-        <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
-        <Stack.Screen name="welcome" options={{ animation: 'fade' }} />
-        <Stack.Screen name="onboarding" />
-        <Stack.Screen name="session" options={{ presentation: 'fullScreenModal', gestureEnabled: false }} />
-        <Stack.Screen name="complete" options={{ animation: 'fade', gestureEnabled: false }} />
-        <Stack.Screen name="save" options={{ gestureEnabled: false }} />
-        <Stack.Screen name="premium" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="reminder" />
-        <Stack.Screen name="edit-areas" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="focus" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="limit" options={{ presentation: 'transparentModal', animation: 'fade', contentStyle: { backgroundColor: 'transparent' } }} />
-        <Stack.Screen name="share" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="exercise/[id]" />
-        <Stack.Screen name="area/[id]" />
-      </Stack>
+      <View style={styles.fill}>
+        <StatusBar style="dark" />
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bgTop } }}>
+          <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
+          <Stack.Screen name="welcome" options={{ animation: 'fade' }} />
+          <Stack.Screen name="onboarding" />
+          <Stack.Screen name="preview" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="session" options={{ presentation: 'fullScreenModal', gestureEnabled: false }} />
+          <Stack.Screen name="complete" options={{ animation: 'fade', gestureEnabled: false }} />
+          <Stack.Screen name="save" options={{ gestureEnabled: false }} />
+          <Stack.Screen name="premium" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="reminder" />
+          <Stack.Screen name="edit-areas" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="focus" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="share" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="exercise/[id]" />
+          <Stack.Screen name="area/[id]" />
+        </Stack>
+        {intro ? <LaunchIntro onDone={endIntro} /> : null}
+      </View>
     </DesktopFrame>
   );
 }
@@ -84,6 +91,7 @@ function DesktopFrame({ children }: { children: ReactNode }) {
 }
 
 const styles = StyleSheet.create({
+  fill: { flex: 1 },
   desk: { flex: 1, backgroundColor: '#15130F', alignItems: 'center', justifyContent: 'center' },
   frame: {
     borderRadius: 44,

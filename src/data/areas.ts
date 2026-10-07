@@ -81,9 +81,3 @@ export function areasLabel(areas: AreaId[]): string {
   return `${AREA_NAMES[sorted[0]]} + ${sorted.length - 1} more`;
 }
 
-/** Line under the body map: "Lower back · Hips", or a count for long lists. */
-export function selectionLabel(areas: AreaId[]): string {
-  const names = sortAreas(areas).map((a) => AREA_NAMES[a]);
-  if (names.length === 0) return 'Tap an area to add it';
-  return names.length <= 3 ? names.join(' · ') : `${names.length} areas`;
-}

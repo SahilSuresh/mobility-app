@@ -20,7 +20,8 @@ import type {
   Reminder,
 } from '@/data/types';
 import { scheduleReminders } from '@/lib/notifications';
-import { buildPlan, generateSessions, makeProgrammeSession, makeQuickSession, type AreaLevels } from '@/lib/plan';
+import type { Holds } from '@/lib/holds';
+import { buildPlan, generateSessions, makeProgrammeSession, makeQuickSession, planStartDay, type AreaLevels } from '@/lib/plan';
 
 /** Device storage that never blocks the app: if saving or loading fails, it carries on without it. */
 const safeStorage = {
@@ -29,7 +30,7 @@ const safeStorage = {
   removeItem: (key: string) => AsyncStorage.removeItem(key).catch(() => undefined),
 };
 
-type Draft = { areas: AreaId[]; goal: Goal; level: Level; days: DaysPerWeek; minutes: Minutes };
+type Draft = { areas: AreaId[]; goal: Goal; level: Level; days: DaysPerWeek; weekdays?: number[]; minutes: Minutes };
 type Flags = { seenSave: boolean; seenPaywall: boolean; seenReminder: boolean };
 
 type Data = {
@@ -44,12 +45,14 @@ type Data = {
   reminder: Reminder | null;
   flags: Flags;
   programmeDays: Record<string, number>;
+  /** Your own hold times per move, set on the session preview. */
+  holds: Holds;
 };
 
 type Actions = {
   setDraft: (patch: Partial<Draft>) => void;
   createPlan: () => void;
-  updatePlan: (patch: Partial<Pick<Plan, 'areas' | 'days' | 'minutes'>>) => void;
+  updatePlan: (patch: Partial<Pick<Plan, 'areas' | 'days' | 'weekdays' | 'minutes'>>) => void;
   recordSession: (session: PlannedSession, seconds: number, moves: number) => string;
   setFeedback: (recordId: string, feedback: Feedback) => void;
   startQuick: (area: AreaId) => PlannedSession | null;
@@ -60,6 +63,8 @@ type Actions = {
   setAccount: (account: Account | null) => void;
   setReminder: (reminder: Reminder | null) => void;
   setFlag: (flag: keyof Flags) => void;
+  /** Set your own hold for a move (seconds per side), or null to go back to its default. */
+  setHold: (exerciseId: string, seconds: number | null) => void;
   reset: () => void;
 };
 
@@ -76,6 +81,7 @@ const initialData: Data = {
   reminder: null,
   flags: { seenSave: false, seenPaywall: false, seenReminder: false },
   programmeDays: {},
+  holds: {},
 };
 
 const newId = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
@@ -116,11 +122,11 @@ export const useAppStore = create<AppState>()(
         if (!plan) return;
         const next = { ...plan, ...patch, areas: sortAreas(patch.areas ?? plan.areas) };
         const levels = levelsFor(next.areas, areaLevels, plan.level);
-        const updated = { ...next, sessions: generateSessions({ ...next, levels }) };
+        const updated = { ...next, sessions: generateSessions({ ...next, levels, startDay: planStartDay(plan) }) };
         set({
           plan: updated,
           areaLevels: { ...areaLevels, ...levels },
-          draft: { ...get().draft, areas: next.areas, days: next.days, minutes: next.minutes },
+          draft: { ...get().draft, areas: next.areas, days: next.days, weekdays: next.weekdays, minutes: next.minutes },
         });
         syncReminders(updated, reminder);
       },
@@ -159,7 +165,7 @@ export const useAppStore = create<AppState>()(
         if (step === 0) return;
         const levels: AreaLevels = { ...areaLevels };
         for (const a of record.areas) levels[a] = clampLevel((levels[a] ?? plan.level) + step);
-        set({ areaLevels: levels, plan: { ...plan, sessions: generateSessions({ ...plan, levels }) } });
+        set({ areaLevels: levels, plan: { ...plan, sessions: generateSessions({ ...plan, levels, startDay: planStartDay(plan) }) } });
       },
 
       startQuick: (area) => {
@@ -186,6 +192,13 @@ export const useAppStore = create<AppState>()(
       setAccount: (account) => set({ account }),
       setReminder: (reminder) => set({ reminder }),
       setFlag: (flag) => set((s) => ({ flags: { ...s.flags, [flag]: true } })),
+      setHold: (exerciseId, seconds) =>
+        set((s) => {
+          const holds = { ...s.holds };
+          if (seconds === null) delete holds[exerciseId];
+          else holds[exerciseId] = seconds;
+          return { holds };
+        }),
       reset: () => set({ ...initialData }),
     }),
     {
@@ -203,6 +216,7 @@ export const useAppStore = create<AppState>()(
         reminder: s.reminder,
         flags: s.flags,
         programmeDays: s.programmeDays,
+        holds: s.holds,
       }),
     },
   ),

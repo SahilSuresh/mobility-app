@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { BodyFigure } from '@/components/BodyFigure';
 import { Icon, type IconName } from '@/components/Icon';
@@ -8,25 +8,31 @@ import { T } from '@/components/T';
 import { IconButton, PrimaryButton, Screen } from '@/components/ui';
 import { config } from '@/constants/config';
 import { colors, fonts, shadows } from '@/constants/theme';
-import { AREA_ORDER } from '@/data/areas';
+import { AREA_NAMES, AREA_ORDER, sortAreas } from '@/data/areas';
 import type { AreaId } from '@/data/types';
 import { continueFirstRun } from '@/lib/flow';
 import { success, tap } from '@/lib/haptics';
+import { yearlySaving } from '@/lib/paywall';
 import { buy, loadOptions, purchasesLive, restore, type PaywallOption } from '@/lib/purchases';
 import { useAppStore } from '@/store/useAppStore';
 
 const BENEFITS: { icon: IconName; label: string }[] = [
-  { icon: 'infinity', label: 'Unlimited sessions' },
-  { icon: 'person', label: 'Every area, any time' },
-  { icon: 'layers', label: 'Every programme' },
-  { icon: 'arc', label: 'Full progress history' },
+  { icon: 'calendar', label: 'Your full plan, every session' },
+  { icon: 'sliders', label: 'Adjusts to how each session felt' },
+  { icon: 'layers', label: 'Every area and programme' },
+  { icon: 'arc', label: 'Your progress over time' },
 ];
 
 const ALL_AREAS = Object.fromEntries(AREA_ORDER.map((a) => [a, 0.55])) as Partial<Record<AreaId, number>>;
 
+/**
+ * Premium. Every session needs it (or its free trial). Opened after the plan is ready and whenever someone
+ * without it taps Start; with `then`, a successful purchase goes straight on to that session.
+ */
 export default function Premium() {
-  const { flow } = useLocalSearchParams<{ flow?: string }>();
+  const { flow, then } = useLocalSearchParams<{ flow?: string; then?: string }>();
   const inFlow = flow === '1';
+  const plan = useAppStore((s) => s.plan);
   const isPremium = useAppStore((s) => s.isPremium);
   const setPremium = useAppStore((s) => s.setPremium);
   const setFlag = useAppStore((s) => s.setFlag);
@@ -44,7 +50,13 @@ export default function Premium() {
   }, [setFlag]);
 
   const close = () => (inFlow ? continueFirstRun('premium') : router.back());
+  // After buying: on to the session that was waiting, or wherever we came from.
+  const unlocked = () => {
+    if (then) router.replace({ pathname: '/preview', params: { id: then } });
+    else close();
+  };
   const option = options.find((o) => o.id === selected);
+  const saving = yearlySaving(options);
 
   const purchase = async () => {
     if (!option) return;
@@ -54,7 +66,7 @@ export default function Premium() {
       if (await buy(option)) {
         setPremium(true);
         success();
-        close();
+        unlocked();
       }
     } catch {
       setMessage('The purchase did not go through. Please try again.');
@@ -68,7 +80,7 @@ export default function Premium() {
     const active = await restore();
     if (active) {
       setPremium(true);
-      close();
+      unlocked();
     } else {
       setMessage(active === null ? 'Restore works once the App Store is connected.' : 'No purchases to restore.');
     }
@@ -95,8 +107,11 @@ export default function Premium() {
     );
   }
 
-  const cta = option?.trial ? 'Start free trial' : 'Subscribe';
-  const note = option ? (option.trial ? `${option.trial}, then ${option.price}. Cancel anytime.` : `${option.price}. Cancel anytime.`) : '';
+  const areas = sortAreas(plan?.areas ?? []);
+  const glows = Object.fromEntries(areas.map((a) => [a, 1])) as Partial<Record<AreaId, number>>;
+  const trial = option?.trial;
+  const cta = trial ? 'Start free trial' : 'Subscribe';
+  const terms = option ? `${trial ? `${trial} free, then ` : ''}${option.price} a ${option.period}. Cancel anytime.` : '';
 
   return (
     <Screen modal>
@@ -108,62 +123,88 @@ export default function Premium() {
           </T>
         </Pressable>
       </View>
+
       <ScrollView style={styles.flex} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.hero}>
-          <View style={styles.halo} />
-          <BodyFigure height={168} glows={ALL_AREAS} />
-        </View>
-        <T variant="kicker" center style={{ marginTop: 14 }}>
-          Premium
+        <T variant="kicker">{plan ? 'Your plan is ready' : 'Premium'}</T>
+        <T variant="title" style={styles.title} accessibilityRole="header">
+          {trial ? `Try it free for ${trial}` : 'Unlock your plan'}
         </T>
-        <T variant="title" center style={styles.title}>
-          Keep progressing
-        </T>
-        <T variant="body" color={colors.muted} center style={{ marginTop: 6 }}>
-          Unlimited sessions, built around your body.
-        </T>
+
+        {plan ? (
+          <View style={styles.planCard}>
+            <View style={styles.bodies} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+              <BodyFigure height={92} view="front" glows={glows} />
+              <BodyFigure height={92} view="back" glows={glows} />
+            </View>
+            <View style={styles.planText}>
+              <T variant="bodyStrong" numberOfLines={2}>
+                {areas.map((a) => AREA_NAMES[a]).join(', ')}
+              </T>
+              <T variant="caption">
+                {plan.days === 7 ? 'Every day' : `${plan.days} days a week`} · {plan.minutes} min each
+              </T>
+            </View>
+          </View>
+        ) : null}
+
         <View style={styles.benefits}>
           {BENEFITS.map((b) => (
             <View key={b.label} style={styles.benefit}>
               <View style={styles.benefitIcon}>
-                <Icon name={b.icon} size={18} color={colors.green} />
+                <Icon name={b.icon} size={16} color={colors.green} />
               </View>
-              <T variant="body" style={{ fontFamily: fonts.medium }}>
+              <T variant="body" style={styles.benefitText}>
                 {b.label}
               </T>
             </View>
           ))}
         </View>
-        <View style={styles.plans}>
+
+        {trial ? (
+          <View style={styles.timeline}>
+            <Step icon="check" title="Today" body="Full access to your plan, free." first />
+            <Step icon="calendar" title={`In ${trial}`} body={`Your subscription starts, unless you cancel before then in your ${storeName()} settings.`} />
+          </View>
+        ) : null}
+
+        <View style={styles.plans} accessibilityRole="radiogroup">
           {options.map((o) => {
             const on = o.id === selected;
+            const best = o.id === 'annual';
             return (
               <Pressable
                 key={o.id}
-                accessibilityRole="button"
-                accessibilityState={{ selected: on }}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: on }}
+                accessibilityLabel={`${o.title}, ${o.price} a ${o.period}${o.perMonth ? `, ${o.perMonth} a month` : ''}${o.trial ? `, ${o.trial} free` : ''}`}
                 onPress={() => {
                   tap();
                   setSelected(o.id);
                 }}
                 style={[styles.plan, on && styles.planOn]}
               >
-                {o.trial ? (
-                  <View style={styles.badge}>
-                    <T style={styles.badgeText}>{o.trial}</T>
+                <View style={[styles.radio, on && styles.radioOn]}>{on ? <Icon name="check" size={12} color={colors.white} strokeWidth={3} /> : null}</View>
+                <View style={styles.planInfo}>
+                  <View style={styles.planTitleRow}>
+                    <T variant="bodyStrong">{o.title}</T>
+                    {best && saving ? (
+                      <View style={styles.badge}>
+                        <T style={styles.badgeText}>Save {saving}%</T>
+                      </View>
+                    ) : null}
                   </View>
-                ) : null}
-                <T variant="smallStrong" color={colors.muted}>
-                  {o.title}
-                </T>
-                <T variant="h2" style={{ marginTop: 4 }}>
-                  {o.price}
-                </T>
+                  <T variant="caption">{o.trial ? `${o.trial} free, then ${o.price} a ${o.period}` : `${o.price} a ${o.period}`}</T>
+                </View>
+                <View style={styles.planPrice}>
+                  <T style={styles.priceBig}>{o.perMonth ?? o.price}</T>
+                  <T variant="caption">a month</T>
+                </View>
               </Pressable>
             );
           })}
         </View>
       </ScrollView>
+
       {busy ? (
         <View style={styles.busy}>
           <ActivityIndicator color={colors.cream} />
@@ -172,11 +213,11 @@ export default function Premium() {
         <PrimaryButton label={cta} onPress={purchase} disabled={!option} />
       )}
       <T variant="caption" center style={{ marginTop: 10 }}>
-        {message || note}
+        {message || terms}
       </T>
       {!purchasesLive() ? (
         <T variant="caption" center color={colors.greenText} style={{ marginTop: 4 }}>
-          Test mode: no payment is taken.
+          Test mode: example prices, no payment is taken.
         </T>
       ) : null}
       <View style={styles.links}>
@@ -191,31 +232,59 @@ export default function Premium() {
   );
 }
 
+/** Where subscriptions are managed: Google Play on Android, the App Store everywhere else. */
+function storeName(): string {
+  return Platform.OS === 'android' ? 'Google Play' : 'App Store';
+}
+
+function Step({ icon, title, body, first }: { icon: IconName; title: string; body: string; first?: boolean }) {
+  return (
+    <View style={styles.step}>
+      <View style={[styles.stepDot, first && styles.stepDotFirst]}>
+        <Icon name={icon} size={13} color={first ? colors.white : colors.green} strokeWidth={2.4} />
+      </View>
+      <View style={styles.stepText}>
+        <T variant="smallStrong">{title}</T>
+        <T variant="caption">{body}</T>
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   restore: { height: 44, justifyContent: 'center', paddingHorizontal: 4 },
-  scroll: { paddingTop: 10, paddingBottom: 16 },
-  hero: { alignSelf: 'center', width: 200, height: 168, alignItems: 'center' },
-  halo: { position: 'absolute', left: 10, top: -6, width: 180, height: 180, borderRadius: 90, backgroundColor: 'rgba(47,122,86,0.09)' },
-  title: { marginTop: 4, fontSize: 34, lineHeight: 38 },
-  benefits: { marginTop: 22, gap: 12, paddingHorizontal: 6 },
+  scroll: { paddingTop: 12, paddingBottom: 16 },
+  title: { marginTop: 6 },
+
+  planCard: { marginTop: 16, flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, borderRadius: 20, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
+  bodies: { flexDirection: 'row', gap: 2, paddingHorizontal: 6, borderRadius: 14, backgroundColor: 'rgba(47,122,86,0.07)' },
+  planText: { flex: 1, gap: 2 },
+
+  benefits: { marginTop: 18, gap: 10 },
   benefit: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  benefitIcon: { width: 30, height: 30, borderRadius: 15, backgroundColor: colors.greenTint, alignItems: 'center', justifyContent: 'center' },
-  plans: { marginTop: 24, flexDirection: 'row', gap: 12 },
-  plan: {
-    flex: 1,
-    height: 88,
-    borderRadius: 22,
-    paddingTop: 16,
-    paddingHorizontal: 14,
-    backgroundColor: '#FFFBF4',
-    borderWidth: 1,
-    borderColor: 'rgba(90,70,40,0.14)',
-  },
-  planOn: { borderWidth: 2, borderColor: colors.green, boxShadow: shadows.small },
-  badge: { position: 'absolute', left: 12, top: -11, height: 22, paddingHorizontal: 10, borderRadius: 11, backgroundColor: colors.green, justifyContent: 'center' },
-  badgeText: { fontFamily: fonts.bold, fontSize: 12, color: colors.white },
+  benefitIcon: { width: 28, height: 28, borderRadius: 14, backgroundColor: colors.greenTint, alignItems: 'center', justifyContent: 'center' },
+  benefitText: { flex: 1, fontFamily: fonts.medium },
+
+  timeline: { marginTop: 18, gap: 10, paddingLeft: 2 },
+  step: { flexDirection: 'row', gap: 12 },
+  stepDot: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.greenTint },
+  stepDotFirst: { backgroundColor: colors.green },
+  stepText: { flex: 1, gap: 1 },
+
+  plans: { marginTop: 20, gap: 10 },
+  plan: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 68, paddingHorizontal: 14, paddingVertical: 12, borderRadius: 20, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
+  planOn: { borderWidth: 2, borderColor: colors.green, boxShadow: shadows.small, backgroundColor: '#F6FAF4' },
+  radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: 'rgba(90,70,40,0.3)', alignItems: 'center', justifyContent: 'center' },
+  radioOn: { backgroundColor: colors.green, borderColor: colors.green },
+  planInfo: { flex: 1, gap: 2 },
+  planTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  badge: { height: 20, paddingHorizontal: 8, borderRadius: 10, backgroundColor: colors.green, justifyContent: 'center' },
+  badgeText: { fontFamily: fonts.bold, fontSize: 11, color: colors.white },
+  planPrice: { alignItems: 'flex-end' },
+  priceBig: { fontFamily: fonts.display, fontSize: 18, lineHeight: 22, color: colors.ink },
+
   busy: { height: 56, borderRadius: 28, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
   links: { marginTop: 6, flexDirection: 'row', justifyContent: 'center', gap: 16 },
   link: { fontSize: 12, textDecorationLine: 'underline' },
