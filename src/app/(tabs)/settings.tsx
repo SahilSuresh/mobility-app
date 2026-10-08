@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, type Href } from 'expo-router';
 import { useState } from 'react';
-import { Linking, Pressable, StyleSheet, Switch, View } from 'react-native';
+import { Linking, Platform, Pressable, StyleSheet, Switch, View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
 import { T } from '@/components/T';
@@ -13,7 +13,7 @@ import { reloadApp, saveAppearance } from '@/lib/appearance';
 import { restSeconds } from '@/lib/holds';
 import { cancelReminders } from '@/lib/notifications';
 import { reminderSummary } from '@/lib/reminders';
-import { restore } from '@/lib/purchases';
+import { manageSubscription, purchasesLive, restore } from '@/lib/purchases';
 import { useAppStore } from '@/store/useAppStore';
 
 type RowProps = { label: string; value?: string; href?: Href; onPress?: () => void; last?: boolean };
@@ -58,9 +58,18 @@ export default function SettingsTab() {
   if (!plan) return null;
 
   const restorePurchases = async () => {
-    const active = await restore();
-    if (active) setPremium(true);
-    setNote(active ? 'Premium restored.' : active === null ? 'Restore works once the App Store is connected.' : 'No purchases to restore.');
+    const store = Platform.OS === 'android' ? 'Google Play' : 'App Store';
+    try {
+      const active = await restore();
+      if (active) setPremium(true);
+      setNote(active ? 'Premium restored.' : active === null ? `Restore works once the ${store} is connected.` : 'No purchases to restore.');
+    } catch {
+      setNote(`Couldn't reach the ${store}. Check your connection and try again.`);
+    }
+  };
+
+  const openSubscription = async () => {
+    if (!(await manageSubscription())) setNote('Manage your subscription in your App Store or Google Play account settings.');
   };
 
   return (
@@ -79,7 +88,7 @@ export default function SettingsTab() {
           <LinearGradient colors={isDark ? ['#2C5541', colors.card] : ['#2B3A31', colors.ink]} start={{ x: 1, y: 0 }} end={{ x: 0, y: 1 }} style={styles.premiumCard}>
             <View style={styles.flex}>
               <T variant="bodyStrong" color={colors.cream} style={{ fontSize: 17, fontFamily: fonts.bold }}>
-                Try Premium free
+                Get Premium
               </T>
               <T variant="caption" color="#CFC6B6" style={{ marginTop: 2 }}>
                 Unlock every session in your plan
@@ -136,6 +145,7 @@ export default function SettingsTab() {
       </T>
       <View style={styles.group}>
         <Row label="Reminders" value={reminderSummary(reminder)} href={{ pathname: '/reminder', params: { edit: '1' } }} />
+        {isPremium && purchasesLive() ? <Row label="Manage subscription" onPress={openSubscription} /> : null}
         <Row label="Restore purchases" onPress={restorePurchases} />
         <Row label="Help" onPress={() => Linking.openURL(config.links.help)} />
         <Row label="Privacy and terms" onPress={() => Linking.openURL(config.links.privacy)} last />

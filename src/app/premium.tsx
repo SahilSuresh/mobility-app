@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { BodyFigure } from '@/components/BodyFigure';
@@ -13,7 +13,7 @@ import type { AreaId } from '@/data/types';
 import { continueFirstRun, goBack } from '@/lib/flow';
 import { success, tap } from '@/lib/haptics';
 import { yearlySaving } from '@/lib/paywall';
-import { buy, loadOptions, purchasesLive, restore, type PaywallOption } from '@/lib/purchases';
+import { buy, loadOptions, purchasesTestMode, restore, type PaywallOption } from '@/lib/purchases';
 import { playStartSound } from '@/lib/sounds';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -38,17 +38,29 @@ export default function Premium() {
   const setPremium = useAppStore((s) => s.setPremium);
   const setFlag = useAppStore((s) => s.setFlag);
   const [options, setOptions] = useState<PaywallOption[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<PaywallOption['id']>('annual');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
 
-  useEffect(() => {
-    setFlag('seenPaywall');
+  const fetchOptions = useCallback(() => {
     loadOptions().then((list) => {
       setOptions(list);
+      setLoading(false);
       if (!list.some((o) => o.id === 'annual') && list[0]) setSelected(list[0].id);
     });
-  }, [setFlag]);
+  }, []);
+
+  useEffect(() => {
+    setFlag('seenPaywall');
+    fetchOptions();
+  }, [setFlag, fetchOptions]);
+
+  const retry = () => {
+    setLoading(true);
+    setMessage('');
+    fetchOptions();
+  };
 
   const close = () => (inFlow ? continueFirstRun('premium') : goBack());
   // After buying: on to the session that was waiting, or wherever we came from.
@@ -64,12 +76,15 @@ export default function Premium() {
     setBusy(true);
     setMessage('');
     try {
-      if (await buy(option)) {
+      const result = await buy(option);
+      if (result === 'premium') {
         // The trial or subscription has started: it sounds like every other start.
         playStartSound();
         setPremium(true);
         success();
         unlocked();
+      } else if (result !== 'cancelled') {
+        setMessage(BUY_MESSAGES[result]);
       }
     } catch {
       setMessage('The purchase did not go through. Please try again.');
@@ -80,12 +95,16 @@ export default function Premium() {
 
   const restorePurchases = async () => {
     setMessage('');
-    const active = await restore();
-    if (active) {
-      setPremium(true);
-      unlocked();
-    } else {
-      setMessage(active === null ? 'Restore works once the App Store is connected.' : 'No purchases to restore.');
+    try {
+      const active = await restore();
+      if (active) {
+        setPremium(true);
+        unlocked();
+      } else {
+        setMessage(active === null ? `Restore works once the ${storeName()} is connected.` : 'No purchases to restore.');
+      }
+    } catch {
+      setMessage(`Couldn't reach the ${storeName()}. Check your connection and try again.`);
     }
   };
 
@@ -114,7 +133,10 @@ export default function Premium() {
   const glows = Object.fromEntries(areas.map((a) => [a, 1])) as Partial<Record<AreaId, number>>;
   const trial = option?.trial;
   const cta = trial ? 'Start free trial' : 'Subscribe';
-  const terms = option ? `${trial ? `${trial} free, then ` : ''}${option.price} a ${option.period}. Cancel anytime.` : '';
+  // What Apple and Google ask a subscription screen to spell out: the price, how often, and how renewal and cancelling work.
+  const terms = option
+    ? `${trial ? `${trial} free, then ` : ''}${option.price} a ${option.period}. Renews automatically unless you cancel at least 24 hours before the end of the ${trial ? 'trial or ' : ''}current period, in your ${storeName()} settings.`
+    : '';
 
   return (
     <Screen modal>
@@ -170,6 +192,19 @@ export default function Premium() {
           </View>
         ) : null}
 
+        {!loading && options.length === 0 ? (
+          <View style={styles.unavailable}>
+            <T variant="body" color={colors.muted} center>
+              {`Couldn't load prices from the ${storeName()}. Check your connection and try again.`}
+            </T>
+            <Pressable accessibilityRole="button" onPress={retry} hitSlop={8} style={styles.retry}>
+              <T variant="smallStrong" color={colors.greenText}>
+                Try again
+              </T>
+            </Pressable>
+          </View>
+        ) : null}
+
         <View style={styles.plans} accessibilityRole="radiogroup">
           {options.map((o) => {
             const on = o.id === selected;
@@ -179,7 +214,7 @@ export default function Premium() {
                 key={o.id}
                 accessibilityRole="radio"
                 accessibilityState={{ checked: on }}
-                accessibilityLabel={`${o.title}, ${o.price} a ${o.period}${o.perMonth ? `, ${o.perMonth} a month` : ''}${o.trial ? `, ${o.trial} free` : ''}`}
+                accessibilityLabel={`${o.title}, ${o.price} a ${o.period}${o.trial ? `, ${o.trial} free first` : ''}${perMonthNote(o)}`}
                 onPress={() => {
                   tap();
                   setSelected(o.id);
@@ -196,11 +231,12 @@ export default function Premium() {
                       </View>
                     ) : null}
                   </View>
-                  <T variant="caption">{o.trial ? `${o.trial} free, then ${o.price} a ${o.period}` : `${o.price} a ${o.period}`}</T>
+                  <T variant="caption">{`${o.trial ? `${o.trial} free, then billed` : 'Billed'} every ${o.period}${perMonthNote(o)}`}</T>
                 </View>
+                {/* The amount actually charged is the biggest price on the screen (an App Store rule); the monthly equivalent stays small. */}
                 <View style={styles.planPrice}>
-                  <T style={styles.priceBig}>{o.perMonth ?? o.price}</T>
-                  <T variant="caption">a month</T>
+                  <T style={styles.priceBig}>{o.price}</T>
+                  <T variant="caption">{`a ${o.period}`}</T>
                 </View>
               </Pressable>
             );
@@ -208,7 +244,7 @@ export default function Premium() {
         </View>
       </ScrollView>
 
-      {busy ? (
+      {busy || loading ? (
         <View style={styles.busy}>
           <ActivityIndicator color={colors.onGreen} />
         </View>
@@ -218,21 +254,32 @@ export default function Premium() {
       <T variant="caption" center style={{ marginTop: 10 }}>
         {message || terms}
       </T>
-      {!purchasesLive() ? (
+      {purchasesTestMode() ? (
         <T variant="caption" center color={colors.greenText} style={{ marginTop: 4 }}>
           Test mode: example prices, no payment is taken.
         </T>
       ) : null}
       <View style={styles.links}>
         <T variant="caption" style={styles.link} onPress={() => Linking.openURL(config.links.terms)}>
-          Terms
+          Terms of Use
         </T>
         <T variant="caption" style={styles.link} onPress={() => Linking.openURL(config.links.privacy)}>
-          Privacy
+          Privacy Policy
         </T>
       </View>
     </Screen>
   );
+}
+
+const BUY_MESSAGES: Record<'pending' | 'inactive' | 'unavailable', string> = {
+  pending: 'Your payment is waiting for approval. Premium turns on as soon as it goes through.',
+  inactive: 'Your payment went through but Premium did not turn on. Tap Restore to try again.',
+  unavailable: 'Subscriptions are not available right now. Please try again later.',
+};
+
+/** ", £2.50 a month" for a yearly plan, so it can be compared with monthly; nothing for a monthly one. */
+function perMonthNote(o: PaywallOption): string {
+  return o.period === 'year' && o.perMonth ? `, ${o.perMonth} a month` : '';
 }
 
 /** Where subscriptions are managed: Google Play on Android, the App Store everywhere else. */
@@ -291,6 +338,8 @@ const styles = StyleSheet.create({
   busy: { height: 56, borderRadius: 28, backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center' },
   links: { marginTop: 6, flexDirection: 'row', justifyContent: 'center', gap: 16 },
   link: { fontSize: 12, textDecorationLine: 'underline' },
+  unavailable: { marginTop: 20, alignItems: 'center', gap: 4 },
+  retry: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 12 },
   activeStage: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   activeFigure: { width: 220, height: 220, alignItems: 'center', justifyContent: 'center' },
   activeHalo: { position: 'absolute', width: 220, height: 220, borderRadius: 110, backgroundColor: accent(0.09) },

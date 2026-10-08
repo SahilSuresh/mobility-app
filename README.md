@@ -57,15 +57,19 @@ Phone and computer need to be on the same Wi-Fi. If it won't connect, run `npx e
 
 ## Before you ship
 
-1. **Names:** replace `com.CHANGEME.mobility` and the app name in `app.json`, and `appName` + `links` in `src/constants/config.ts`.
-2. **Subscriptions:** in App Store Connect create a yearly and a monthly subscription (with a 7-day free trial). In RevenueCat add an entitlement called `premium` and an offering with **Annual** and **Monthly** packages.
-3. **Keys:** copy `.env.example` to `.env.local` and paste your RevenueCat public iOS key. Without a key the paywall runs in **test mode** (no payment taken).
-4. **Real purchases** need a development build instead of Expo Go:
+1. **Names:** the app is called **Unknot** (`name` in `app.json`, `appName` in `config.ts`). The app ID is `page.unknot.app` (iOS bundle identifier and Android package, from the domain); it becomes permanent with the first store upload. Published by Andrej Gazi as an individual, so the App Store shows that name as the seller. Contact email: getunknotstretch@gmail.com.
+2. **Paywall:** follow "Paywall setup" below. The code is done; what's left is accounts, products and keys.
+3. **Support, Privacy and Terms pages** live at **https://unknot.page** (`/`, `/privacy.html`, `/terms.html`), from the files in `docs/` (`docs/CNAME` holds the domain). The app links to them through `config.links`, and the App Store and Play listings need the same addresses. They name Andrej Gazi (UK) as the publisher and getunknotstretch@gmail.com as the contact. To put them online (the domain's DNS is on Cloudflare):
+   1. **Verify the domain on GitHub first** (stops anyone else's GitHub Pages claiming it): Sahil's GitHub → Settings → Pages → Add a domain → `unknot.page`. Add the TXT record it shows in Cloudflare → DNS, then press Verify.
+   2. Merge this work into `main`, then repo Settings → Pages → Deploy from a branch → `main`, folder `/docs`. The custom domain fills itself in from `docs/CNAME`.
+   3. In Cloudflare → DNS, add for `unknot.page` (Proxy status **DNS only**, grey cloud): A records `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153` and AAAA records `2606:50c0:8000::153`, `2606:50c0:8001::153`, `2606:50c0:8002::153`, `2606:50c0:8003::153`. Optionally a CNAME `www` → `sahilsuresh.github.io`.
+   4. Once GitHub shows the certificate is ready, tick **Enforce HTTPS**. `.page` domains only work over HTTPS, so the site stays blank until then (minutes to an hour).
+4. **Development build:** purchases need native code, so they don't run in Expo Go (there RevenueCat only shows mock prices). `expo-dev-client` and `eas.json` are set up:
 
    ```bash
-   npx expo install expo-dev-client
-   npx eas-cli@latest build:configure
-   npx eas-cli@latest build --profile development --platform ios
+   npx eas-cli@latest login
+   npx eas-cli@latest build --profile development --platform ios      # or android
+   npx expo start                                                       # then open the app from the dev build
    ```
 
 5. **TestFlight / App Store:**
@@ -76,6 +80,44 @@ Phone and computer need to be on the same Wi-Fi. If it won't connect, run `npx e
    ```
 
 EAS builds in the cloud, so no Mac is needed. You do need an Apple Developer account.
+
+### Paywall setup
+
+The paywall runs on RevenueCat (`react-native-purchases`). Everything about Premium is in `src/lib/purchases.ts`, and RevenueCat is the source of truth: Premium is checked at launch, every time the app comes to the front, and whenever RevenueCat reports a change (renewal, expiry, refund, a pending payment clearing).
+
+**Three modes**
+
+| Mode | When | What happens |
+| --- | --- | --- |
+| Test mode | Development build or web, no keys | Example prices (labelled), "Start free trial" unlocks Premium with no payment. |
+| Test Store | Development build with `EXPO_PUBLIC_REVENUECAT_TEST_KEY` | Real RevenueCat purchases with fake money, no App Store or Google Play needed. Subscriptions renew every few minutes. |
+| Live | Any build with the store keys | Real prices and payments (sandbox on TestFlight and Play testing tracks). |
+
+**What the paywall does for App Store review:** the amount actually charged is the biggest price on each plan (the monthly equivalent of yearly is small text), the terms under the button spell out the trial, price, period, automatic renewal and how to cancel, and Restore, Terms of Use and Privacy Policy are on the screen. On iPhone the free trial is only offered to people Apple says can still have one (`withoutUsedTrials` in `purchases.ts`); if Apple can't confirm it, no trial is promised (RevenueCat's advice). Google Play only offers trials to eligible people itself. Settings says "Get Premium" rather than promising a free trial.
+
+A **release** build never gives Premium away: with no keys, or if prices can't load, the paywall says so and offers "Try again". A Test Store key is ignored in release builds (RevenueCat would crash the app on purpose).
+
+**Step 1: RevenueCat (works today, no store accounts needed)**
+
+> **Done on 8 October 2026.** RevenueCat project **Mobility** (in Andrej's RevenueCat account): entitlement `premium`; Test Store products `premium_yearly` ($29.99 a year, 1-week free trial for anyone who has never bought) and `monthly` ($9.99 a month); the `default` offering (current) with `$rc_annual` → `premium_yearly` and `$rc_monthly` → `monthly`. The wizard's own `yearly` product ($79.99, no trial) is left over and unused, so it can be deleted. The Test Store key is in `.env.local` (git-ignored); ask for it rather than committing it. The app is linked to EAS as `@andrejga/mobility-app`.
+
+1. Create a free account at revenuecat.com and a project.
+2. **Entitlements:** add one with the identifier `premium` (must match `premiumEntitlement` in `config.ts`).
+3. **Apps and providers → Test configuration:** create a Test Store, then add two products to it: a yearly subscription with a 7-day free trial and a monthly one. Attach both to `premium`.
+4. **Offerings:** make the default ("current") offering with an **Annual** package and a **Monthly** package. The app picks packages by those types, not by name.
+5. Copy `.env.example` to `.env.local` and paste the Test Store key (`test_...`) into `EXPO_PUBLIC_REVENUECAT_TEST_KEY`.
+6. Make a development build (step 4 above), run `npx expo start`, and buy, cancel, restore and let a subscription lapse. Customers show up in the RevenueCat dashboard.
+
+**Step 2: App Store (iOS)**
+
+1. Apple Developer Program, then register the bundle ID `page.unknot.app` (Certificates, Identifiers & Profiles) and create the app in App Store Connect.
+2. Sign the Paid Applications agreement and add banking and tax (Business section). Without it, products never load.
+3. **Subscriptions:** one subscription group with a yearly and a monthly subscription, plus a 7-day free introductory offer on the yearly.
+4. In RevenueCat add an App Store app (bundle ID and an In-App Purchase key from App Store Connect), import the two products, attach them to `premium` and to the Annual and Monthly packages of the same offering.
+5. Put the public Apple key (`appl_...`) in `EXPO_PUBLIC_REVENUECAT_IOS_KEY`: in `.env.local` for local builds, and as an EAS environment variable (`npx eas-cli@latest env:create`) for cloud builds, since `.env.local` isn't uploaded.
+6. Test with a Sandbox tester (App Store Connect → Users and Access → Sandbox) on a development build or TestFlight.
+
+**Step 3: Google Play (Android):** the same with a Play Console app, a service-account credential for RevenueCat, the two subscriptions (a base plan each, a free-trial offer on yearly) and the `goog_...` key in `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY`. Play needs an upload of the app (internal testing track) before its products can be bought.
 
 ---
 
@@ -99,7 +141,7 @@ Everything below was built on the `onboarding` branch. It's written so a new cha
 - `npx expo start`, then press `w` for web. In a wide browser window the app sits in a phone-sized frame.
 - Onboarding only shows when there's no saved plan. Use **Settings → Testing → Start again from Welcome**, or open `http://localhost:8081/welcome` (or any `/onboarding/...` route) directly.
 - **Settings → Testing → Premium (test)** switches Premium on and off, to see both sides of the paywall.
-- Without RevenueCat keys the paywall runs in **test mode**: "Start free trial" unlocks Premium with no payment, and the prices shown are **examples** (£29.99 a year, £9.99 a month).
+- Without RevenueCat keys a development build runs the paywall in **test mode**: "Start free trial" unlocks Premium with no payment, and the prices shown are **examples** (£29.99 a year, £9.99 a month).
 
 ### Design direction
 
@@ -168,7 +210,7 @@ Everything below was built on the `onboarding` branch. It's written so a new cha
 - **UI UX Pro Max skill** (github.com/nextlevelbuilder/ui-ux-pro-max-skill) is now installed on Andre's machine (`~/.claude/skills/ui-ux-pro-max`) and was used for the Today work. On another machine, install it with `/plugin marketplace add nextlevelbuilder/ui-ux-pro-max-skill`, then `/plugin install ui-ux-pro-max@ui-ux-pro-max-skill`.
 - **Instant dark mode switch in store builds:** install and configure `expo-updates` (EAS Update) and call `Updates.reloadAsync()` from `reloadApp` in `src/lib/appearance.ts` for release builds. Time-of-day looks (dawn/dusk) were dropped on purpose.
 - **Welcome's "Grows with you"** isn't backed yet: levels don't go up on their own (only through "Too easy" / "Too hard" feedback, for Premium). Either build progression or change the copy.
-- **Store setup still needed:** yearly and monthly subscriptions with a 7-day free-trial introductory offer in App Store Connect and Google Play, a RevenueCat offering with Annual and Monthly packages, and the keys in `.env`. Replace the example.com Terms and Privacy links in `config.ts`.
+- **Store setup still needed:** yearly and monthly subscriptions with a 7-day free-trial introductory offer in App Store Connect and Google Play, a RevenueCat offering with Annual and Monthly packages, and the keys (see "Paywall setup"). Replace the example.com Terms and Privacy links in `config.ts`.
 - **Plans saved before this branch** keep their Monday-based sessions until edited (their first-week target is still worked out from `createdAt`).
 - Not yet tested on a physical phone. Everything was checked on web (headless Chrome screenshots of each flow), plus `typecheck` and `lint`.
 

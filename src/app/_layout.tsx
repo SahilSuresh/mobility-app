@@ -16,7 +16,7 @@ import { AppState, Platform, StyleSheet, useWindowDimensions, View } from 'react
 import { LaunchIntro } from '@/components/LaunchIntro';
 import { colors, isDark, shade } from '@/constants/theme';
 import { setupNotifications, syncNotifications } from '@/lib/notifications';
-import { fetchPremium, initPurchases } from '@/lib/purchases';
+import { fetchPremium, initPurchases, watchPremium } from '@/lib/purchases';
 import { frameFor } from '@/lib/viewport';
 import { useAppStore, useHydrated } from '@/store/useAppStore';
 
@@ -42,12 +42,22 @@ export default function RootLayout() {
     initPurchases();
   }, []);
 
+  // When RevenueCat is set up, the store is the source of truth for Premium: checked at launch and each time
+  // the app comes to the front, and updated as it changes (a renewal, an expiry, a refund, a pending payment clearing).
   useEffect(() => {
     if (!hydrated) return;
-    // When RevenueCat is set up, the store is the source of truth for Premium.
-    fetchPremium().then((active) => {
+    const apply = (active: boolean | null) => {
       if (active !== null) useAppStore.getState().setPremium(active);
+    };
+    fetchPremium().then(apply);
+    const stopWatching = watchPremium(apply);
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') fetchPremium().then(apply);
     });
+    return () => {
+      stopWatching();
+      sub.remove();
+    };
   }, [hydrated]);
 
   useEffect(() => {

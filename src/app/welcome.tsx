@@ -11,6 +11,7 @@ import { PoseBubble } from '@/components/PoseBubble';
 import { Rise } from '@/components/Rise';
 import { T } from '@/components/T';
 import { PrimaryButton, Screen } from '@/components/ui';
+import { config } from '@/constants/config';
 import { accent, colors, fonts, glass, NATIVE_DRIVER, REGION_COLORS, shadows, tint } from '@/constants/theme';
 import { AREA_NAMES } from '@/data/areas';
 import { durationLabel, getExercise } from '@/data/exercises';
@@ -102,7 +103,7 @@ export default function Welcome() {
             <Icon name="sprout" size={15} color={colors.onGreen} strokeWidth={2.2} />
           </View>
           <T variant="bodyStrong" style={styles.wordmark}>
-            Mobility
+            {config.appName}
           </T>
         </View>
       </Rise>

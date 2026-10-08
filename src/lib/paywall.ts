@@ -13,6 +13,13 @@ export type PlanOption = {
   trial?: string;
 };
 
+/**
+ * How a purchase ended: Premium is on, the person backed out, the store is still processing the payment
+ * (Ask to Buy, a slow card), it went through but the entitlement isn't on (a RevenueCat setup problem),
+ * or there was nothing to buy (the store isn't connected).
+ */
+export type BuyResult = 'premium' | 'cancelled' | 'pending' | 'inactive' | 'unavailable';
+
 /** Example prices for test mode, before the store is connected. Labelled as examples on the paywall. */
 export const TEST_OPTIONS: PlanOption[] = [
   { id: 'annual', title: 'Yearly', price: '£29.99', period: 'year', perMonth: '£2.50', amount: 29.99, trial: '7 days' },

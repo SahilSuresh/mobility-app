@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
 
+import { config } from '@/constants/config';
 import { accent, colors, fonts, NATIVE_DRIVER } from '@/constants/theme';
 
 import { T } from './T';
@@ -59,7 +60,7 @@ export function LaunchIntro({ onDone }: { onDone: () => void }) {
           </Animated.View>
         </View>
         <Animated.View style={[styles.text, { opacity: reduceMotion ? 1 : lift, transform: [{ translateY: reduceMotion ? 0 : textRise }] }]}>
-          <T style={styles.name}>Mobility</T>
+          <T style={styles.name}>{config.appName}</T>
           <T variant="kicker" color={colors.greenText} style={styles.tagline}>
             Loosen up · Move better
           </T>
