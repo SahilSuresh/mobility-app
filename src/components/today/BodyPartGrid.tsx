@@ -14,6 +14,7 @@ import { exercisesForArea } from '@/data/exercises';
 import type { AreaId, BodyView, PlannedSession } from '@/data/types';
 import { alpha } from '@/lib/color';
 import { startSession } from '@/lib/flow';
+import { playSound } from '@/lib/sounds';
 import { plantFor } from '@/lib/garden';
 import { tap } from '@/lib/haptics';
 import { AREA_MINUTES, makeAreaSession, makeAreasSession } from '@/lib/plan';
@@ -122,7 +123,10 @@ export function BodyPartGrid({ L, planAreas }: { L: LookTokens; planAreas: AreaI
   const start = (area: AreaId) => begin(sessionFor(area));
   // The body map's choice: one session across every chosen part, at the chosen time.
   const mix = picked.length > 0 ? makeAreasSession(picked, minutes, plan, areaLevels) : null;
-  const toggle = (area: AreaId) => setPicked((p) => (p.includes(area) ? p.filter((a) => a !== area) : [...p, area]));
+  const toggle = (area: AreaId) => {
+    playSound(picked.includes(area) ? 'deselect' : 'select');
+    setPicked((p) => (p.includes(area) ? p.filter((a) => a !== area) : [...p, area]));
+  };
 
   return (
     <Section
@@ -141,6 +145,7 @@ export function BodyPartGrid({ L, planAreas }: { L: LookTokens; planAreas: AreaI
               hitSlop={{ top: 8, bottom: 8 }}
               onPress={() => {
                 tap();
+                if (mode !== m) playSound('select');
                 setMode(m);
               }}
               style={[styles.switchOption, mode === m && { backgroundColor: alpha(L.accent, L.dark ? 0.18 : 0.12) }]}
@@ -163,6 +168,7 @@ export function BodyPartGrid({ L, planAreas }: { L: LookTokens; planAreas: AreaI
               accessibilityLabel={`${m} minutes`}
               onPress={() => {
                 tap();
+                if (!on) playSound('select');
                 setMinutes(m);
               }}
               style={[styles.time, { borderColor: on ? L.accent : L.chip.border, backgroundColor: on ? L.chip.onBg : L.chip.bg }]}
@@ -212,7 +218,15 @@ export function BodyPartGrid({ L, planAreas }: { L: LookTokens; planAreas: AreaI
                 <T variant="bodyStrong" color={L.ink} style={styles.flex} numberOfLines={2}>
                   {areasPhrase(picked).replace(/^./, (c) => c.toUpperCase())}
                 </T>
-                <Pressable accessibilityRole="button" accessibilityLabel="Clear chosen parts" hitSlop={10} onPress={() => setPicked([])}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear chosen parts"
+                  hitSlop={10}
+                  onPress={() => {
+                    playSound('deselect');
+                    setPicked([]);
+                  }}
+                >
                   <T variant="smallStrong" color={L.accent}>
                     Clear
                   </T>

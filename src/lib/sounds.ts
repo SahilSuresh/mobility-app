@@ -57,10 +57,15 @@ export function playSound(sound: Sound): void {
   }
 }
 
+/** Whether either session chime is on in Sound & timer. Start and the session-complete chord follow it. */
+export function chimesOn(): boolean {
+  const { sounds } = useAppStore.getState();
+  return sounds.moveEnd || sounds.readyEnd;
+}
+
 /** The sound for every Start button. It goes with the session chimes: turning them off in Sound & timer quiets it too. */
 export function playStartSound(): void {
-  const { sounds } = useAppStore.getState();
-  if (sounds.moveEnd || sounds.readyEnd) playSound('start');
+  if (chimesOn()) playSound('start');
 }
 
 let pending: ReturnType<typeof setTimeout> | null = null;

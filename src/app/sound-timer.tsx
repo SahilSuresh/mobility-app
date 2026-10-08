@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Switch, View } from 'react-native';
 
+import { Appear } from '@/components/Appear';
 import { Icon, type IconName } from '@/components/Icon';
 import { T } from '@/components/T';
 import { IconButton, Screen } from '@/components/ui';
@@ -25,83 +26,95 @@ export default function SoundTimer() {
       <View style={styles.header}>
         <IconButton icon="back" label="Back" onPress={goBack} />
       </View>
-      <T style={styles.title} accessibilityRole="header">
-        Sound & timer
-      </T>
-      <T variant="body" color={colors.muted} style={styles.sub}>
-        Follow along without looking at your phone.
-      </T>
+      {/* Builds in once: the title, then each section in turn. */}
+      <Appear>
+        <T style={styles.title} accessibilityRole="header">
+          Sound & timer
+        </T>
+      </Appear>
+      <Appear delay={80}>
+        <T variant="body" color={colors.muted} style={styles.sub}>
+          Follow along without looking at your phone.
+        </T>
+      </Appear>
 
-      <T variant="kicker" style={styles.section}>
-        Sounds
-      </T>
-      <View style={styles.group}>
-        <SettingRow
-          icon="check"
-          label="End of each exercise"
-          hint="A soft chime when a move's time is up"
-          on={sounds.moveEnd}
-          onChange={(on) => setSound('moveEnd', on)}
-          onPreview={() => playSound('done')}
-        />
-        <View style={styles.hairline} />
-        <SettingRow
-          icon="play"
-          label="When each stretch starts"
-          hint="A tone as your rest ends"
-          on={sounds.readyEnd}
-          onChange={(on) => setSound('readyEnd', on)}
-          onPreview={() => playSound('go')}
-        />
-      </View>
+      <Appear delay={160}>
+        <T variant="kicker" style={styles.section}>
+          Sounds
+        </T>
+        <View style={styles.group}>
+          <SettingRow
+            icon="check"
+            label="End of each exercise"
+            hint="A soft chime when a move's time is up"
+            on={sounds.moveEnd}
+            onChange={(on) => setSound('moveEnd', on)}
+            onPreview={() => playSound('done')}
+          />
+          <View style={styles.hairline} />
+          <SettingRow
+            icon="play"
+            label="When each stretch starts"
+            hint="A tone as your rest ends"
+            on={sounds.readyEnd}
+            onChange={(on) => setSound('readyEnd', on)}
+            onPreview={() => playSound('go')}
+          />
+        </View>
+      </Appear>
 
-      <T variant="kicker" style={styles.section}>
-        Voice
-      </T>
-      <View style={styles.group}>
-        <SettingRow
-          icon="person"
-          label="Voice guide"
-          hint="Talks you through rests, what's next, how long to hold and when to switch sides, and counts down the last 5 seconds"
-          on={sounds.voice}
-          onChange={(on) => setSound('voice', on)}
-          onPreview={() => speak(`Rest for ${readySeconds} seconds. Next: Child's pose. Hold for 1 minute.`)}
-        />
-      </View>
+      <Appear delay={260}>
+        <T variant="kicker" style={styles.section}>
+          Voice
+        </T>
+        <View style={styles.group}>
+          <SettingRow
+            icon="person"
+            label="Voice guide"
+            hint="Talks you through rests, what's next, how long to hold and when to switch sides, and counts down the last 5 seconds"
+            on={sounds.voice}
+            onChange={(on) => setSound('voice', on)}
+            onPreview={() => speak(`Rest for ${readySeconds} seconds. Next: Child's pose. Hold for 1 minute.`)}
+          />
+        </View>
+      </Appear>
 
-      <T variant="kicker" style={styles.section}>
-        Rest between stretches
-      </T>
-      <View style={styles.segments} accessibilityRole="radiogroup" accessibilityLabel="Rest between stretches">
-        {READY_OPTIONS.map((s) => {
-          const on = s === readySeconds;
-          return (
-            <Pressable
-              key={s}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: on }}
-              accessibilityLabel={`${s} seconds`}
-              onPress={() => {
-                tap();
-                setReadySeconds(s);
-              }}
-              style={({ pressed }) => [styles.segment, on && styles.segmentOn, pressed && !on && styles.pressed]}
-            >
-              <T style={[styles.segmentText, on && styles.segmentTextOn]}>{`${s}s`}</T>
-            </Pressable>
-          );
-        })}
-      </View>
-      <T variant="caption" style={styles.note} accessibilityLiveRegion="polite">
-        {`After each stretch you rest for ${readySeconds} seconds while the next one is announced, then it starts.`}
-      </T>
+      <Appear delay={360}>
+        <T variant="kicker" style={styles.section}>
+          Rest between stretches
+        </T>
+        <View style={styles.segments} accessibilityRole="radiogroup" accessibilityLabel="Rest between stretches">
+          {READY_OPTIONS.map((s) => {
+            const on = s === readySeconds;
+            return (
+              <Pressable
+                key={s}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: on }}
+                accessibilityLabel={`${s} seconds`}
+                onPress={() => {
+                  tap();
+                  if (!on) playSound('select');
+                  setReadySeconds(s);
+                }}
+                style={({ pressed }) => [styles.segment, on && styles.segmentOn, pressed && !on && styles.pressed]}
+              >
+                <T style={[styles.segmentText, on && styles.segmentTextOn]}>{`${s}s`}</T>
+              </Pressable>
+            );
+          })}
+        </View>
+        <T variant="caption" style={styles.note} accessibilityLiveRegion="polite">
+          {`After each stretch you rest for ${readySeconds} seconds while the next one is announced, then it starts.`}
+        </T>
+      </Appear>
 
-      <View style={styles.footer}>
+      <Appear delay={460} style={styles.footer}>
         <Icon name="sun" size={14} color={colors.faint} />
         <T variant="caption" style={styles.footerText}>
           Sounds and voice play over your music, and stay quiet when your phone is on silent.
         </T>
-      </View>
+      </Appear>
     </Screen>
   );
 }
@@ -152,7 +165,9 @@ function SettingRow({
         value={on}
         onValueChange={(next) => {
           onChange(next);
+          // On: hear what you've turned on. Off: a soft "off" pop.
           if (next) onPreview();
+          else playSound('deselect');
         }}
         trackColor={{ true: colors.green, false: colors.line }}
       />

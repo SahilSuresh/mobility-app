@@ -15,6 +15,7 @@ import { getExercise } from '@/data/exercises';
 import type { AreaId, Exercise, PlannedSession } from '@/data/types';
 import { alpha } from '@/lib/color';
 import { tap } from '@/lib/haptics';
+import { playSound } from '@/lib/sounds';
 import { minutesForMoves } from '@/lib/plan';
 
 import { CARD } from './Section';
@@ -167,6 +168,7 @@ export function ExerciseGroups({ L, session, focus, onFocus, onStart, startLabel
   const chosen = groups.find((g) => g.area === focus);
 
   const choose = (next: AreaId | 'all') => {
+    if (next !== focus) playSound('select');
     onFocus(next);
     setOpen(true);
     const group = groups.find((g) => g.area === next);

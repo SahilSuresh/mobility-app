@@ -7,6 +7,7 @@ import type { LookTokens } from '@/constants/looks';
 import { fonts } from '@/constants/theme';
 import { PROGRAMMES } from '@/data/content';
 import { tap } from '@/lib/haptics';
+import { playSound } from '@/lib/sounds';
 import { useAppStore } from '@/store/useAppStore';
 
 import { CARD, Section } from './Section';
@@ -23,6 +24,7 @@ export function QuickProgrammes({ L }: { L: LookTokens }) {
 
   const open = (id: string) => {
     tap();
+    playSound('next');
     const s = startProgramme(id);
     if (s) router.push({ pathname: '/preview', params: { id: s.id } });
   };

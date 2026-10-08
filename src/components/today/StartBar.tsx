@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Appear } from '@/components/Appear';
 import { HoldToStart } from '@/components/HoldToStart';
 import { PrimaryButton } from '@/components/ui';
 import type { LookTokens } from '@/constants/looks';
@@ -22,11 +23,13 @@ export function StartBar({ L, onStart, what }: Props) {
   const insets = useSafeAreaInsets();
   return (
     <View pointerEvents="box-none" style={[styles.wrap, { bottom: Math.max(insets.bottom, 12) + TAB_BAR + 12 }]}>
-      {L.start === 'hold' ? (
-        <HoldToStart label={`Hold to start · ${what}`} onStart={onStart} bg={L.button.bg} text={L.button.text} halo={L.button.halo} />
-      ) : (
-        <PrimaryButton label={`Start · ${what}`} icon="play" onPress={onStart} />
-      )}
+      <Appear kind="pop" delay={420}>
+        {L.start === 'hold' ? (
+          <HoldToStart label={`Hold to start · ${what}`} onStart={onStart} bg={L.button.bg} text={L.button.text} halo={L.button.halo} />
+        ) : (
+          <PrimaryButton label={`Start · ${what}`} icon="play" onPress={onStart} />
+        )}
+      </Appear>
     </View>
   );
 }

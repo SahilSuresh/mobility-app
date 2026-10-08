@@ -6,6 +6,7 @@ import type { LookTokens } from '@/constants/looks';
 import { fonts } from '@/constants/theme';
 import { AREA_NAMES } from '@/data/areas';
 import { PROGRAMMES, type Programme } from '@/data/content';
+import { playSound } from '@/lib/sounds';
 import { useAppStore } from '@/store/useAppStore';
 
 import { Icon } from './Icon';
@@ -39,7 +40,10 @@ export function ProgrammeList({ L, hideFree }: { L: LookTokens; /** Leave out th
       return;
     }
     const s = startProgramme(id);
-    if (s) router.push({ pathname: '/preview', params: { id: s.id } });
+    if (s) {
+      playSound('next');
+      router.push({ pathname: '/preview', params: { id: s.id } });
+    }
   };
 
   return (

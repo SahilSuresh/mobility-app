@@ -1,7 +1,10 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
+import { useReducedMotion } from 'react-native-reanimated';
 
+import { Appear } from '@/components/Appear';
 import { Icon } from '@/components/Icon';
 import { ProgrammeList } from '@/components/ProgrammeList';
 import { T } from '@/components/T';
@@ -25,7 +28,6 @@ export default function PlanTab() {
   const now = useNow();
   const L = LOOKS[resolveLook(choice, now)];
 
-
   if (!plan) return null;
 
   const today = weekdayIndex(now);
@@ -39,7 +41,8 @@ export default function PlanTab() {
 
   return (
     <Screen scroll tabBar backdrop={L.background ? <LinearGradient colors={L.background} style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]} /> : undefined}>
-      <View style={styles.header}>
+      {/* The page builds in once, top to bottom, as the tab first opens: the week's sessions one by one. */}
+      <Appear style={styles.header}>
         <View style={styles.flex}>
           <T style={[styles.title, { color: L.ink }]} accessibilityRole="header">
             Your plan
@@ -59,55 +62,83 @@ export default function PlanTab() {
             Edit
           </T>
         </Pressable>
-      </View>
+      </Appear>
 
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`${plan.days} days a week, ${plan.minutes} minutes, ${plan.areas.length} areas. Change your routine`}
-        onPress={() => router.push({ pathname: '/onboarding/days', params: { edit: '1' } })}
-        hitSlop={4}
-        style={({ pressed }) => [styles.pill, styles.summary, { backgroundColor: L.chip.bg, borderColor: L.chip.border }, flat, pressed && styles.pressed]}
-      >
-        <Icon name="calendar" size={14} color={L.accent} strokeWidth={2} />
-        <T variant="smallStrong" color={L.ink}>
-          {plan.days === 7 ? 'Every day' : `${plan.days} days a week`} · {plan.minutes} min · {plan.areas.length} {plan.areas.length === 1 ? 'area' : 'areas'}
-        </T>
-        <Icon name="chevron" size={14} color={L.muted} strokeWidth={2.4} />
-      </Pressable>
+      <Appear delay={90}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`${plan.days} days a week, ${plan.minutes} minutes, ${plan.areas.length} areas. Change your routine`}
+          onPress={() => router.push({ pathname: '/onboarding/days', params: { edit: '1' } })}
+          hitSlop={4}
+          style={({ pressed }) => [styles.pill, styles.summary, { backgroundColor: L.chip.bg, borderColor: L.chip.border }, flat, pressed && styles.pressed]}
+        >
+          <Icon name="calendar" size={14} color={L.accent} strokeWidth={2} />
+          <T variant="smallStrong" color={L.ink}>
+            {plan.days === 7 ? 'Every day' : `${plan.days} days a week`} · {plan.minutes} min · {plan.areas.length} {plan.areas.length === 1 ? 'area' : 'areas'}
+          </T>
+          <Icon name="chevron" size={14} color={L.muted} strokeWidth={2.4} />
+        </Pressable>
+      </Appear>
 
-      <View style={styles.sectionHeader}>
+      <Appear delay={170} style={styles.sectionHeader}>
         <T style={[styles.heading, { color: L.ink }]}>{`Week ${weekNumber(plan, now)}`}</T>
         <T variant="body" color={L.muted} style={styles.tabular}>
           {doneCount} of {sessions.length} done
         </T>
-      </View>
-      <View style={[styles.track, { backgroundColor: L.rule }]}>
-        <View style={[styles.fill, { width: `${progress * 100}%`, backgroundColor: L.bright }]} />
-      </View>
+      </Appear>
+      <Appear delay={170} style={[styles.track, { backgroundColor: L.rule }]}>
+        <GrowFill progress={progress} color={L.bright} />
+      </Appear>
 
-      <View style={[styles.card, { borderColor: L.chip.border }, flat]}>
-        <LinearGradient colors={L.dark ? [L.heroBase, L.background?.[1] ?? L.heroBase] : [L.heroBase, L.heroBase]} style={StyleSheet.absoluteFill} />
-        {sessions.map((s, i) => (
-          <Row
-            key={s.id}
-            L={L}
-            session={s}
-            date={dateOfWeekday(s.weekday, now).getDate()}
-            first={i === 0}
-            status={done.has(s.id) ? 'done' : next?.session.id === s.id ? 'next' : 'later'}
-            label={next?.session.id === s.id ? (s.weekday === today ? 'Today' : next.when === 'upcoming' ? 'Next' : 'Catch up') : undefined}
-          />
-        ))}
-        {sessions.length === 0 ? (
-          <T variant="caption" center color={L.muted} style={styles.empty}>
-            No sessions planned this week.
-          </T>
-        ) : null}
-      </View>
+      <Appear delay={230}>
+        <View style={[styles.card, { borderColor: L.chip.border }, flat]}>
+          <LinearGradient colors={L.dark ? [L.heroBase, L.background?.[1] ?? L.heroBase] : [L.heroBase, L.heroBase]} style={StyleSheet.absoluteFill} />
+          {sessions.map((s, i) => (
+            <Appear key={s.id} delay={300 + i * 70}>
+              <Row
+                L={L}
+                session={s}
+                date={dateOfWeekday(s.weekday, now).getDate()}
+                first={i === 0}
+                status={done.has(s.id) ? 'done' : next?.session.id === s.id ? 'next' : 'later'}
+                label={next?.session.id === s.id ? (s.weekday === today ? 'Today' : next.when === 'upcoming' ? 'Next' : 'Catch up') : undefined}
+              />
+            </Appear>
+          ))}
+          {sessions.length === 0 ? (
+            <T variant="caption" center color={L.muted} style={styles.empty}>
+              No sessions planned this week.
+            </T>
+          ) : null}
+        </View>
+      </Appear>
 
-      <ProgrammeList L={L} />
+      <Appear delay={300 + sessions.length * 70 + 80}>
+        <ProgrammeList L={L} />
+      </Appear>
     </Screen>
   );
+}
+
+/** The week's progress bar, filling up to how much of the week is done. */
+function GrowFill({ progress, color }: { progress: number; color: string }) {
+  const reduceMotion = useReducedMotion();
+  const [amount] = useState(() => new Animated.Value(reduceMotion ? progress : 0));
+
+  useEffect(() => {
+    const anim = Animated.timing(amount, {
+      toValue: progress,
+      duration: reduceMotion ? 0 : 900,
+      delay: reduceMotion ? 0 : 350,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    });
+    anim.start();
+    return () => anim.stop();
+  }, [amount, progress, reduceMotion]);
+
+  const width = amount.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] });
+  return <Animated.View style={[styles.fill, { width, backgroundColor: color }]} />;
 }
 
 /** One session in the week list: day and date, name, length, and Start / done / chevron on the right. */

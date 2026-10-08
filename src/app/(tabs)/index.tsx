@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Appear } from '@/components/Appear';
 import { Icon } from '@/components/Icon';
 import { ProgrammeList } from '@/components/ProgrammeList';
 import { T } from '@/components/T';
@@ -101,7 +102,8 @@ export default function Today() {
       backdrop={L.background ? <LinearGradient colors={L.background} style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]} /> : undefined}
       overlay={showStart ? <StartBar L={L} onStart={start} what={startLabel} /> : null}
     >
-      <View style={styles.header}>
+      {/* The page builds in once, top to bottom, as the tab first opens. */}
+      <Appear style={styles.header}>
         <T variant="bodyStrong" color={L.muted} style={styles.flex}>
           {longDate(now)}
         </T>
@@ -113,25 +115,35 @@ export default function Today() {
           <Icon name={streakIcon(run)} size={17} color={L.accent} strokeWidth={1.9} />
           <T style={[styles.streakText, { color: L.accent }]}>{String(run)}</T>
         </View>
-      </View>
+      </Appear>
 
       {trained ? (
         cardOpen ? (
-          <DoneStage L={L} today={todays} run={run} now={now} dayNumber={daysShownUp} weekDone={!session} onClose={fold} />
+          <Appear delay={80}>
+            <DoneStage L={L} today={todays} run={run} now={now} dayNumber={daysShownUp} weekDone={!session} onClose={fold} />
+          </Appear>
         ) : (
-          <DoneBanner L={L} today={todays} onOpen={() => setCardOpen(true)} />
+          <Appear delay={80}>
+            <DoneBanner L={L} today={todays} onOpen={() => setCardOpen(true)} />
+          </Appear>
         )
       ) : null}
 
       {session ? (
         <>
-          <T style={[styles.title, { color: L.ink }]} accessibilityRole="header">
-            {session.title}
-          </T>
-          <T variant="body" color={L.muted} style={styles.details}>
-            {`${when}, ${session.minutes} minutes, ${session.exerciseIds.length} moves at level ${level}`}
-          </T>
-          <ExerciseGroups L={L} session={session} focus={focus} onFocus={setChosenArea} onStart={start} startLabel={startLabel} />
+          <Appear delay={140}>
+            <T style={[styles.title, { color: L.ink }]} accessibilityRole="header">
+              {session.title}
+            </T>
+          </Appear>
+          <Appear delay={200}>
+            <T variant="body" color={L.muted} style={styles.details}>
+              {`${when}, ${session.minutes} minutes, ${session.exerciseIds.length} moves at level ${level}`}
+            </T>
+          </Appear>
+          <Appear delay={280}>
+            <ExerciseGroups L={L} session={session} focus={focus} onFocus={setChosenArea} onStart={start} startLabel={startLabel} />
+          </Appear>
         </>
       ) : trained ? null : (
         <>
@@ -144,9 +156,15 @@ export default function Today() {
         </>
       )}
 
-      <BodyPartGrid L={L} planAreas={plan.areas} />
-      <QuickProgrammes L={L} />
-      <ProgrammeList L={L} hideFree />
+      <Appear delay={380}>
+        <BodyPartGrid L={L} planAreas={plan.areas} />
+      </Appear>
+      <Appear delay={460}>
+        <QuickProgrammes L={L} />
+      </Appear>
+      <Appear delay={540}>
+        <ProgrammeList L={L} hideFree />
+      </Appear>
     </Screen>
   );
 }
