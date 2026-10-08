@@ -1,14 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { Appear, STAGGER } from '@/components/Appear';
 import { AreaChips } from '@/components/AreaChips';
 import { BodyMap, ViewToggle } from '@/components/BodyFigure';
 import { PremiumSheet } from '@/components/Sheet';
 import { T } from '@/components/T';
 import { IconButton, PrimaryButton, Screen } from '@/components/ui';
-import { AREA_NAMES, sortAreas, VISIBLE } from '@/data/areas';
+import { AREA_NAMES, AREA_ORDER, sortAreas, VISIBLE } from '@/data/areas';
 import type { AreaId, BodyView } from '@/data/types';
 import { goBack } from '@/lib/flow';
+import { playSound, preloadSounds } from '@/lib/sounds';
 import { useViewport } from '@/lib/viewport';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -21,7 +23,12 @@ export default function EditAreas() {
   const [sheet, setSheet] = useState<{ area: AreaId; adding: boolean } | null>(null);
   const { height } = useViewport();
   const mapHeight = Math.max(240, Math.min(440, height - 420));
+  useEffect(() => preloadSounds(), []);
   if (!plan) return null;
+
+  // The screen builds in like onboarding: the toggle, the body, the areas one by one with a soft pop, then Save.
+  const CHIPS_AT = 500;
+  const BUTTON_AT = CHIPS_AT + AREA_ORDER.length * STAGGER + 150;
 
   const changed = sortAreas(selected).join() !== sortAreas(plan.areas).join();
 
@@ -32,6 +39,7 @@ export default function EditAreas() {
       setSheet({ area, adding });
       return;
     }
+    playSound(adding ? 'select' : 'deselect');
     setSelected(adding ? [...selected, area] : selected.filter((a) => a !== area));
     // Picking an area from the list turns the body round if it can only be seen from the other side.
     if (adding && !VISIBLE[view].includes(area)) setView(view === 'front' ? 'back' : 'front');
@@ -46,28 +54,31 @@ export default function EditAreas() {
         </T>
         <View style={{ width: 44 }} />
       </View>
-      <View style={styles.toggle}>
+      <Appear delay={80} style={styles.toggle}>
         <ViewToggle view={view} onChange={setView} />
-      </View>
-      <View style={styles.stage}>
+      </Appear>
+      <Appear delay={200} style={styles.stage}>
         <BodyMap view={view} selected={selected} onToggle={toggle} height={mapHeight} />
-      </View>
-      <AreaChips selected={selected} onToggle={toggle} />
-      {isPremium ? (
-        <PrimaryButton
-          label="Save"
-          disabled={!changed || selected.length === 0}
-          style={styles.cta}
-          onPress={() => {
-            updatePlan({ areas: selected });
-            goBack();
-          }}
-        />
-      ) : (
-        <T variant="caption" center style={styles.cta}>
-          Tap an area to add it to your plan.
-        </T>
-      )}
+      </Appear>
+      <AreaChips selected={selected} onToggle={toggle} introDelay={CHIPS_AT} />
+      <Appear delay={BUTTON_AT}>
+        {isPremium ? (
+          <PrimaryButton
+            label="Save"
+            disabled={!changed || selected.length === 0}
+            style={styles.cta}
+            onPress={() => {
+              playSound('next');
+              updatePlan({ areas: selected });
+              goBack();
+            }}
+          />
+        ) : (
+          <T variant="caption" center style={styles.cta}>
+            Tap an area to add it to your plan.
+          </T>
+        )}
+      </Appear>
       <PremiumSheet
         visible={sheet !== null}
         onClose={() => setSheet(null)}
