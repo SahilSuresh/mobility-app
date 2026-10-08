@@ -5,6 +5,21 @@ import type { PoseKey } from './types';
  * torso: thick stroke · back: the limbs further from you (lighter) · limbs: nearer limbs
  * h: head centre · d: green dot on the area being stretched. The floor sits at y ≈ 82.
  */
+/** Standing, kneeling (or on all fours), sitting or lying: the position each move is done in. */
+export type Position = 'standing' | 'kneeling' | 'seated' | 'lying';
+
+export const POSITION: Record<PoseKey, Position> = {
+  reach: 'standing', fold: 'standing', neck: 'standing', chinTuck: 'standing', armCross: 'standing', goalpost: 'standing',
+  sideBend: 'standing', legSwing: 'standing', squat: 'standing', quad: 'standing', calf: 'standing', armsOut: 'standing',
+  wristCircle: 'standing', prayer: 'standing', reversePrayer: 'standing', fingerPull: 'standing', forearmTurn: 'standing',
+  wallArm: 'standing', calfRaise: 'standing', doorway: 'standing', sideLunge: 'standing', triceps: 'standing',
+  cat: 'kneeling', thread: 'kneeling', lunge: 'kneeling', couch: 'kneeling', heelSit: 'kneeling', ankleRock: 'kneeling',
+  downDog: 'kneeling', tabletop: 'kneeling', child: 'kneeling', birdDog: 'kneeling', puppy: 'kneeling', lungeReach: 'kneeling',
+  pigeon: 'kneeling',
+  butterfly: 'seated', seated: 'seated', twist: 'seated', footFlex: 'seated',
+  cobra: 'lying', sphinx: 'lying', hug: 'lying', bridge: 'lying', supineTwist: 'lying', legRaise: 'lying',
+};
+
 export type Pose = {
   torso: string;
   back: string;
@@ -50,6 +65,24 @@ export const POSES: Record<PoseKey, Pose> = {
   tabletop: { torso: 'M34 54 L62 54', back: 'M37 55 L37 82 L22 82 M59 55 L59 82', limbs: 'M33 55 L33 82 L17 82 M63 55 L63 82', h: [71, 49], d: [20, 81] },
   footFlex: { torso: 'M36 79 L45 60', back: 'M36 79 L57 80 L79 81', limbs: 'M36 80 L57 81 L79 80 L80 74 M45 62 L55 72 L62 78', h: [49, 52], d: [79, 78] },
   calfRaise: { torso: 'M50 54 L50 35', back: '', limbs: 'M46 54 L45 67 L44 77 L49 82 M54 54 L55 67 L56 77 L61 82 M48 37 L43 50 L41 60 M52 37 L57 50 L59 60', h: [50, 26], d: [52, 80] },
+  // Stepping through a doorway, forearm on the frame behind you at shoulder height.
+  doorway: { torso: 'M49 57 L54 38', back: 'M49 57 L42 70 L38 82 M53 40 L38 41 L37 27', limbs: 'M49 57 L57 70 L61 82 M54 40 L57 49 L58 58', h: [56, 29], d: [57, 43] },
+  // Lying on your front, propped on your forearms.
+  sphinx: { torso: 'M46 80 Q58 78 62 68', back: 'M46 80 L30 80 L14 80', limbs: 'M46 81 L30 82 L14 82 M62 69 L63 81 L77 81', h: [68, 61], d: [53, 79] },
+  // On your back, knees bent and dropped to one side.
+  supineTwist: { torso: 'M46 79 L26 79', back: 'M48 79 L62 71 L69 78 M27 79 L41 82', limbs: 'M46 79 L60 73 L67 81 M30 80 L44 83', h: [17, 77], d: [40, 79] },
+  // On your back, one leg straight up, hands behind the thigh.
+  legRaise: { torso: 'M46 79 L26 79', back: 'M48 79 L58 64 L67 82 M27 79 L41 82', limbs: 'M46 79 L48 62 L50 45 M30 80 L39 72 L47 66', h: [17, 77], d: [48, 66] },
+  // Hands and knees, opposite arm and leg reaching long.
+  birdDog: { torso: 'M34 55 Q48 55 62 55', back: 'M37 56 L37 82 L22 82 M59 56 L85 51', limbs: 'M33 56 L20 55 L7 54 M63 56 L63 82', h: [70, 49], d: [48, 55] },
+  // Knees under hips, chest sinking to the floor, arms long in front.
+  puppy: { torso: 'M40 58 Q52 64 64 73', back: 'M42 59 L41 82 L26 82 M63 74 L76 79 L89 81', limbs: 'M39 59 L38 82 L23 82 M65 74 L78 80 L91 82', h: [68, 79], d: [55, 66] },
+  // Feet wide, sitting into one hip, the other leg long.
+  sideLunge: { torso: 'M42 64 L43 45', back: '', limbs: 'M40 64 L32 72 L30 82 M44 64 L58 73 L72 82 M41 47 L35 56 L33 65 M45 47 L42 57 L36 65', h: [43, 36], d: [55, 71] },
+  // One arm overhead, elbow bent, the other hand easing the elbow back.
+  triceps: { torso: 'M50 57 L50 38', back: '', limbs: 'M47 57 L47 70 L47 82 M53 57 L53 70 L53 82 M48 40 L42 32 L54 23 M52 40 L56 24 L48 33', h: [50, 29], d: [56, 31] },
+  // Long lunge, hands down inside the front foot, one arm reaching to the ceiling.
+  lungeReach: { torso: 'M44 62 L58 47', back: 'M44 62 L30 78 L12 81 M57 48 L60 64 L62 81', limbs: 'M44 62 L62 63 L65 82 M58 47 L60 33 L62 19', h: [64, 41], d: [46, 62] },
 };
 
 /**
@@ -124,4 +157,22 @@ export const START: Record<PoseKey, Pose> = {
   footFlex: { torso: 'M36 79 L45 60', back: 'M36 79 L57 80 L79 81', limbs: 'M36 80 L57 81 L79 80 L86 82 M45 62 L55 72 L62 78', h: [49, 52], d: [80, 80] },
   // Standing, feet flat.
   calfRaise: { torso: 'M50 57 L50 38', back: '', limbs: 'M46 57 L45 70 L45 80 L50 82 M54 57 L55 70 L55 80 L60 82 M48 40 L43 53 L41 63 M52 40 L57 53 L59 63', h: [50, 29], d: [52, 80] },
+  // Standing in the doorway, forearm already on the frame.
+  doorway: { torso: 'M48 57 L48 38', back: 'M48 57 L48 70 L48 82 M48 40 L34 41 L33 27', limbs: 'M48 57 L48 70 L48 82 M48 40 L50 49 L51 58', h: [48, 29], d: [52, 43] },
+  // Lying flat on your front, forearms down.
+  sphinx: { torso: 'M46 80 Q58 80 68 79', back: 'M46 80 L30 80 L14 80', limbs: 'M46 81 L30 82 L14 82 M67 79 L66 81 L78 81', h: [76, 77], d: [53, 79] },
+  // On your back, knees bent and upright.
+  supineTwist: { torso: 'M46 79 L26 79', back: 'M48 79 L58 64 L67 82 M27 79 L41 82', limbs: 'M46 79 L56 63 L64 82 M30 80 L44 83', h: [17, 77], d: [40, 79] },
+  // On your back, both knees bent.
+  legRaise: { torso: 'M46 79 L26 79', back: 'M48 79 L58 64 L67 82 M27 79 L41 82', limbs: 'M46 79 L56 63 L64 82 M30 80 L37 82 L44 83', h: [17, 77], d: [48, 66] },
+  // On hands and knees.
+  birdDog: { torso: 'M34 55 Q48 55 62 55', back: 'M37 56 L37 82 L22 82 M59 56 L59 82', limbs: 'M33 56 L33 82 L17 82 M63 56 L63 82', h: [70, 49], d: [48, 55] },
+  // On hands and knees.
+  puppy: { torso: 'M40 55 Q52 55 64 55', back: 'M42 56 L41 82 L26 82 M63 56 L63 69 L63 82', limbs: 'M39 56 L38 82 L23 82 M65 56 L65 69 L65 82', h: [72, 49], d: [55, 55] },
+  // Standing with feet wide.
+  sideLunge: { torso: 'M50 57 L50 38', back: '', limbs: 'M47 57 L40 70 L33 82 M53 57 L60 70 L67 82 M48 40 L46 49 L45 58 M52 40 L54 49 L55 58', h: [50, 29], d: [55, 71] },
+  // Standing, arms by your sides.
+  triceps: { torso: 'M50 57 L50 38', back: '', limbs: 'M47 57 L47 70 L47 82 M53 57 L53 70 L53 82 M48 40 L46 49 L45 58 M52 40 L54 49 L55 58', h: [50, 29], d: [56, 31] },
+  // Long lunge, both hands down inside the front foot.
+  lungeReach: { torso: 'M44 62 L58 47', back: 'M44 62 L30 78 L12 81 M57 48 L59 64 L60 81', limbs: 'M44 62 L62 63 L65 82 M58 47 L61 64 L63 81', h: [64, 43], d: [46, 62] },
 };

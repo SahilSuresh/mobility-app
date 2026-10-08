@@ -13,7 +13,7 @@ import { colors, fonts, glass, POSE_COLORS, REGION_COLORS, tint } from '@/consta
 import { AREA_NAMES } from '@/data/areas';
 import type { AreaId } from '@/data/types';
 import { relativeDay } from '@/lib/dates';
-import { areaCounts, minutesOf, sessionMinutes, streak, thisWeek, weeklyTarget, weeksOnTarget } from '@/lib/progress';
+import { areaCounts, minutesOf, plannedDone, sessionMinutes, streak, thisWeek, weeklyTarget, weeksOnTarget } from '@/lib/progress';
 import { useNow } from '@/lib/useNow';
 import { useAppStore } from '@/store/useAppStore';
 import { resolveLook, useLook } from '@/store/useLook';
@@ -41,13 +41,13 @@ export default function ProgressTab() {
       </View>
 
       <Card big style={styles.weekCard}>
-        <Ring size={92} stroke={9} progress={week.length / Math.max(1, weeklyTarget(plan, now))}>
-          <T variant="h2">{`${week.length}/${weeklyTarget(plan, now)}`}</T>
+        <Ring size={92} stroke={9} progress={plannedDone(plan, history, now) / Math.max(1, weeklyTarget(plan, now))}>
+          <T variant="h2">{`${plannedDone(plan, history, now)}/${weeklyTarget(plan, now)}`}</T>
         </Ring>
         <View>
           <T variant="kicker">This week</T>
           <T variant="stat" style={styles.minutes}>{`${minutesOf(week)} min`}</T>
-          <T variant="small">{`${week.length} of ${weeklyTarget(plan, now)} sessions`}</T>
+          <T variant="small">{`${plannedDone(plan, history, now)} of ${weeklyTarget(plan, now)} sessions`}</T>
         </View>
       </Card>
 

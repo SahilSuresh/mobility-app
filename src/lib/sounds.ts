@@ -7,7 +7,7 @@ import { useAppStore } from '@/store/useAppStore';
  * Short sounds. The session player's chimes: `done` when a move ends, `go` when the rest ends.
  * Soft pops for picking areas: `pop` as each one appears, `select` and `deselect` as it's tapped.
  * `build` for "Build my plan": three rising bell notes. `ready` as the plan appears. `start` for every Start button.
- * `next` for Continue in onboarding: two warm marimba notes.
+ * `next` for Continue in onboarding: two warm marimba notes. `tab` for switching tabs: one soft marimba tock.
  */
 const SOURCES = {
   done: require('../../assets/sounds/done.wav'),
@@ -19,6 +19,7 @@ const SOURCES = {
   ready: require('../../assets/sounds/ready.wav'),
   start: require('../../assets/sounds/start.wav'),
   next: require('../../assets/sounds/next.wav'),
+  tab: require('../../assets/sounds/tab.wav'),
 } as const;
 
 export type Sound = keyof typeof SOURCES;

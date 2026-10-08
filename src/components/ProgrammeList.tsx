@@ -74,7 +74,7 @@ export function ProgrammeList({ L, hideFree }: { L: LookTokens; /** Leave out th
   );
 }
 
-/** One programme: its drawing, name, length and areas, progress once started, and what tapping does. */
+/** One programme: its drawing, name, length and what it's for, progress once started, and what tapping does. */
 function ProgrammeRow({
   L,
   programme: p,
@@ -119,7 +119,7 @@ function ProgrammeRow({
           {p.days} days · {p.minutes} min a day
         </T>
         <T variant="caption" color={L.faint} numberOfLines={2} style={styles.areas}>
-          {areas}
+          {p.about}
         </T>
         {started ? (
           <View style={styles.progress}>

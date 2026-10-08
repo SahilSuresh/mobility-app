@@ -59,6 +59,9 @@ const SHAPES = {
   bars: [{ r: [4.5, 12, 4, 8.5, 2], fill: true }, { r: [10, 4.5, 4, 16, 2], fill: true }, { r: [15.5, 9, 4, 11.5, 2], fill: true }],
   /** Progress: range of motion opening up. */
   arc: [{ p: 'M3 18h18' }, { p: ARC }, { p: 'M12 18H4.5A7.5 7.5 0 0 1 17.3 12.7z', fill: true }],
+  /** Routines: your own list of moves, with one being added. */
+  routine: [{ r: [3.5, 4, 13, 16, 3.5], fill: true }, { p: 'M7 9h6M7 12.5h6M7 16h3.5', inner: true }, { p: 'M19 13v6M16 16h6' }],
+  search: [{ c: [10.5, 10.5, 6.5] }, { p: 'M15.5 15.5L20 20' }],
   sliders: [{ p: 'M4 8h8.1M17.9 8H20M4 16h2.1M11.9 16H20' }, { c: [15, 8, 2.9], fill: true }, { c: [9, 16, 2.9], fill: true }],
 
   /** Streak: steady growth rather than intensity. */
@@ -80,6 +83,8 @@ const SHAPES = {
   ],
   /** Gentle sessions. */
   feather: [{ p: 'M19 5c-6 0-12 5-12 12v2h2c7 0 10-7 10-14z', fill: true }, { p: 'M5 21l9.5-11.5' }],
+  /** A note to take care: when to ease off a move. */
+  info: [{ c: [12, 12, 9], fill: true }, { p: 'M12 11v5.5', inner: true }, { c: [12, 7.8, 0.4], inner: true }],
   mat: [{ r: [3, 12.5, 14, 5, 1.5], fill: true }, { c: [17.5, 15, 3.5], fill: true }, { c: [17.5, 15, 0.9], inner: true }],
   wall: [{ r: [3, 4, 9, 16, 1.5], fill: true }, { p: 'M3 9.5h9M3 15h9M7.5 4v5.5M5.5 9.5V15M9.5 9.5V15M7.5 15v5', inner: true }, { p: 'M12 20h9' }],
   /** How a session felt: the meter a third, two thirds or all the way open. */

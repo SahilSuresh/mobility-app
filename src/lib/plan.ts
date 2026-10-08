@@ -1,7 +1,8 @@
 import { AREA_NAMES, areasLabel, FOCUS_TITLES, sortAreas } from '@/data/areas';
 import { DAY_PATTERNS, type Programme } from '@/data/content';
 import { EXERCISES, moveSeconds } from '@/data/exercises';
-import type { AreaId, DaysPerWeek, Exercise, Goal, Level, Minutes, Plan, PlannedSession, SessionKind } from '@/data/types';
+import { POSITION, type Position } from '@/data/poses';
+import type { AreaId, DaysPerWeek, Exercise, Goal, Level, Minutes, Plan, PlannedSession, Routine, SessionKind } from '@/data/types';
 import { weekdayIndex } from './dates';
 
 export type AreaLevels = Partial<Record<AreaId, Level>>;
@@ -244,6 +245,36 @@ export function makeAreaSession(area: AreaId, minutes: number, plan: Plan, level
 }
 
 /** How long a list of moves takes, rounded to whole minutes (at least one), counting the pause between moves. */
+/** One of your routines as a session: its moves in your order, played through `rounds` times. */
+export function routineSession(routine: Routine): PlannedSession {
+  const moves = routine.moves.filter((id) => EXERCISES.some((e) => e.id === id));
+  const exerciseIds = Array.from({ length: Math.max(1, routine.rounds) }, () => moves).flat();
+  const areas = sortAreas([...new Set(moves.map((id) => EXERCISES.find((e) => e.id === id)?.area).filter((a): a is AreaId => !!a))]);
+  return {
+    id: `routine-${routine.id}`,
+    weekday: weekdayIndex(new Date()),
+    title: routine.name,
+    kind: 'custom',
+    areas,
+    exerciseIds,
+    minutes: minutesForMoves(exerciseIds),
+    routineId: routine.id,
+  };
+}
+
+/**
+ * Orders moves so you get down to the floor once: standing first, then kneeling, sitting and lying,
+ * keeping your own order within each. The calmest moves end up last.
+ */
+export function fewerUpsAndDowns(ids: string[]): string[] {
+  const rank: Record<Position, number> = { standing: 0, kneeling: 1, seated: 2, lying: 3 };
+  const at = (id: string) => {
+    const e = EXERCISES.find((x) => x.id === id);
+    return e ? rank[POSITION[e.pose]] : 0;
+  };
+  return ids.map((id, i) => ({ id, i })).sort((a, b) => at(a.id) - at(b.id) || a.i - b.i).map((x) => x.id);
+}
+
 export function minutesForMoves(ids: string[]): number {
   const seconds = ids.reduce((t, id) => {
     const e = EXERCISES.find((x) => x.id === id);
@@ -288,24 +319,62 @@ function fitToMinutes(ids: string[], minutes: number): string[] {
   return out;
 }
 
-/** Today's session for a programme. Easy programmes use beginner moves only. */
+/**
+ * A programme's moves for one day, sized to its minutes. The first move (the gentle start) and the last (the calm finish)
+ * always stay. From halfway through, the harder `later` moves come in near the end, once you're warm, and are kept first;
+ * the main moves fill the time left, in order. A long day goes round the main moves again.
+ */
+export function programmeMoves(programme: Programme, day: number): string[] {
+  const known = (ids: string[]) => ids.filter((id) => EXERCISES.some((e) => e.id === id));
+  const [first, ...rest] = known(programme.moves);
+  if (!first) return [];
+  const finish = rest.length ? rest[rest.length - 1] : null;
+  const main = rest.slice(0, -1);
+  const later = programme.later && day > Math.ceil(programme.days / 2) ? known(programme.later) : [];
+
+  const cost = (id: string) => {
+    const e = EXERCISES.find((x) => x.id === id);
+    return e ? moveSeconds(e) + TRANSITION : 0;
+  };
+  const budget = programme.minutes * 60 + 20;
+  let used = cost(first) + (finish ? cost(finish) : 0) + later.reduce((t, id) => t + cost(id), 0);
+
+  const middle: string[] = [];
+  for (let round = 0; round < 3 && main.length; round++) {
+    let added = false;
+    for (const id of main) {
+      if (middle[middle.length - 1] === id || used + cost(id) > budget) continue;
+      middle.push(id);
+      used += cost(id);
+      added = true;
+    }
+    if (!added || used >= budget - 30) break;
+  }
+  return [first, ...middle, ...later, ...(finish ? [finish] : [])];
+}
+
+/** Today's session for a programme: its own sequence for this day. */
 export function makeProgrammeSession(programme: Programme, day: number, plan: Plan, levels: AreaLevels): PlannedSession {
-  const picked = pickExercises({
-    areas: programme.areas,
-    levels,
-    fallbackLevel: plan.level,
-    goal: plan.goal,
-    minutes: programme.minutes,
-    recovery: !!programme.easy,
-    seed: day * 31,
-  });
+  // Every programme has its own moves; the area picker is only a fallback if none of them exist.
+  const own = programmeMoves(programme, day);
+  const picked = own.length
+    ? own
+    : pickExercises({
+        areas: programme.areas,
+        levels,
+        fallbackLevel: plan.level,
+        goal: plan.goal,
+        minutes: programme.minutes,
+        recovery: !!programme.easy,
+        seed: day * 31,
+      });
   return {
     id: `prog-${programme.id}`,
     weekday: weekdayIndex(new Date()),
     title: `${programme.title} · Day ${day}`,
     kind: 'programme',
     areas: programme.areas,
-    exerciseIds: fitToMinutes(picked, programme.minutes),
+    exerciseIds: own.length ? own : fitToMinutes(picked, programme.minutes),
     minutes: programme.minutes,
     programmeId: programme.id,
   };

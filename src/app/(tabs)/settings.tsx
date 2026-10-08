@@ -10,9 +10,9 @@ import { config } from '@/constants/config';
 import { colors, fonts, isDark, shade, shadows, tint } from '@/constants/theme';
 import { AREA_NAMES } from '@/data/areas';
 import { reloadApp, saveAppearance } from '@/lib/appearance';
-import { timeLabel } from '@/lib/dates';
 import { restSeconds } from '@/lib/holds';
 import { cancelReminders } from '@/lib/notifications';
+import { reminderSummary } from '@/lib/reminders';
 import { restore } from '@/lib/purchases';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -43,7 +43,6 @@ function Row({ label, value, href, onPress, last }: RowProps) {
 
 export default function SettingsTab() {
   const plan = useAppStore((s) => s.plan);
-  const account = useAppStore((s) => s.account);
   const reminder = useAppStore((s) => s.reminder);
   const isPremium = useAppStore((s) => s.isPremium);
   const setPremium = useAppStore((s) => s.setPremium);
@@ -136,12 +135,7 @@ export default function SettingsTab() {
         General
       </T>
       <View style={styles.group}>
-        <Row label="Reminders" value={reminder ? timeLabel(reminder.hour, reminder.minute) : 'Off'} href={{ pathname: '/reminder', params: { edit: '1' } }} />
-        <Row
-          label="Account"
-          value={account ? (account.provider === 'apple' ? 'Apple' : (account.email ?? 'Email')) : 'Not signed in'}
-          href={{ pathname: '/save', params: { edit: '1' } }}
-        />
+        <Row label="Reminders" value={reminderSummary(reminder)} href={{ pathname: '/reminder', params: { edit: '1' } }} />
         <Row label="Restore purchases" onPress={restorePurchases} />
         <Row label="Help" onPress={() => Linking.openURL(config.links.help)} />
         <Row label="Privacy and terms" onPress={() => Linking.openURL(config.links.privacy)} last />

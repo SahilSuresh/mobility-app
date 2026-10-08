@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { BodyMap, ViewToggle } from '@/components/BodyFigure';
@@ -26,11 +26,14 @@ import { CARD, Section } from './Section';
 /** Card width: about two and a half fit on a phone, so the next one peeks in and says "swipe for more". */
 const BLOCK_WIDTH = 140;
 
-/** "Not trained yet", "Trained today", "Yesterday" or "6 days ago": why a card is where it is in the row. */
+/**
+ * When you last trained this part: "Not trained yet", "Trained today", "Trained yesterday", "Trained 6 days ago".
+ * It says why a card is where it is in the row; the card itself is always a fresh session at the time picked above.
+ */
 function lastLabel(days: number | null): string {
   if (days === null) return 'Not trained yet';
   if (days === 0) return 'Trained today';
-  return days === 1 ? 'Yesterday' : `${days} days ago`;
+  return days === 1 ? 'Trained yesterday' : `Trained ${days} days ago`;
 }
 
 type BlockProps = {
@@ -102,8 +105,9 @@ export function BodyPartGrid({ L, planAreas }: { L: LookTokens; planAreas: AreaI
   const setMinutes = useAppStore((s) => s.setAreaMinutes);
   const startCustom = useAppStore((s) => s.startCustom);
   const now = useNow();
-  // The body map leads: tap where you feel it. The list is one switch away.
-  const [mode, setMode] = useState<'row' | 'body'>('body');
+  // The list leads, every time Today opens; the body map is one switch away.
+  const [mode, setMode] = useState<'row' | 'body'>('row');
+  useFocusEffect(useCallback(() => setMode('row'), []));
   const [view, setView] = useState<BodyView>('front');
   // Every part chosen on the body map; one session trains them all.
   const [picked, setPicked] = useState<AreaId[]>([]);
@@ -136,7 +140,7 @@ export function BodyPartGrid({ L, planAreas }: { L: LookTokens; planAreas: AreaI
       sub={mode === 'body' ? 'Tap every part you want to train, then start.' : undefined}
       aside={
         <View style={[styles.switch, { borderColor: L.chip.border }]} accessibilityRole="tablist">
-          {(['body', 'row'] as const).map((m) => (
+          {(['row', 'body'] as const).map((m) => (
             <Pressable
               key={m}
               accessibilityRole="tab"

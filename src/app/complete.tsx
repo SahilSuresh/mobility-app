@@ -15,7 +15,7 @@ import { AREA_NAMES, sortAreas } from '@/data/areas';
 import type { AreaId, CompletedSession, Feedback } from '@/data/types';
 import { continueFirstRun } from '@/lib/flow';
 import { chimesOn, playSound, preloadSounds } from '@/lib/sounds';
-import { sessionMinutes, streak, thisWeek, weekDays, weeklyTarget } from '@/lib/progress';
+import { plannedDone, sessionMinutes, streak, weekDays, weeklyTarget } from '@/lib/progress';
 import { useViewport } from '@/lib/viewport';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -95,7 +95,7 @@ export default function Complete() {
   const figure = compact ? 132 : 158;
   // The halo is a circle just big enough to frame both figures, and the hero is sized to hold it.
   const halo = Math.round(figure * 1.25);
-  const weekCount = thisWeek(history, now).length;
+  const weekCount = plannedDone(plan, history, now);
   const target = weeklyTarget(plan, now);
   const run = streak(plan, history, now);
   const minutes = sessionMinutes(record);

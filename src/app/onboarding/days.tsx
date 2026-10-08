@@ -24,6 +24,7 @@ const KIND_LABEL: Record<PlannedSession['kind'], string> = {
   recovery: 'Gentle, to end the week',
   quick: 'Quick',
   programme: 'Programme',
+  custom: 'Your routine',
 };
 
 // In onboarding the screen builds itself in order: the question, the week day by day, the days picker, then the button.

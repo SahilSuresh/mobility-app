@@ -11,6 +11,7 @@ export default function TabsLayout() {
     <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => <FloatingTabBar {...props} />}>
       <Tabs.Screen name="index" />
       <Tabs.Screen name="plan" />
+      <Tabs.Screen name="routines" />
       <Tabs.Screen name="progress" />
       <Tabs.Screen name="settings" />
     </Tabs>

@@ -7,7 +7,6 @@ import { sortAreas } from '@/data/areas';
 import { PROGRAMMES } from '@/data/content';
 import { getExercise } from '@/data/exercises';
 import type {
-  Account,
   AreaId,
   CompletedSession,
   DaysPerWeek,
@@ -18,8 +17,9 @@ import type {
   Plan,
   PlannedSession,
   Reminder,
+  Routine,
 } from '@/data/types';
-import { scheduleReminders } from '@/lib/notifications';
+import { syncNotifications } from '@/lib/notifications';
 import { READY_SECONDS, type Holds } from '@/lib/holds';
 import { buildPlan, generateSessions, makeProgrammeSession, planStartDay, type AreaLevels } from '@/lib/plan';
 
@@ -32,7 +32,7 @@ const safeStorage = {
 
 type Draft = { areas: AreaId[]; goal: Goal; level: Level; days: DaysPerWeek; weekdays?: number[]; minutes: Minutes };
 export type SoundSettings = { moveEnd: boolean; readyEnd: boolean; voice: boolean };
-type Flags = { seenSave: boolean; seenPaywall: boolean; seenReminder: boolean };
+type Flags = { seenPaywall: boolean; seenReminder: boolean };
 
 type Data = {
   draft: Draft;
@@ -41,7 +41,6 @@ type Data = {
   history: CompletedSession[];
   /** The current one-off session (stiff-today or programme day). */
   extra: PlannedSession | null;
-  account: Account | null;
   isPremium: boolean;
   reminder: Reminder | null;
   flags: Flags;
@@ -54,6 +53,8 @@ type Data = {
   readySeconds: number;
   /** How long to train one body part from Today's "Explore by body part", remembered between visits. */
   areaMinutes: number;
+  /** Your own routines, built on the Routines tab, newest first. */
+  routines: Routine[];
 };
 
 type Actions = {
@@ -66,7 +67,6 @@ type Actions = {
   startCustom: (session: PlannedSession) => void;
   startProgramme: (programmeId: string) => PlannedSession | null;
   setPremium: (value: boolean) => void;
-  setAccount: (account: Account | null) => void;
   setReminder: (reminder: Reminder | null) => void;
   setFlag: (flag: keyof Flags) => void;
   /** Set your own hold for a move (seconds per side), or null to go back to its default. */
@@ -74,6 +74,9 @@ type Actions = {
   setSound: (key: keyof SoundSettings, on: boolean) => void;
   setReadySeconds: (seconds: number) => void;
   setAreaMinutes: (minutes: number) => void;
+  /** Save a routine: a new one (no id) goes to the top; an existing one is updated in place. Returns its id. */
+  saveRoutine: (routine: Pick<Routine, 'name' | 'moves' | 'rounds'> & { id?: string }) => string;
+  deleteRoutine: (id: string) => void;
   reset: () => void;
 };
 
@@ -85,15 +88,15 @@ const initialData: Data = {
   areaLevels: {},
   history: [],
   extra: null,
-  account: null,
   isPremium: false,
   reminder: null,
-  flags: { seenSave: false, seenPaywall: false, seenReminder: false },
+  flags: { seenPaywall: false, seenReminder: false },
   programmeDays: {},
   holds: {},
   sounds: { moveEnd: true, readyEnd: true, voice: true },
   readySeconds: READY_SECONDS,
   areaMinutes: 5,
+  routines: [],
 };
 
 const newId = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
@@ -111,9 +114,10 @@ function levelsFor(areas: AreaId[], existing: AreaLevels, fallback: Level): Area
 /** How much each answer moves the level: easy up, hard down, just right nowhere. */
 const FEEDBACK_STEP: Record<Feedback, number> = { easy: 1, right: 0, hard: -1 };
 
-/** Keeps reminders on the right days with the right titles after the plan changes. */
-function syncReminders(plan: Plan, reminder: Reminder | null): void {
-  if (reminder) scheduleReminders(plan, reminder).catch(() => undefined);
+/** Rewrites reminders after anything they depend on changes: the plan, the reminder settings, or a finished session. */
+function syncReminders(): void {
+  const { plan, reminder, history } = useAppStore.getState();
+  syncNotifications({ plan, reminder, history }).catch(() => undefined);
 }
 
 export const useAppStore = create<AppState>()(
@@ -130,7 +134,7 @@ export const useAppStore = create<AppState>()(
       },
 
       updatePlan: (patch) => {
-        const { plan, areaLevels, reminder } = get();
+        const { plan, areaLevels } = get();
         if (!plan) return;
         const next = { ...plan, ...patch, areas: sortAreas(patch.areas ?? plan.areas) };
         const levels = levelsFor(next.areas, areaLevels, plan.level);
@@ -140,7 +144,7 @@ export const useAppStore = create<AppState>()(
           areaLevels: { ...areaLevels, ...levels },
           draft: { ...get().draft, areas: next.areas, days: next.days, weekdays: next.weekdays, minutes: next.minutes },
         });
-        syncReminders(updated, reminder);
+        syncReminders();
       },
 
       recordSession: (session, seconds, moves) => {
@@ -158,10 +162,13 @@ export const useAppStore = create<AppState>()(
         };
         set((s) => ({
           history: [record, ...s.history],
+          routines: session.routineId ? s.routines.map((r) => (r.id === session.routineId ? { ...r, lastDone: record.date } : r)) : s.routines,
           programmeDays: session.programmeId
             ? { ...s.programmeDays, [session.programmeId]: (s.programmeDays[session.programmeId] ?? 0) + 1 }
             : s.programmeDays,
         }));
+        // Today's remaining reminders go quiet now you've trained.
+        syncReminders();
         return id;
       },
 
@@ -178,6 +185,7 @@ export const useAppStore = create<AppState>()(
         const levels: AreaLevels = { ...areaLevels };
         for (const a of record.areas) levels[a] = clampLevel((levels[a] ?? plan.level) + step);
         set({ areaLevels: levels, plan: { ...plan, sessions: generateSessions({ ...plan, levels, startDay: planStartDay(plan) }) } });
+        syncReminders();
       },
 
       startCustom: (session) => set({ extra: session }),
@@ -193,12 +201,24 @@ export const useAppStore = create<AppState>()(
       },
 
       setPremium: (value) => set({ isPremium: value }),
-      setAccount: (account) => set({ account }),
-      setReminder: (reminder) => set({ reminder }),
+      setReminder: (reminder) => {
+        set({ reminder });
+        syncReminders();
+      },
       setFlag: (flag) => set((s) => ({ flags: { ...s.flags, [flag]: true } })),
       setSound: (key, on) => set((s) => ({ sounds: { ...s.sounds, [key]: on } })),
       setReadySeconds: (seconds) => set({ readySeconds: seconds }),
       setAreaMinutes: (minutes) => set({ areaMinutes: minutes }),
+      saveRoutine: ({ id, name, moves, rounds }) => {
+        if (id && get().routines.some((r) => r.id === id)) {
+          set((s) => ({ routines: s.routines.map((r) => (r.id === id ? { ...r, name, moves, rounds } : r)) }));
+          return id;
+        }
+        const routine: Routine = { id: newId(), name, moves, rounds, createdAt: new Date().toISOString() };
+        set((s) => ({ routines: [routine, ...s.routines] }));
+        return routine.id;
+      },
+      deleteRoutine: (id) => set((s) => ({ routines: s.routines.filter((r) => r.id !== id) })),
       setHold: (exerciseId, seconds) =>
         set((s) => {
           const holds = { ...s.holds };
@@ -218,7 +238,6 @@ export const useAppStore = create<AppState>()(
         areaLevels: s.areaLevels,
         history: s.history,
         extra: s.extra,
-        account: s.account,
         isPremium: s.isPremium,
         reminder: s.reminder,
         flags: s.flags,
@@ -227,6 +246,7 @@ export const useAppStore = create<AppState>()(
         sounds: s.sounds,
         readySeconds: s.readySeconds,
         areaMinutes: s.areaMinutes,
+        routines: s.routines,
       }),
     },
   ),

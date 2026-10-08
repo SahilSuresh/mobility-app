@@ -9,6 +9,7 @@ import { T } from '@/components/T';
 import { IconButton, PrimaryButton, Screen, TextButton } from '@/components/ui';
 import { colors, fonts, REGION_COLORS, tint } from '@/constants/theme';
 import { AREA_NAMES, sortAreas } from '@/data/areas';
+import { PROGRAMMES } from '@/data/content';
 import { EQUIPMENT_LABEL, getExercise } from '@/data/exercises';
 import type { Exercise } from '@/data/types';
 import { goBack } from '@/lib/flow';
@@ -45,6 +46,8 @@ export default function SessionPreview() {
   const totalSeconds = all.reduce((t, e) => t + moveTime(e, holds) + readySeconds, 0);
   const totalMinutes = Math.max(1, Math.round(totalSeconds / 60));
   const changed = moves.filter((e) => holds[e.id] !== undefined);
+  // A programme day says what the programme is for.
+  const about = session.programmeId ? PROGRAMMES.find((p) => p.id === session.programmeId)?.about : undefined;
   const equipment = [...new Set(all.map((e) => e.equipment))].filter((q) => q !== 'none');
 
   const adjust = (e: Exercise, by: number) => {
@@ -82,6 +85,13 @@ export default function SessionPreview() {
           {session.title}
         </T>
       </Appear>
+      {about ? (
+        <Appear delay={130}>
+          <T variant="body" color={colors.muted} style={styles.about}>
+            {about}
+          </T>
+        </Appear>
+      ) : null}
       <View style={styles.facts}>
         {/* The time pops again whenever a change to a hold changes it. */}
         <Appear key={totalMinutes} kind="pop" delay={touched ? 0 : 180}>
@@ -188,6 +198,7 @@ function StepButton({ icon, label, disabled, onPress }: { icon: IconName; label:
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  about: { marginTop: 6 },
   kicker: { marginTop: 14, marginBottom: 4 },
   facts: { marginTop: 14, flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   fact: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 30, paddingHorizontal: 11, borderRadius: 15, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, maxWidth: '100%' },

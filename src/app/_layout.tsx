@@ -6,15 +6,16 @@ import { Figtree_600SemiBold } from '@expo-google-fonts/figtree/600SemiBold';
 import { Figtree_700Bold } from '@expo-google-fonts/figtree/700Bold';
 import { Lora_600SemiBold } from '@expo-google-fonts/lora/600SemiBold';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import * as Notifications from 'expo-notifications';
+import { router, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { AppState, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { LaunchIntro } from '@/components/LaunchIntro';
 import { colors, isDark, shade } from '@/constants/theme';
-import { setupNotifications } from '@/lib/notifications';
+import { setupNotifications, syncNotifications } from '@/lib/notifications';
 import { fetchPremium, initPurchases } from '@/lib/purchases';
 import { frameFor } from '@/lib/viewport';
 import { useAppStore, useHydrated } from '@/store/useAppStore';
@@ -53,6 +54,32 @@ export default function RootLayout() {
     if (ready) SplashScreen.hideAsync();
   }, [ready]);
 
+  // Each time the app comes to the front, reminders are rewritten, so they always match today's plan and progress.
+  useEffect(() => {
+    if (!hydrated) return;
+    const sync = () => {
+      const { plan, reminder, history } = useAppStore.getState();
+      syncNotifications({ plan, reminder, history }).catch(() => undefined);
+    };
+    sync();
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') sync();
+    });
+    return () => sub.remove();
+  }, [hydrated]);
+
+  // Tapping a reminder opens where it points: Today, or your plan for the week-ahead one.
+  useEffect(() => {
+    if (!ready || Platform.OS === 'web') return;
+    const open = (response: Notifications.NotificationResponse | null) => {
+      const url = response?.notification.request.content.data?.url;
+      if (typeof url === 'string' && url !== '/') router.navigate(url as never);
+    };
+    Notifications.getLastNotificationResponseAsync().then(open).catch(() => undefined);
+    const sub = Notifications.addNotificationResponseReceivedListener(open);
+    return () => sub.remove();
+  }, [ready]);
+
   if (!ready) return null;
 
   return (
@@ -66,11 +93,11 @@ export default function RootLayout() {
           <Stack.Screen name="preview" options={{ presentation: 'modal' }} />
           <Stack.Screen name="session" options={{ presentation: 'fullScreenModal', gestureEnabled: false }} />
           <Stack.Screen name="complete" options={{ animation: 'fade', gestureEnabled: false }} />
-          <Stack.Screen name="save" options={{ gestureEnabled: false }} />
           <Stack.Screen name="premium" options={{ presentation: 'modal' }} />
           <Stack.Screen name="reminder" />
           <Stack.Screen name="sound-timer" />
           <Stack.Screen name="edit-areas" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="routine-builder" options={{ presentation: 'modal' }} />
           <Stack.Screen name="share" options={{ presentation: 'modal' }} />
           <Stack.Screen name="exercise/[id]" />
           <Stack.Screen name="area/[id]" />

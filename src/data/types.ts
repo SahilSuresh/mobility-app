@@ -47,7 +47,16 @@ export type PoseKey =
   | 'wallArm'
   | 'tabletop'
   | 'footFlex'
-  | 'calfRaise';
+  | 'calfRaise'
+  | 'doorway'
+  | 'sphinx'
+  | 'supineTwist'
+  | 'legRaise'
+  | 'birdDog'
+  | 'puppy'
+  | 'sideLunge'
+  | 'triceps'
+  | 'lungeReach';
 
 export type Exercise = {
   id: string;
@@ -62,11 +71,15 @@ export type Exercise = {
   goals: Goal[];
   /** One line shown in the session player. */
   tip: string;
+  /** Why this move is worth doing: what it does for you, in plain words. Shown on the exercise screen. */
+  why: string;
+  /** When to ease off or skip it, for moves that need care. */
+  careful?: string;
   /** Short numbered steps shown on the exercise screen. */
   steps: string[];
 };
 
-export type SessionKind = 'mixed' | 'focus' | 'recovery' | 'quick' | 'programme';
+export type SessionKind = 'mixed' | 'focus' | 'recovery' | 'quick' | 'programme' | 'custom';
 
 export type PlannedSession = {
   id: string;
@@ -78,8 +91,23 @@ export type PlannedSession = {
   exerciseIds: string[];
   minutes: Minutes;
   programmeId?: string;
+  /** For one of your own routines: which one, so finishing it is remembered on its card. */
+  routineId?: string;
   /** For an adjusted version of a planned session: the planned session it stands in for, so finishing it counts. */
   replaces?: string;
+};
+
+/** A routine you built yourself from any stretches, in your own order, saved to do again. */
+export type Routine = {
+  id: string;
+  name: string;
+  /** Exercise ids, in the order they play. */
+  moves: string[];
+  /** How many times the whole list plays through: 1, 2 or 3. */
+  rounds: number;
+  createdAt: string;
+  /** When you last finished it. */
+  lastDone?: string;
 };
 
 export type Plan = {
@@ -106,12 +134,17 @@ export type CompletedSession = {
   feedback?: Feedback;
 };
 
-export type Account = {
-  provider: 'apple' | 'email';
-  id: string;
-  email?: string;
-  name?: string;
-};
-
 export type ReminderSlot = 'morning' | 'afternoon' | 'evening' | 'custom';
-export type Reminder = { slot: ReminderSlot; hour: number; minute: number };
+export type Reminder = {
+  slot: ReminderSlot;
+  hour: number;
+  minute: number;
+  /** The days to remind on (0 = Monday), or undefined for your plan's days. */
+  days?: number[];
+  /** Streak saver: an 8 pm nudge on plan days you haven't trained yet. On unless turned off. */
+  streak?: boolean;
+  /** Come-back nudge: after a few days without a session. On unless turned off. */
+  comeback?: boolean;
+  /** Week ahead: Sunday evening, what next week holds. Off unless turned on. */
+  weekly?: boolean;
+};

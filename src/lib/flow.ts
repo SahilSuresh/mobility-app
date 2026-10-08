@@ -24,16 +24,12 @@ export function goHome(): void {
 }
 
 /**
- * After the first session: save progress → Premium offer → reminder → home.
+ * After the first session: Premium offer → reminder → home.
  * Each step is shown once; anything already done or seen is skipped.
  */
-export function continueFirstRun(from: 'complete' | 'save' | 'premium' | 'reminder'): void {
+export function continueFirstRun(from: 'complete' | 'premium' | 'reminder'): void {
   const s = useAppStore.getState();
-  if (from === 'complete' && !s.flags.seenSave && !s.account) {
-    router.replace('/save');
-    return;
-  }
-  if ((from === 'complete' || from === 'save') && !s.flags.seenPaywall && !s.isPremium) {
+  if (from === 'complete' && !s.flags.seenPaywall && !s.isPremium) {
     router.replace({ pathname: '/premium', params: { flow: '1' } });
     return;
   }

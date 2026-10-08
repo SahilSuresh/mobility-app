@@ -45,9 +45,9 @@
         }
       ],
       "expo-sharing",
-      "expo-apple-authentication",
       "expo-sqlite",
-      ["expo-audio", { "microphonePermission": false, "recordAudioAndroid": false, "enableBackgroundPlayback": false }]
+      ["expo-audio", { "microphonePermission": false, "recordAudioAndroid": false, "enableBackgroundPlayback": false }],
+      ["expo-notifications", { "color": "#1F5A3E" }]
     ],
     "experiments": {
       "typedRoutes": false,

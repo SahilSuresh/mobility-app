@@ -5,12 +5,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { accent, colors, fonts, isDark, shade, tint } from '@/constants/theme';
 import { tap } from '@/lib/haptics';
+import { playSound } from '@/lib/sounds';
 
 import { Icon, type IconName } from './Icon';
 
 const TABS: Record<string, { label: string; icon: IconName }> = {
   index: { label: 'Today', icon: 'today' },
   plan: { label: 'Plan', icon: 'plan' },
+  routines: { label: 'Routines', icon: 'routine' },
   progress: { label: 'Progress', icon: 'arc' },
   settings: { label: 'Settings', icon: 'sliders' },
 };
@@ -39,6 +41,8 @@ export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
                 accessibilityLabel={tab.label}
                 onPress={() => {
                   tap();
+                  // A soft tock when moving to another tab; tapping the one you're on stays quiet.
+                  if (!focused) playSound('tab');
                   const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
                   if (!focused && !event.defaultPrevented) navigation.navigate(route.name, route.params);
                 }}

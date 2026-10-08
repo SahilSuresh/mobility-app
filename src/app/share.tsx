@@ -9,7 +9,7 @@ import { config } from '@/constants/config';
 import { colors, fonts } from '@/constants/theme';
 import type { AreaId } from '@/data/types';
 import { goBack } from '@/lib/flow';
-import { minutesOf, thisWeek, weekDays, weekNumber } from '@/lib/progress';
+import { minutesOf, plannedDone, thisWeek, weekDays, weeklyTarget, weekNumber } from '@/lib/progress';
 import { canShareImages, captureCard, saveImage, shareImage } from '@/lib/share';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -70,7 +70,7 @@ export default function Share() {
               <BodyFigure height={208} glows={glows} fill="#3B6351" glowColor={MINT} />
             </View>
             <T style={styles.kicker}>{`WEEK ${weekNumber(plan, now)}`}</T>
-            <T style={styles.big}>{`${week.length}/${plan.days}`}</T>
+            <T style={styles.big}>{`${plannedDone(plan, history, now)}/${weeklyTarget(plan, now)}`}</T>
             <T style={styles.caption}>sessions this week</T>
             <View style={styles.flex} />
             <T style={styles.mid}>{String(minutesOf(week))}</T>

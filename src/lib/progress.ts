@@ -115,6 +115,15 @@ export function weeksOnTarget(plan: Plan, history: CompletedSession[], now: Date
   return weeks;
 }
 
+/**
+ * How many of this week's planned sessions are done, the number that goes with `weeklyTarget`. Extra sessions
+ * (programmes, routines, one body part) don't count towards it, so it never reads "4 of 2".
+ */
+export function plannedDone(plan: Plan, history: CompletedSession[], now: Date): number {
+  const done = doneForPlan(plan, history, now);
+  return scheduledInWeek(plan, now).filter((s) => done.has(s.id)).length;
+}
+
 /** Sessions to aim for in the week of `now`: the plan's days, or fewer in the week it started. */
 export function weeklyTarget(plan: Plan, now: Date): number {
   return scheduledInWeek(plan, now).length;
