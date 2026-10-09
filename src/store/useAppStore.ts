@@ -33,6 +33,8 @@ const safeStorage = {
 type Draft = { areas: AreaId[]; goal: Goal; level: Level; days: DaysPerWeek; weekdays?: number[]; minutes: Minutes };
 export type SoundSettings = { moveEnd: boolean; readyEnd: boolean; voice: boolean };
 type Flags = { seenPaywall: boolean; seenReminder: boolean };
+/** When the Premium pop-up or the paywall was last seen, and how many times in a row the pop-up was waved away. */
+export type NudgeState = { lastShown: string | null; dismissals: number };
 
 type Data = {
   draft: Draft;
@@ -55,6 +57,8 @@ type Data = {
   areaMinutes: number;
   /** Your own routines, built on the Routines tab, newest first. */
   routines: Routine[];
+  /** For the Premium pop-up on Today (lib/nudge.ts): when it, or the paywall, was last seen, and how often it was dismissed. */
+  nudge: NudgeState;
 };
 
 type Actions = {
@@ -69,6 +73,10 @@ type Actions = {
   setPremium: (value: boolean) => void;
   setReminder: (reminder: Reminder | null) => void;
   setFlag: (flag: keyof Flags) => void;
+  /** The Premium pop-up or the paywall was just seen: the gap before the pop-up comes back starts now. */
+  noteNudgeShown: () => void;
+  /** "Not now" on the pop-up: it waits longer before coming back. */
+  dismissNudge: () => void;
   /** Set your own hold for a move (seconds per side), or null to go back to its default. */
   setHold: (exerciseId: string, seconds: number | null) => void;
   setSound: (key: keyof SoundSettings, on: boolean) => void;
@@ -97,6 +105,7 @@ const initialData: Data = {
   readySeconds: READY_SECONDS,
   areaMinutes: 5,
   routines: [],
+  nudge: { lastShown: null, dismissals: 0 },
 };
 
 const newId = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
@@ -207,6 +216,8 @@ export const useAppStore = create<AppState>()(
         syncReminders();
       },
       setFlag: (flag) => set((s) => ({ flags: { ...s.flags, [flag]: true } })),
+      noteNudgeShown: () => set((s) => ({ nudge: { ...s.nudge, lastShown: new Date().toISOString() } })),
+      dismissNudge: () => set((s) => ({ nudge: { ...s.nudge, dismissals: s.nudge.dismissals + 1 } })),
       setSound: (key, on) => set((s) => ({ sounds: { ...s.sounds, [key]: on } })),
       setReadySeconds: (seconds) => set({ readySeconds: seconds }),
       setAreaMinutes: (minutes) => set({ areaMinutes: minutes }),
@@ -249,6 +260,7 @@ export const useAppStore = create<AppState>()(
         readySeconds: s.readySeconds,
         areaMinutes: s.areaMinutes,
         routines: s.routines,
+        nudge: s.nudge,
       }),
     },
   ),

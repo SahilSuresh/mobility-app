@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Appear } from '@/components/Appear';
 import { Icon } from '@/components/Icon';
+import { PremiumNudge } from '@/components/PremiumNudge';
 import { ProgrammeList } from '@/components/ProgrammeList';
 import { T } from '@/components/T';
 import { BodyPartGrid } from '@/components/today/BodyPartGrid';
@@ -165,6 +166,9 @@ export default function Today() {
       <Appear delay={540}>
         <ProgrammeList L={L} hideFree />
       </Appear>
+
+      {/* Now and then, for anyone without Premium: see lib/nudge.ts for when. */}
+      <PremiumNudge />
     </Screen>
   );
 }

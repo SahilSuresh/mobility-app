@@ -5,25 +5,26 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Appear, STAGGER, usePopSounds } from '@/components/Appear';
 import { Icon } from '@/components/Icon';
 import { OnboardingHeader } from '@/components/OnboardingHeader';
-import { ExerciseArt } from '@/components/ExerciseArt';
-import { PoseBubble } from '@/components/PoseBubble';
+import { ExerciseArt, MoveThumb } from '@/components/ExerciseArt';
 import { T } from '@/components/T';
 import { PrimaryButton, Screen } from '@/components/ui';
-import { accent, colors, fonts, glass, POSE_COLORS, shade, shadows, tint } from '@/constants/theme';
+import { accent, colors, fonts, glass, shade, shadows, tint } from '@/constants/theme';
 import { GOALS, LEVELS } from '@/data/content';
 import { getExercise } from '@/data/exercises';
-import type { Exercise, Goal, Level, PoseKey } from '@/data/types';
+import type { Exercise, Goal, Level } from '@/data/types';
 import { tap } from '@/lib/haptics';
 import { playSound, preloadSounds } from '@/lib/sounds';
 import { useAppStore } from '@/store/useAppStore';
 
 /** A drawing and a one-line description for each goal. */
-const GOAL_INFO: Record<Goal, { pose: PoseKey; color: string; line: string }> = {
-  freely: { pose: 'reach', color: POSE_COLORS[0], line: 'Loosen up all over' },
-  flexibility: { pose: 'seated', color: POSE_COLORS[1], line: 'Reach further, go deeper' },
-  stiffness: { pose: 'cat', color: POSE_COLORS[2], line: 'Ease tight, achy spots' },
-  sport: { pose: 'lunge', color: POSE_COLORS[3], line: 'Warm up and recover' },
-  everyday: { pose: 'squat', color: POSE_COLORS[4], line: 'Bend, lift and reach with ease' },
+// Each goal's picture is a move that shows what it's about: a big reach, a deep fold, easing a stiff back,
+// a sport warm-up, and the squat behind bending and lifting.
+const GOAL_INFO: Record<Goal, { cover: string; line: string }> = {
+  freely: { cover: 'sh-sidebend', line: 'Loosen up all over' },
+  flexibility: { cover: 'lb-seated', line: 'Reach further, go deeper' },
+  stiffness: { cover: 'ub-catcow', line: 'Ease tight, achy spots' },
+  sport: { cover: 'hip-wgs', line: 'Warm up and recover' },
+  everyday: { cover: 'hip-squat', line: 'Bend, lift and reach with ease' },
 };
 
 /** What each level means for the plan, with real moves from the library at that level. */
@@ -89,7 +90,7 @@ export default function GoalAndExperience() {
                   onPress={() => pickGoal(g.id)}
                   style={({ pressed }) => [styles.goal, wide ? styles.goalWide : styles.goalHalf, on && styles.goalOn, pressed && styles.pressed]}
                 >
-                  <PoseBubble pose={info.pose} size={wide ? 44 : 48} color={info.color} dot={false} />
+                  <MoveThumb id={info.cover} size={wide ? 44 : 48} />
                   <View style={wide ? styles.goalTextWide : styles.goalText}>
                     <T variant="bodyStrong" numberOfLines={1}>
                       {g.label}

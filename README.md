@@ -81,6 +81,15 @@ Phone and computer need to be on the same Wi-Fi. If it won't connect, run `npx e
 
 EAS builds in the cloud, so no Mac is needed. You do need an Apple Developer account.
 
+### When the paywall shows
+
+The paywall (`src/app/premium.tsx`) opens:
+- at the end of onboarding: "Start first session" goes to it, since every session needs Premium or its free trial;
+- whenever someone without Premium starts a session (`startSession` in `src/lib/flow.ts`). Only the three free quick programmes skip it;
+- from anything locked: a Premium programme, a locked move on an area page, Areas trained on Progress, the Premium row in Settings, and adding an area in Edit areas (through `PremiumSheet` first).
+
+**The Premium pop-up** (`src/components/PremiumNudge.tsx`, rules in `src/lib/nudge.ts`) is a short reminder on Today, Bend-style, shown 1.5 seconds after Today opens or the app comes back from the background. It never shows to anyone with Premium (including a free trial), and it closes itself if Premium turns on while it's open. It also never shows in the 30 minutes after making a plan. It shows at most once every 12 hours, and each "Not now" makes it wait longer: 12 hours, then 1 day, then 3 days, then weekly (`GAPS_HOURS`). Opening the full paywall any other way restarts the wait, so the two never come back to back. The state (`nudge: { lastShown, dismissals }`) is saved with the rest of the app's data.
+
 ### Paywall setup
 
 The paywall runs on RevenueCat (`react-native-purchases`). Everything about Premium is in `src/lib/purchases.ts`, and RevenueCat is the source of truth: Premium is checked at launch, every time the app comes to the front, and whenever RevenueCat reports a change (renewal, expiry, refund, a pending payment clearing).

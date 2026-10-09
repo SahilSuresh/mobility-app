@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Appear, STAGGER } from '@/components/Appear';
@@ -18,7 +19,9 @@ export default function EditAreas() {
   const plan = useAppStore((s) => s.plan);
   const isPremium = useAppStore((s) => s.isPremium);
   const updatePlan = useAppStore((s) => s.updatePlan);
-  const [view, setView] = useState<BodyView>('back');
+  // The body always opens on the front, every time this screen is shown (coming back to it too).
+  const [view, setView] = useState<BodyView>('front');
+  useFocusEffect(useCallback(() => setView('front'), []));
   const [selected, setSelected] = useState<AreaId[]>(plan?.areas ?? []);
   const [sheet, setSheet] = useState<{ area: AreaId; adding: boolean } | null>(null);
   const { height } = useViewport();

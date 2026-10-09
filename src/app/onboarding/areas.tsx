@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';
 
 import { Appear, STAGGER } from '@/components/Appear';
@@ -18,7 +18,9 @@ import { useAppStore } from '@/store/useAppStore';
 export default function Areas() {
   const selected = useAppStore((s) => s.draft.areas);
   const setDraft = useAppStore((s) => s.setDraft);
-  const [view, setView] = useState<BodyView>('back');
+  // The body always opens on the front, every time this screen is shown (coming back to it too).
+  const [view, setView] = useState<BodyView>('front');
+  useFocusEffect(useCallback(() => setView('front'), []));
   const { height } = useViewport();
   // Leaves room for the wrapped chips under the body.
   const mapHeight = Math.max(220, Math.min(440, height - 490));

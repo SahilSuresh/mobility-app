@@ -8,12 +8,11 @@ import Svg, { Circle, Defs, Ellipse, RadialGradient, Stop } from 'react-native-s
 import { BodyFigure } from '@/components/BodyFigure';
 import { Icon, type IconName } from '@/components/Icon';
 import { ExerciseArt } from '@/components/ExerciseArt';
-import { PoseBubble } from '@/components/PoseBubble';
 import { Rise } from '@/components/Rise';
 import { T } from '@/components/T';
 import { PrimaryButton, Screen } from '@/components/ui';
 import { config } from '@/constants/config';
-import { accent, colors, fonts, glass, NATIVE_DRIVER, REGION_COLORS, shadows, tint } from '@/constants/theme';
+import { accent, colors, fonts, glass, NATIVE_DRIVER, shadows, tint } from '@/constants/theme';
 import { AREA_NAMES } from '@/data/areas';
 import { durationLabel, getExercise } from '@/data/exercises';
 import type { AreaId, Exercise } from '@/data/types';
@@ -216,11 +215,11 @@ export default function Welcome() {
   );
 }
 
-/** The move that goes with the lit area: its drawing, name, area and hold time. */
+/** The move that goes with the lit area: its picture, name, area and hold time. */
 function Caption({ exercise, area }: { exercise: Exercise; area: AreaId }) {
   return (
     <>
-      <PoseBubble pose={exercise.pose} size={34} color={REGION_COLORS[area]} dot={false} />
+      <ExerciseArt exercise={exercise} size={36} dot={false} />
       <View style={styles.captionText}>
         <T variant="kicker" style={styles.captionKicker}>
           For {AREA_NAMES[area].toLowerCase()}

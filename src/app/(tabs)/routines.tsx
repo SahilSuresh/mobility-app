@@ -183,39 +183,52 @@ function RoutineCard({ L, routine: r, now, onStart, onMenu }: { L: LookTokens; r
   // "Last done today", "Last done on Wednesday", "Last done on 2 Oct".
   const day = r.lastDone ? relativeDay(r.lastDone, now) : null;
   const last = !day ? 'Not done yet' : `Last done ${day === 'Today' || day === 'Yesterday' ? day.toLowerCase() : `on ${day}`}`;
+  // The card dims and shrinks a touch while pressed, as it did when it was one button.
+  const [pressed, setPressed] = useState(false);
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`${r.name}, ${summary(r)}. ${last}. Starts the routine`}
-      onPress={onStart}
-      onLongPress={onMenu}
-      style={({ pressed }) => [styles.card, { borderColor: L.chip.border }, L.dark && styles.flat, pressed && styles.pressed]}
-    >
+    // Two buttons side by side, never one inside the other (on the web that's invalid HTML): the whole card
+    // starts the routine, with the ••• menu on top of it. The card's own content lets taps through to the card.
+    <View style={[styles.card, { borderColor: L.chip.border }, L.dark && styles.flat, pressed && styles.pressed]}>
       <LinearGradient colors={L.dark ? [L.heroBase, L.background?.[1] ?? L.heroBase] : [L.heroBase, L.heroBase]} style={StyleSheet.absoluteFill} />
-      <View style={styles.cardTop}>
-        <Bubbles ids={r.moves} size={40} />
-        <Pressable accessibilityRole="button" accessibilityLabel={`Edit or delete ${r.name}`} hitSlop={10} onPress={onMenu} style={[styles.more, { borderColor: L.chip.border }]}>
-          <T style={[styles.moreDots, { color: L.muted }]}>•••</T>
-        </Pressable>
-      </View>
-      <T style={[styles.cardTitle, { color: L.ink }]} numberOfLines={1}>
-        {r.name}
-      </T>
-      <View style={styles.cardBottom}>
-        <View style={styles.flex}>
-          <T variant="caption" color={L.muted}>
-            {summary(r)}
-          </T>
-          <T variant="caption" color={r.lastDone ? L.accent : L.faint} style={styles.last}>
-            {last}
-          </T>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${r.name}, ${summary(r)}. ${last}. Starts the routine`}
+        onPress={onStart}
+        onLongPress={onMenu}
+        onPressIn={() => setPressed(true)}
+        onPressOut={() => setPressed(false)}
+        style={StyleSheet.absoluteFill}
+      />
+      <View style={styles.passThrough}>
+        <View style={[styles.cardTop, styles.passThrough]}>
+          <View style={styles.noTouch}>
+            <Bubbles ids={r.moves} size={40} />
+          </View>
+          <Pressable accessibilityRole="button" accessibilityLabel={`Edit or delete ${r.name}`} hitSlop={10} onPress={onMenu} style={[styles.more, { borderColor: L.chip.border }]}>
+            <T style={[styles.moreDots, { color: L.muted }]}>•••</T>
+          </Pressable>
         </View>
-        <View style={[styles.start, { backgroundColor: L.button.bg }]}>
-          <Icon name="play" size={11} color={L.button.text} />
-          <T style={[styles.startText, { color: L.button.text }]}>Start</T>
+        <View style={styles.noTouch} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+          <T style={[styles.cardTitle, { color: L.ink }]} numberOfLines={1}>
+            {r.name}
+          </T>
+          <View style={styles.cardBottom}>
+            <View style={styles.flex}>
+              <T variant="caption" color={L.muted}>
+                {summary(r)}
+              </T>
+              <T variant="caption" color={r.lastDone ? L.accent : L.faint} style={styles.last}>
+                {last}
+              </T>
+            </View>
+            <View style={[styles.start, { backgroundColor: L.button.bg }]}>
+              <Icon name="play" size={11} color={L.button.text} />
+              <T style={[styles.startText, { color: L.button.text }]}>Start</T>
+            </View>
+          </View>
         </View>
       </View>
-    </Pressable>
+    </View>
   );
 }
 
@@ -237,6 +250,9 @@ function Bubbles({ ids, size, max = 4 }: { ids: string[]; size: number; max?: nu
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   flat: { boxShadow: 'none' },
+  // Lets taps through to the card behind, while the ••• button inside still takes its own.
+  passThrough: { pointerEvents: 'box-none' },
+  noTouch: { pointerEvents: 'none' },
   pressed: { opacity: 0.8, transform: [{ scale: 0.99 }] },
   title: { fontFamily: fonts.serif, fontSize: 30, lineHeight: 36 },
   sub: { marginTop: 4 },
