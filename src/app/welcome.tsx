@@ -7,6 +7,7 @@ import Svg, { Circle, Defs, Ellipse, RadialGradient, Stop } from 'react-native-s
 
 import { BodyFigure } from '@/components/BodyFigure';
 import { Icon, type IconName } from '@/components/Icon';
+import { ExerciseArt } from '@/components/ExerciseArt';
 import { PoseBubble } from '@/components/PoseBubble';
 import { Rise } from '@/components/Rise';
 import { T } from '@/components/T';
@@ -152,7 +153,7 @@ export default function Welcome() {
                     ]}
                   >
                     {lit ? <Animated.View style={[styles.activeRing, { opacity: fade(i) }]} /> : null}
-                    <PoseBubble pose={m.exercise.pose} size={BUBBLE} color={REGION_COLORS[m.exercise.area]} dot={false} outline shadow />
+                    <ExerciseArt exercise={m.exercise} size={BUBBLE} dot={false} outline shadow />
                   </Animated.View>
                 );
               })}

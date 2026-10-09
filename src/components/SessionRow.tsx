@@ -1,12 +1,12 @@
 import { StyleSheet, View } from 'react-native';
 
-import { colors, fonts, REGION_COLORS, tint } from '@/constants/theme';
+import { colors, fonts, tint } from '@/constants/theme';
 import { getExercise } from '@/data/exercises';
 import type { Exercise, PlannedSession } from '@/data/types';
 import { DAY_SHORT, dateOfWeekday } from '@/lib/dates';
 
 import { Icon } from './Icon';
-import { PoseBubble } from './PoseBubble';
+import { ExerciseArt } from './ExerciseArt';
 import { T } from './T';
 import { Card, SandPill } from './ui';
 
@@ -47,7 +47,7 @@ export function SessionRow({ session, now, meta, highlight, trailing, onPress, d
       {trailing === 'bubbles' ? (
         <View style={styles.stack}>
           {moves.map((e, i) => (
-            <PoseBubble key={e.pose} pose={e.pose} size={30} color={REGION_COLORS[e.area]} dot={false} outline style={i > 0 ? styles.overlap : undefined} />
+            <ExerciseArt key={e.pose} exercise={e} size={30} dot={false} outline style={i > 0 ? styles.overlap : undefined} />
           ))}
         </View>
       ) : null}

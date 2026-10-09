@@ -156,6 +156,7 @@ export const useAppStore = create<AppState>()(
           title: session.title,
           areas: session.areas,
           firstPose: first?.pose ?? 'child',
+          firstMove: first?.id,
           date: new Date().toISOString(),
           seconds,
           moves,
@@ -232,6 +233,7 @@ export const useAppStore = create<AppState>()(
       name: 'mobility-app',
       version: 1,
       storage: createJSONStorage(() => safeStorage),
+      merge: (persisted, current) => withoutMissingMoves({ ...current, ...(persisted as Partial<AppState>) }),
       partialize: (s): Data => ({
         draft: s.draft,
         plan: s.plan,
@@ -251,6 +253,18 @@ export const useAppStore = create<AppState>()(
     },
   ),
 );
+
+/** Drops exercise ids that are no longer in the library from saved sessions and routines. */
+function withoutMissingMoves(state: AppState): AppState {
+  const known = (ids: string[]) => ids.filter((id) => getExercise(id));
+  const session = (s: PlannedSession): PlannedSession => ({ ...s, exerciseIds: known(s.exerciseIds) });
+  return {
+    ...state,
+    plan: state.plan ? { ...state.plan, sessions: state.plan.sessions.map(session) } : state.plan,
+    extra: state.extra ? session(state.extra) : state.extra,
+    routines: (state.routines ?? []).map((r) => ({ ...r, moves: known(r.moves) })),
+  };
+}
 
 /** Find a planned or one-off session by id. */
 export function findSession(state: Pick<AppState, 'plan' | 'extra'>, id: string | undefined): PlannedSession | undefined {

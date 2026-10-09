@@ -4,13 +4,13 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { BodyMap, ViewToggle } from '@/components/BodyFigure';
 import { Icon } from '@/components/Icon';
-import { PoseBubble } from '@/components/PoseBubble';
+import { MoveThumb } from '@/components/ExerciseArt';
 import { T } from '@/components/T';
 import { SecondaryButton } from '@/components/ui';
 import type { LookTokens } from '@/constants/looks';
-import { fonts, REGION_COLORS, SCREEN_PADDING } from '@/constants/theme';
+import { fonts, SCREEN_PADDING } from '@/constants/theme';
 import { AREA_NAMES, AREA_ORDER, areasPhrase } from '@/data/areas';
-import { exercisesForArea } from '@/data/exercises';
+import { AREA_COVER } from '@/data/art';
 import type { AreaId, BodyView, PlannedSession } from '@/data/types';
 import { alpha } from '@/lib/color';
 import { startSession } from '@/lib/flow';
@@ -50,7 +50,6 @@ type BlockProps = {
 
 /** One body part: a real move for it, its name, what the chosen time gives you, and (for your areas) how long it's been. */
 function Block({ L, area, reason, due, minutes, moves, onStart }: BlockProps) {
-  const pose = exercisesForArea(area)[0]?.pose ?? 'reach';
   const openMoves = () => router.push({ pathname: '/area/[id]', params: { id: area } });
   return (
     <Pressable
@@ -70,7 +69,7 @@ function Block({ L, area, reason, due, minutes, moves, onStart }: BlockProps) {
       style={({ pressed }) => [styles.block, { backgroundColor: L.chip.bg, borderColor: L.chip.border }, pressed && styles.pressed]}
     >
       <View style={styles.top}>
-        <PoseBubble pose={pose} size={48} color={REGION_COLORS[area]} dot={false} />
+        <MoveThumb id={AREA_COVER[area]} size={48} />
         {/* Tapping starts this part at the chosen time, so the card carries a play button. */}
         <View style={[styles.play, { backgroundColor: alpha(L.accent, L.dark ? 0.16 : 0.1) }]}>
           <Icon name="play" size={12} color={L.accent} />

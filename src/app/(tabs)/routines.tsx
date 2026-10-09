@@ -5,12 +5,12 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Appear } from '@/components/Appear';
 import { Icon } from '@/components/Icon';
-import { PoseBubble } from '@/components/PoseBubble';
+import { ExerciseArt } from '@/components/ExerciseArt';
 import { Sheet } from '@/components/Sheet';
 import { T } from '@/components/T';
 import { PrimaryButton, Screen, SecondaryButton, TextButton } from '@/components/ui';
 import { LOOKS, type LookTokens } from '@/constants/looks';
-import { colors, fonts, REGION_COLORS, shadows } from '@/constants/theme';
+import { colors, fonts, shadows } from '@/constants/theme';
 import { ROUTINE_IDEAS } from '@/data/content';
 import { getExercise } from '@/data/exercises';
 import type { Routine } from '@/data/types';
@@ -227,7 +227,7 @@ function Bubbles({ ids, size, max = 4 }: { ids: string[]; size: number; max?: nu
   return (
     <View style={styles.bubbles} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
       {shown.map((e, i) => (
-        <PoseBubble key={e.id} pose={e.pose} size={size} color={REGION_COLORS[e.area]} dot={false} outline style={i > 0 ? { marginLeft: -size * 0.28 } : undefined} />
+        <ExerciseArt key={e.id} exercise={e} size={size} dot={false} outline style={i > 0 ? { marginLeft: -size * 0.28 } : undefined} />
       ))}
       {more > 0 ? <T style={[styles.more2, { fontSize: size * 0.32 }]}>{`+${more}`}</T> : null}
     </View>

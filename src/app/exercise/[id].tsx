@@ -1,11 +1,11 @@
 import { Redirect, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { PoseBubble } from '@/components/PoseBubble';
+import { ExerciseArt } from '@/components/ExerciseArt';
 import { T } from '@/components/T';
 import { Icon } from '@/components/Icon';
 import { Chip, IconButton, Screen } from '@/components/ui';
-import { colors, fonts, glass, REGION_COLORS } from '@/constants/theme';
+import { colors, fonts, glass } from '@/constants/theme';
 import { AREA_NAMES } from '@/data/areas';
 import { GOAL_LABEL, LEVEL_NAME } from '@/data/content';
 import { durationLabel, EQUIPMENT_LABEL, getExercise } from '@/data/exercises';
@@ -15,13 +15,12 @@ export default function ExerciseScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const exercise = getExercise(id);
   if (!exercise) return <Redirect href="/" />;
-  const color = REGION_COLORS[exercise.area];
 
   return (
     <Screen scroll>
       <IconButton icon="back" label="Back" onPress={() => goBack()} />
       <View style={styles.stage}>
-        <PoseBubble pose={exercise.pose} size={220} color={color} shadow breathe />
+        <ExerciseArt exercise={exercise} size={220} shadow breathe />
       </View>
       <T variant="kicker" style={styles.kicker}>
         {AREA_NAMES[exercise.area]}

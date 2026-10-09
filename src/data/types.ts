@@ -128,6 +128,8 @@ export type CompletedSession = {
   title: string;
   areas: AreaId[];
   firstPose: PoseKey;
+  /** The session's first move, for its picture in Recent. Older records only have `firstPose`. */
+  firstMove?: string;
   date: string;
   seconds: number;
   moves: number;

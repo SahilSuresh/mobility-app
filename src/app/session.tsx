@@ -4,12 +4,12 @@ import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { BackHandler, Pressable, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
-import { PoseBubble } from '@/components/PoseBubble';
+import { ExerciseArt } from '@/components/ExerciseArt';
 import { Ring } from '@/components/Ring';
 import { Sheet } from '@/components/Sheet';
 import { T } from '@/components/T';
 import { IconButton, PrimaryButton, Screen, Segments, TextButton } from '@/components/ui';
-import { accent, colors, fonts, glass, REGION_COLORS, shadows, tint } from '@/constants/theme';
+import { accent, colors, fonts, glass, shadows, tint } from '@/constants/theme';
 import { AREA_NAMES } from '@/data/areas';
 import { getExercise } from '@/data/exercises';
 import type { Exercise } from '@/data/types';
@@ -206,7 +206,8 @@ export default function SessionPlayer() {
 
       <View style={[styles.stage, compact && styles.stageCompact]}>
         <Ring size={ringSize} stroke={6} progress={left / total} color={between ? accent(0.35) : colors.green}>
-          <PoseBubble pose={move.pose} size={ringSize - 44} color={REGION_COLORS[move.area]} shadow breathe={playing && !between} />
+          {/* The second side of a two-sided move shows the picture flipped; it turns over during the switch break. */}
+          <ExerciseArt exercise={move} size={ringSize - 44} shadow breathe={playing && !between} mirrored={move.eachSide && (switching || side === 2)} />
         </Ring>
       </View>
 
@@ -271,7 +272,7 @@ export default function SessionPlayer() {
       <View style={[styles.upNext, compact && styles.upNextCompact]}>
         {next ? (
           <>
-            <PoseBubble pose={next.pose} size={38} color={REGION_COLORS[next.area]} dot={false} />
+            <ExerciseArt exercise={next} size={38} dot={false} />
             <T variant="small" style={styles.flex}>
               Up next
             </T>

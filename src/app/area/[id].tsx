@@ -3,10 +3,10 @@ import { StyleSheet, View } from 'react-native';
 
 import { AreaGlyph } from '@/components/AreaIcon';
 import { Icon } from '@/components/Icon';
-import { PoseBubble } from '@/components/PoseBubble';
+import { ExerciseArt } from '@/components/ExerciseArt';
 import { T } from '@/components/T';
 import { Card, IconButton, Screen, Segments } from '@/components/ui';
-import { colors, glass, REGION_COLORS } from '@/constants/theme';
+import { colors, glass } from '@/constants/theme';
 import { AREA_NAMES, AREA_ORDER } from '@/data/areas';
 import { LEVEL_NAME } from '@/data/content';
 import { durationLabel, exercisesForArea } from '@/data/exercises';
@@ -54,7 +54,7 @@ export default function AreaScreen() {
               onPress={() => (locked ? router.push('/premium') : router.push({ pathname: '/exercise/[id]', params: { id: e.id } }))}
               accessibilityLabel={locked ? `${e.name}, Premium` : e.name}
             >
-              <PoseBubble pose={e.pose} size={44} color={REGION_COLORS[e.area]} dot={false} style={locked ? styles.dim : undefined} />
+              <ExerciseArt exercise={e} size={44} dot={false} style={locked ? styles.dim : undefined} />
               <View style={styles.flex}>
                 <T variant="bodyStrong" color={locked ? colors.muted : colors.ink}>
                   {e.name}

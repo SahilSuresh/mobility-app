@@ -1,7 +1,7 @@
 import type { AreaId, Exercise } from './types';
 
 /**
- * The library: 62 moves across the 10 areas and 3 levels, at least three beginner moves per area.
+ * The library: 61 moves across the 10 areas and 3 levels, at least three beginner moves per area.
  * Every move earns its place: `why` says what it does for you, and `careful` says when to ease off.
  * Add more here, using an existing pose or a new one in poses.ts.
  */
@@ -83,10 +83,10 @@ export const EXERCISES: Exercise[] = [
   {
     id: 'sh-doorway', name: 'Doorway chest stretch', area: 'shoulders', level: 1, pose: 'doorway', seconds: 30, eachSide: true, equipment: 'wall',
     goals: ['everyday', 'stiffness', 'freely'],
-    tip: 'Forearm on the door frame, elbow at shoulder height. Step through gently.',
+    tip: 'Hand flat on the door frame at shoulder height. Step through gently.',
     why: 'Opens the chest muscles that pull your shoulders forward after long hours at a desk, on a phone or driving.',
-    careful: 'Keep the elbow at or below shoulder height, and ease off if you feel tingling down the arm.',
-    steps: ['Stand in a doorway and rest one forearm on the frame, elbow at shoulder height.', 'Step forward with the same-side foot until you feel a stretch across your chest.', 'Keep your shoulder down, away from your ear, and breathe slowly.'],
+    careful: 'Keep your hand at or below shoulder height, and ease off if you feel tingling down the arm.',
+    steps: ['Stand side-on in a doorway and place one palm flat on the frame behind you, arm straight at shoulder height.', 'Step forward until you feel a stretch across your chest and the front of your shoulder.', 'Keep your shoulder down, away from your ear, and breathe slowly.'],
   },
 
   // Upper back
@@ -277,13 +277,6 @@ export const EXERCISES: Exercise[] = [
     steps: ['Stand tall and hold a wall for balance.', 'Hold one foot behind you.', 'Keep your knees together and hips forward.'],
   },
   {
-    id: 'kn-hamstring', name: 'Hamstring stretch', area: 'knees', level: 1, pose: 'seated', seconds: 30, eachSide: true, equipment: 'mat',
-    goals: ['flexibility', 'everyday'],
-    tip: 'One leg long. Hinge forward with a long back.',
-    why: 'Lengthens the hamstrings, which lets you bend forward without straining your lower back.',
-    steps: ['Sit with one leg long and the other bent.', 'Sit tall, then hinge forward from your hips.', 'Stop at a gentle stretch behind the knee.'],
-  },
-  {
     id: 'kn-lyingham', name: 'Lying hamstring stretch', area: 'knees', level: 1, pose: 'legRaise', seconds: 30, eachSide: true, equipment: 'mat',
     goals: ['flexibility', 'stiffness', 'sport'],
     tip: 'Lift one leg towards the ceiling. Hold behind the thigh, or use a towel.',
@@ -353,7 +346,7 @@ export const EXERCISES: Exercise[] = [
 
   // Elbows
   {
-    id: 'el-circles', name: 'Arm circles', area: 'elbows', level: 1, pose: 'armsOut', seconds: 45, eachSide: false, equipment: 'none',
+    id: 'el-circles', name: 'Arm circles', area: 'shoulders', level: 1, pose: 'armsOut', seconds: 45, eachSide: false, equipment: 'none',
     goals: ['freely', 'everyday', 'stiffness'],
     tip: 'Arms out wide. Draw slow circles, then change direction.',
     why: 'Warms up the shoulders and elbows by taking them through a full circle, a good start to any session.',
@@ -406,9 +399,9 @@ export const EXERCISES: Exercise[] = [
   {
     id: 'wr-pull', name: 'Wrist flexor stretch', area: 'wrists', level: 1, pose: 'fingerPull', seconds: 30, eachSide: true, equipment: 'none',
     goals: ['flexibility', 'everyday'],
-    tip: 'Arm out, palm up. Draw the fingers back gently.',
+    tip: 'Arm straight, hand up like a stop sign. Draw the fingers back gently.',
     why: "Stretches the forearm muscles you grip with, helping ease the tightness behind golfer's elbow.",
-    steps: ['Reach one arm out in front, palm up.', 'With the other hand, draw the fingers back gently.', 'Keep the elbow soft and breathe.'],
+    steps: ['Reach one arm straight out in front at shoulder height.', 'Bend the wrist back so your palm faces away, fingers up, like a stop sign.', 'With the other hand, draw the fingers gently back toward you and breathe.'],
   },
   {
     id: 'wr-table', name: 'Tabletop wrist rocks', area: 'wrists', level: 2, pose: 'tabletop', seconds: 45, eachSide: false, equipment: 'mat',

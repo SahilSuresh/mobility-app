@@ -5,11 +5,11 @@ import { useReducedMotion } from 'react-native-reanimated';
 
 import { Appear } from '@/components/Appear';
 import { Icon, type IconName } from '@/components/Icon';
-import { PoseBubble } from '@/components/PoseBubble';
+import { ExerciseArt } from '@/components/ExerciseArt';
 import { Sheet } from '@/components/Sheet';
 import { T } from '@/components/T';
 import { IconButton, PrimaryButton, Screen, TextButton } from '@/components/ui';
-import { accent, colors, fonts, glass, MAX_FONT_SCALE, REGION_COLORS, tint } from '@/constants/theme';
+import { accent, colors, fonts, glass, MAX_FONT_SCALE, tint } from '@/constants/theme';
 import { AREA_NAMES, AREA_ORDER, sortAreas } from '@/data/areas';
 import { ROUTINE_IDEAS } from '@/data/content';
 import { durationLabel, exercisesForArea, getExercise } from '@/data/exercises';
@@ -183,7 +183,7 @@ export default function RoutineBuilder() {
                   return (
                     <Appear key={moveId} kind="pop">
                       <Pressable accessibilityRole="button" accessibilityLabel={`${i + 1}. ${e.name}. Remove`} onPress={() => toggle(e)} style={styles.trayItem}>
-                        <PoseBubble pose={e.pose} size={46} color={REGION_COLORS[e.area]} dot={false} outline />
+                        <ExerciseArt exercise={e} size={46} dot={false} outline />
                         <View style={styles.trayNumber}>
                           <T style={styles.trayNumberText}>{String(i + 1)}</T>
                         </View>
@@ -270,7 +270,7 @@ export default function RoutineBuilder() {
                     style={({ pressed }) => [styles.cellInner, pressed && styles.pressed]}
                   >
                     <View style={[styles.ring, on && styles.ringOn]}>
-                      <PoseBubble pose={e.pose} size={78} color={REGION_COLORS[e.area]} dot={false} />
+                      <ExerciseArt exercise={e} size={78} dot={false} />
                     </View>
                     {on ? (
                       <View style={styles.badge}>
@@ -393,7 +393,7 @@ export default function RoutineBuilder() {
                 return (
                   <Appear key={moveId} delay={240 + Math.min(i, 8) * 50} style={[styles.row, i > 0 && styles.rowRule]}>
                     <T style={styles.rowNumber}>{String(i + 1)}</T>
-                    <PoseBubble pose={e.pose} size={44} color={REGION_COLORS[e.area]} dot={false} />
+                    <ExerciseArt exercise={e} size={44} dot={false} />
                     <View style={styles.flex}>
                       <T variant="bodyStrong" numberOfLines={1}>
                         {e.name}
@@ -632,8 +632,9 @@ const styles = StyleSheet.create({
   chipText: { fontFamily: fonts.semibold, fontSize: 13.5, color: colors.ink },
   chipTextOn: { color: colors.onGreen },
 
-  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 14, paddingTop: 14, paddingBottom: 12 },
-  cell: { width: '31.5%' },
+  // Three to a row from the left, so a short last row lines up under the others instead of spreading out.
+  grid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 14, marginHorizontal: -4, paddingTop: 14, paddingBottom: 12 },
+  cell: { width: '33.333%', paddingHorizontal: 4 },
   cellInner: { alignItems: 'center' },
   ring: { padding: 3, borderRadius: 50, borderWidth: 2.5, borderColor: 'transparent' },
   ringOn: { borderColor: colors.green, backgroundColor: accent(0.12) },

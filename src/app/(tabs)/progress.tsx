@@ -3,20 +3,28 @@ import { StyleSheet, View } from 'react-native';
 
 import { BodyFigure } from '@/components/BodyFigure';
 import { Icon } from '@/components/Icon';
-import { PoseBubble } from '@/components/PoseBubble';
+import { MoveThumb } from '@/components/ExerciseArt';
 import { Ring } from '@/components/Ring';
 import { T } from '@/components/T';
 import { Garden } from '@/components/today/Garden';
+import { streakIcon } from '@/components/today/streak';
 import { Card, IconButton, Screen } from '@/components/ui';
 import { LOOKS } from '@/constants/looks';
-import { colors, fonts, glass, POSE_COLORS, REGION_COLORS, tint } from '@/constants/theme';
+import { colors, fonts, glass, tint } from '@/constants/theme';
 import { AREA_NAMES } from '@/data/areas';
-import type { AreaId } from '@/data/types';
+import { AREA_COVER } from '@/data/art';
+import { EXERCISES } from '@/data/exercises';
+import type { AreaId, CompletedSession } from '@/data/types';
 import { relativeDay } from '@/lib/dates';
 import { areaCounts, minutesOf, plannedDone, sessionMinutes, streak, thisWeek, weeklyTarget, weeksOnTarget } from '@/lib/progress';
 import { useNow } from '@/lib/useNow';
 import { useAppStore } from '@/store/useAppStore';
 import { resolveLook, useLook } from '@/store/useLook';
+
+/** The move whose picture stands for a past session: its first move, or for older records one with the same pose. */
+function sessionCover(h: CompletedSession): string {
+  return h.firstMove ?? EXERCISES.find((e) => e.pose === h.firstPose)?.id ?? (h.areas[0] ? AREA_COVER[h.areas[0]] : 'lb-child');
+}
 
 export default function ProgressTab() {
   const plan = useAppStore((s) => s.plan);
@@ -31,6 +39,7 @@ export default function ProgressTab() {
   const counts = areaCounts(history);
   const shown = counts.length ? counts : plan.areas.map((area) => ({ area, count: 0 }));
   const max = Math.max(1, ...shown.map((c) => c.count));
+  const run = streak(plan, history, now);
   const glows = Object.fromEntries(shown.filter((c) => c.count > 0).map((c) => [c.area, 0.4 + 0.6 * (c.count / max)])) as Partial<Record<AreaId, number>>;
 
   return (
@@ -54,21 +63,28 @@ export default function ProgressTab() {
       <View style={styles.tiles}>
         <Card style={styles.tile}>
           <View style={styles.tileValue}>
-            <Icon name="sprout" size={18} color={colors.green} strokeWidth={1.9} />
-            <T variant="stat">{String(streak(plan, history, now))}</T>
+            {/* The same seed, sprout or plant as the streak on Today. */}
+            <Icon name={streakIcon(run)} size={18} color={colors.green} strokeWidth={1.9} />
+            <T variant="stat">{String(run)}</T>
           </View>
           <T variant="caption" style={{ fontSize: 12 }}>
             Day streak
           </T>
         </Card>
         <Card style={styles.tile}>
-          <T variant="stat">{String(history.length)}</T>
+          <View style={styles.tileValue}>
+            <Icon name="check" size={17} color={colors.green} strokeWidth={2.2} />
+            <T variant="stat">{String(history.length)}</T>
+          </View>
           <T variant="caption" style={{ fontSize: 12 }}>
             Sessions
           </T>
         </Card>
         <Card style={styles.tile}>
-          <T variant="stat">{String(weeksOnTarget(plan, history, now))}</T>
+          <View style={styles.tileValue}>
+            <Icon name="target" size={17} color={colors.green} strokeWidth={2} />
+            <T variant="stat">{String(weeksOnTarget(plan, history, now))}</T>
+          </View>
           <T variant="caption" style={{ fontSize: 12 }}>
             Weeks on target
           </T>
@@ -84,15 +100,15 @@ export default function ProgressTab() {
       <View style={styles.recent}>
         {history.length === 0 ? (
           <View style={styles.recentRow}>
-            <PoseBubble pose="child" size={44} color={REGION_COLORS.lowerBack} dot={false} />
+            <MoveThumb id="lb-child" size={44} />
             <T variant="small" style={styles.flex}>
               Your sessions will show here. Rest is part of it too.
             </T>
           </View>
         ) : (
-          history.slice(0, 3).map((h, i) => (
+          history.slice(0, 3).map((h) => (
             <View key={h.id} style={styles.recentRow}>
-              <PoseBubble pose={h.firstPose} size={36} color={h.areas[0] ? REGION_COLORS[h.areas[0]] : POSE_COLORS[i % POSE_COLORS.length]} dot={false} />
+              <MoveThumb id={sessionCover(h)} size={40} />
               <View style={styles.flex}>
                 <T variant="bodyStrong" numberOfLines={1} style={{ fontSize: 15 }}>
                   {h.title}
@@ -145,7 +161,7 @@ const styles = StyleSheet.create({
   minutes: { marginTop: 4, fontSize: 32, lineHeight: 36 },
   tiles: { marginTop: 12, flexDirection: 'row', gap: 10 },
   tile: { flex: 1, height: 84, padding: 14, borderRadius: 20, justifyContent: 'space-between' },
-  tileValue: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  tileValue: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   section: { marginTop: 26 },
   recent: { marginTop: 10, gap: 8 },
   recentRow: {

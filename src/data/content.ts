@@ -1,4 +1,4 @@
-import type { AreaId, Goal, Level, Minutes, DaysPerWeek, PoseKey } from './types';
+import type { AreaId, Goal, Level, Minutes, DaysPerWeek } from './types';
 
 export const GOALS: { id: Goal; label: string }[] = [
   { id: 'freely', label: 'Move freely' },
@@ -39,8 +39,8 @@ export type Programme = {
   areas: AreaId[];
   days: number;
   minutes: Minutes;
-  pose: PoseKey;
-  color: string;
+  /** The move whose picture stands for the programme on its row. */
+  cover: string;
   /** Open to everyone, without Premium. */
   free?: boolean;
   /** Beginner moves only (level 1), whatever the user's level. */
@@ -79,8 +79,7 @@ export const PROGRAMMES: Programme[] = [
     areas: ['neck', 'shoulders'],
     days: 7,
     minutes: 2,
-    pose: 'chinTuck',
-    color: '#93A9BC',
+    cover: 'neck-levator',
     free: true,
     easy: true,
     about: 'Quick neck and shoulder release.',
@@ -94,8 +93,7 @@ export const PROGRAMMES: Programme[] = [
     areas: ['upperBack', 'lowerBack', 'hips'],
     days: 7,
     minutes: 5,
-    pose: 'cat',
-    color: '#9FBFA8',
+    cover: 'lb-twist',
     free: true,
     easy: true,
     about: 'Undo a long sit.',
@@ -109,8 +107,7 @@ export const PROGRAMMES: Programme[] = [
     areas: ['shoulders', 'upperBack', 'lowerBack', 'hips', 'knees'],
     days: 7,
     minutes: 10,
-    pose: 'twist',
-    color: '#D9BE93',
+    cover: 'hip-wgs',
     free: true,
     easy: true,
     about: 'A full-body flow, neck to ankles.',
@@ -123,8 +120,7 @@ export const PROGRAMMES: Programme[] = [
     areas: ['lowerBack', 'hips'],
     days: 14,
     minutes: 10,
-    pose: 'hug',
-    color: '#9FBFA8',
+    cover: 'lb-sphinx',
     about: 'Ease a stiff, achy lower back.',
     moves: ['lb-hug', 'lb-twist', 'ub-catcow', 'lb-sphinx', 'hip-fig4', 'kn-lyingham', 'lb-child'],
     later: ['lb-birddog', 'lb-bridge'],
@@ -136,8 +132,7 @@ export const PROGRAMMES: Programme[] = [
     areas: ['neck', 'shoulders', 'upperBack'],
     days: 7,
     minutes: 5,
-    pose: 'reach',
-    color: '#93A9BC',
+    cover: 'sh-cross',
     about: 'Undo screen time. No mat needed.',
     moves: ['neck-tuck', 'sh-doorway', 'neck-levator', 'ub-hug', 'sh-reach'],
   },
@@ -148,8 +143,7 @@ export const PROGRAMMES: Programme[] = [
     areas: ['neck', 'shoulders', 'upperBack'],
     days: 14,
     minutes: 10,
-    pose: 'goalpost',
-    color: '#93A9BC',
+    cover: 'ub-wall',
     about: 'Open your chest and stand taller.',
     moves: ['neck-tuck', 'ub-catcow', 'sh-doorway', 'ub-thread', 'ub-puppy', 'ub-wall', 'hip-lunge', 'lb-child'],
     later: ['lb-birddog', 'sh-goalpost'],
@@ -161,8 +155,7 @@ export const PROGRAMMES: Programme[] = [
     areas: ['hips'],
     days: 14,
     minutes: 10,
-    pose: 'lunge',
-    color: '#9FBFA8',
+    cover: 'hip-pigeon',
     about: 'Freer hips, building over two weeks.',
     moves: ['hip-swing', 'hip-lunge', 'hip-butterfly', 'hip-fig4', 'hip-sidelunge', 'lb-bridge', 'lb-twist'],
     later: ['hip-wgs', 'hip-squat', 'hip-pigeon'],
@@ -174,8 +167,7 @@ export const PROGRAMMES: Programme[] = [
     areas: ['upperBack', 'lowerBack', 'hips'],
     days: 7,
     minutes: 10,
-    pose: 'cat',
-    color: '#D9BE93',
+    cover: 'ub-catcow',
     about: 'Shake off overnight stiffness.',
     moves: ['ub-catcow', 'lb-sphinx', 'ub-thread', 'hip-lunge', 'sh-reach', 'an-calf', 'ft-raise'],
     later: ['hip-wgs', 'an-dog'],
@@ -187,8 +179,7 @@ export const PROGRAMMES: Programme[] = [
     areas: ['lowerBack', 'hips', 'neck'],
     days: 7,
     minutes: 10,
-    pose: 'child',
-    color: '#93A9BC',
+    cover: 'lb-child',
     easy: true,
     about: 'Slow floor stretches before bed.',
     moves: ['neck-tilt', 'hip-butterfly', 'kn-lyingham', 'hip-fig4', 'lb-twist', 'lb-hug', 'lb-child'],
@@ -200,8 +191,7 @@ export const PROGRAMMES: Programme[] = [
     areas: ['hips', 'knees', 'ankles', 'feet'],
     days: 7,
     minutes: 10,
-    pose: 'calf',
-    color: '#D49A7C',
+    cover: 'an-calf',
     about: 'Calves, hips and feet after a run.',
     moves: ['an-calf', 'kn-quad', 'hip-lunge', 'kn-lyingham', 'hip-fig4', 'hip-sidelunge', 'an-rock', 'ft-plantar'],
   },
@@ -212,8 +202,7 @@ export const PROGRAMMES: Programme[] = [
     areas: ['hips', 'knees', 'ankles'],
     days: 7,
     minutes: 10,
-    pose: 'squat',
-    color: '#D49A7C',
+    cover: 'hip-lunge',
     about: 'Cool down the legs and hips you worked.',
     moves: ['hip-lunge', 'kn-quad', 'kn-lyingham', 'hip-fig4', 'an-calf', 'hip-sidelunge', 'lb-child'],
     later: ['hip-pigeon', 'kn-couch'],
@@ -225,8 +214,7 @@ export const PROGRAMMES: Programme[] = [
     areas: ['wrists', 'elbows'],
     days: 7,
     minutes: 5,
-    pose: 'prayer',
-    color: '#D9BE93',
+    cover: 'wr-reverse',
     about: 'For wrists tired from typing and phones.',
     moves: ['wr-circles', 'wr-pull', 'el-extensor', 'el-turn', 'wr-prayer'],
   },

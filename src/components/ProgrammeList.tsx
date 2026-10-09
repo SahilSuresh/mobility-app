@@ -10,7 +10,7 @@ import { playSound } from '@/lib/sounds';
 import { useAppStore } from '@/store/useAppStore';
 
 import { Icon } from './Icon';
-import { PoseBubble } from './PoseBubble';
+import { MoveThumb } from './ExerciseArt';
 import { T } from './T';
 
 /**
@@ -74,7 +74,7 @@ export function ProgrammeList({ L, hideFree }: { L: LookTokens; /** Leave out th
   );
 }
 
-/** One programme: its drawing, name, length and what it's for, progress once started, and what tapping does. */
+/** One programme: its picture, name, length and what it's for, progress once started, and what tapping does. */
 function ProgrammeRow({
   L,
   programme: p,
@@ -103,7 +103,7 @@ function ProgrammeRow({
       onPress={onPress}
       style={({ pressed }) => [styles.row, !first && { borderTopWidth: 1, borderTopColor: L.rule }, pressed && styles.pressed]}
     >
-      <PoseBubble pose={p.pose} size={52} color={p.color} dot={false} />
+      <MoveThumb id={p.cover} size={52} />
       <View style={styles.flex}>
         <View style={styles.titleRow}>
           <T style={[styles.title, { color: L.ink }]} numberOfLines={1}>

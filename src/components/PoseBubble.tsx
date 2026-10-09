@@ -317,8 +317,8 @@ function arrowFor(pose: PoseKey): { path: string; head: string } | null {
 }
 
 /** Timings of the two-picture switch, in ms: the starting position, the change, the move held, the change back. */
-const SWITCH = { start: 1100, fade: 420, hold: 2600 } as const;
-const SWITCH_CYCLE = SWITCH.start + SWITCH.fade + SWITCH.hold + SWITCH.fade;
+export const SWITCH = { start: 1100, fade: 420, hold: 2600 } as const;
+export const SWITCH_CYCLE = SWITCH.start + SWITCH.fade + SWITCH.hold + SWITCH.fade;
 
 /** The figure in one position, with its floor shadow and (optionally) the glow on the area being stretched. */
 function Drawing({ p, id, dot }: { p: Pose; id: string; dot: boolean }) {

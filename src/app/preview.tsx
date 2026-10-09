@@ -4,10 +4,10 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Appear } from '@/components/Appear';
 import { Icon, type IconName } from '@/components/Icon';
-import { PoseBubble } from '@/components/PoseBubble';
+import { ExerciseArt } from '@/components/ExerciseArt';
 import { T } from '@/components/T';
 import { IconButton, PrimaryButton, Screen, TextButton } from '@/components/ui';
-import { colors, fonts, REGION_COLORS, tint } from '@/constants/theme';
+import { colors, fonts, tint } from '@/constants/theme';
 import { AREA_NAMES, sortAreas } from '@/data/areas';
 import { PROGRAMMES } from '@/data/content';
 import { EQUIPMENT_LABEL, getExercise } from '@/data/exercises';
@@ -131,7 +131,7 @@ export default function SessionPreview() {
                   onPress={() => router.push({ pathname: '/exercise/[id]', params: { id: e.id } })}
                   style={({ pressed }) => [styles.move, pressed && styles.pressed]}
                 >
-                  <PoseBubble pose={e.pose} size={48} color={REGION_COLORS[e.area]} dot={false} breathe phase={(i * 0.17) % 1} />
+                  <ExerciseArt exercise={e} size={48} dot={false} breathe phase={(i * 0.17) % 1} />
                   <View style={styles.moveText}>
                     <T variant="bodyStrong" numberOfLines={1}>
                       {e.name}

@@ -5,10 +5,11 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Appear, STAGGER, usePopSounds } from '@/components/Appear';
 import { Icon } from '@/components/Icon';
 import { OnboardingHeader } from '@/components/OnboardingHeader';
+import { ExerciseArt } from '@/components/ExerciseArt';
 import { PoseBubble } from '@/components/PoseBubble';
 import { T } from '@/components/T';
 import { PrimaryButton, Screen } from '@/components/ui';
-import { accent, colors, fonts, glass, POSE_COLORS, REGION_COLORS, shade, shadows, tint } from '@/constants/theme';
+import { accent, colors, fonts, glass, POSE_COLORS, shade, shadows, tint } from '@/constants/theme';
 import { GOALS, LEVELS } from '@/data/content';
 import { getExercise } from '@/data/exercises';
 import type { Exercise, Goal, Level, PoseKey } from '@/data/types';
@@ -162,7 +163,7 @@ export default function GoalAndExperience() {
                   </View>
                   <View style={styles.stack} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
                     {examples.map((e, i) => (
-                      <PoseBubble key={e.id} pose={e.pose} size={36} color={REGION_COLORS[e.area]} dot={false} outline style={i > 0 ? styles.stacked : undefined} />
+                      <ExerciseArt key={e.id} exercise={e} size={36} dot={false} outline style={i > 0 ? styles.stacked : undefined} />
                     ))}
                   </View>
                 </View>

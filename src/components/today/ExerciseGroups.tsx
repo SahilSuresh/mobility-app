@@ -2,15 +2,15 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { AccessibilityInfo, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
-import { AreaGlyph } from '@/components/AreaIcon';
 import { Icon } from '@/components/Icon';
-import { PoseBubble } from '@/components/PoseBubble';
+import { ArtIcon, ExerciseArt, MoveThumb } from '@/components/ExerciseArt';
 import { Sheet } from '@/components/Sheet';
 import { T } from '@/components/T';
 import { PrimaryButton } from '@/components/ui';
 import type { LookTokens } from '@/constants/looks';
-import { fonts, REGION_COLORS } from '@/constants/theme';
+import { fonts } from '@/constants/theme';
 import { AREA_NAMES } from '@/data/areas';
+import { AREA_COVER } from '@/data/art';
 import { getExercise } from '@/data/exercises';
 import type { AreaId, Exercise, PlannedSession } from '@/data/types';
 import { alpha } from '@/lib/color';
@@ -20,8 +20,8 @@ import { minutesForMoves } from '@/lib/plan';
 
 import { CARD } from './Section';
 
-/** Glyphs sit on the pastel region colour, so they use one dark ink in both looks. */
-const GLYPH_INK = '#17221B';
+/** The area pictures on the tiles: big enough for the figure to read, small enough for three tiles a row. */
+const TILE_ART = 40;
 
 type Move = { exercise: Exercise; order: number };
 type Group = { area: AreaId; moves: Move[] };
@@ -63,7 +63,7 @@ function rows<T>(items: T[], size: number): T[][] {
 
 type TileProps = { L: LookTokens; label: string; detail: string; selected: boolean; onPress: () => void; area?: AreaId };
 
-/** One choice in the area picker: the area's icon on its colour, its name, and how much of today it is. */
+/** One choice in the area picker: a move picture for the area (or the all-areas icon), its name, and how much of today it is. */
 function AreaTile({ L, label, detail, selected, onPress, area }: TileProps) {
   return (
     <Pressable
@@ -82,9 +82,7 @@ function AreaTile({ L, label, detail, selected, onPress, area }: TileProps) {
         pressed && styles.pressed,
       ]}
     >
-      <View style={[styles.tileGlyph, { backgroundColor: area ? REGION_COLORS[area] : L.bright }]}>
-        {area ? <AreaGlyph area={area} size={22} color={GLYPH_INK} /> : <Icon name="layers" size={20} color={L.onBright} strokeWidth={2} />}
-      </View>
+      {area ? <MoveThumb id={AREA_COVER[area]} size={TILE_ART} style={styles.tileArt} /> : <ArtIcon name="layers" size={TILE_ART} style={styles.tileArt} />}
       <T variant="smallStrong" color={L.ink} numberOfLines={1}>
         {label}
       </T>
@@ -108,7 +106,7 @@ function MoveRow({ L, move: { exercise: e, order }, total, first, onOpen }: { L:
       }}
       style={({ pressed }) => [styles.row, !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: L.rule }, pressed && styles.pressed]}
     >
-      <PoseBubble pose={e.pose} size={48} color={REGION_COLORS[e.area]} dot={false} />
+      <ExerciseArt exercise={e} size={48} dot={false} />
       <View style={styles.flex}>
         <T variant="bodyStrong" color={L.ink} numberOfLines={2}>
           {e.name}
@@ -132,9 +130,7 @@ function MoveRow({ L, move: { exercise: e, order }, total, first, onOpen }: { L:
 function AreaHeading({ L, group }: { L: LookTokens; group: Group }) {
   return (
     <View style={styles.areaHeading}>
-      <View style={[styles.smallGlyph, { backgroundColor: REGION_COLORS[group.area] }]}>
-        <AreaGlyph area={group.area} size={16} color={GLYPH_INK} />
-      </View>
+      <MoveThumb id={AREA_COVER[group.area]} size={28} />
       <T variant="smallStrong" color={L.ink} style={styles.flex} accessibilityRole="header">
         {AREA_NAMES[group.area]}
       </T>
@@ -212,15 +208,7 @@ export function ExerciseGroups({ L, session, focus, onFocus, onStart, startLabel
 
       <Sheet visible={open} onClose={() => setOpen(false)}>
         <View style={styles.sheetHead}>
-          {chosen ? (
-            <View style={[styles.headGlyph, { backgroundColor: REGION_COLORS[chosen.area] }]}>
-              <AreaGlyph area={chosen.area} size={26} color={GLYPH_INK} />
-            </View>
-          ) : (
-            <View style={[styles.headGlyph, { backgroundColor: L.bright }]}>
-              <Icon name="layers" size={22} color={L.onBright} strokeWidth={2} />
-            </View>
-          )}
+          {chosen ? <MoveThumb id={AREA_COVER[chosen.area]} size={56} /> : <ArtIcon name="layers" size={56} />}
           <View style={styles.flex}>
             <T style={[styles.sheetTitle, { color: L.ink }]} accessibilityRole="header">
               {chosen ? AREA_NAMES[chosen.area] : session.title}
@@ -267,13 +255,11 @@ const styles = StyleSheet.create({
   tile: { flex: 1, minHeight: 96, padding: 10, borderRadius: CARD.tileRadius, borderWidth: 1.5, gap: 2 },
   // Same padding and border as a tile, so a short last row keeps tiles the same width.
   tileSpacer: { flex: 1, padding: 10, borderWidth: 1.5, borderColor: 'transparent' },
-  tileGlyph: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
+  tileArt: { marginBottom: 6 },
   sheetHead: { marginTop: 6, flexDirection: 'row', alignItems: 'center', gap: 14 },
-  headGlyph: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
   sheetTitle: { fontFamily: fonts.serif, fontSize: 24, lineHeight: 30 },
   sheetList: { paddingTop: 16, gap: 14 },
   areaHeading: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  smallGlyph: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   list: { borderWidth: 1, borderRadius: CARD.radius, overflow: 'hidden' },
   row: { minHeight: 68, paddingHorizontal: 14, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 12 },
   meta: { marginTop: 2, flexDirection: 'row', alignItems: 'center', gap: 4 },
