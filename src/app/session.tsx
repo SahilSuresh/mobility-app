@@ -14,8 +14,9 @@ import { AREA_NAMES } from '@/data/areas';
 import { getExercise } from '@/data/exercises';
 import type { Exercise } from '@/data/types';
 import { goBack } from '@/lib/flow';
+import { cueSchedule, guideFor, restLine, speechSeconds, startLine, switchLine } from '@/lib/guide';
 import { success, tap } from '@/lib/haptics';
-import { COUNTDOWN, holdFor, restSeconds, spokenTime, SWITCH_SECONDS } from '@/lib/holds';
+import { COUNTDOWN, holdFor, restSeconds, SWITCH_SECONDS } from '@/lib/holds';
 import { playSound, preloadSounds, speak, stopSpeaking } from '@/lib/sounds';
 import { useViewport } from '@/lib/viewport';
 import { findSession, useAppStore } from '@/store/useAppStore';
@@ -92,29 +93,53 @@ export default function SessionPlayer() {
     };
   }, []);
 
-  // The voice guide (Sound & timer → Voice): the rest and what's next, how long to hold,
-  // when to switch sides, and a countdown through the last seconds of every hold.
-  // It starts just after the chime that marks each change, so the two don't talk over each other.
+  // The guide (lib/guide.ts, with each move's script in data/guide.ts) talks you through every move:
+  // in the rest, what's next and how to get into position; as it starts, the movement and how long;
+  // through it, form and breathing cues; at the switch, how to change sides; and a countdown at the end.
+  // The voice is a setting (Sound & timer → Voice). The same words show under the picture either way.
+  // The latest cue said during a hold, tagged with its stage, so it only shows while that stage lasts.
+  const [cue, setCue] = useState<{ stage: string; text: string } | null>(null);
+  // This hold's cues, by seconds left on the timer.
+  const cues = useRef<Record<number, string>>({});
+  // When the voice will have finished what it's saying (ms), so a queued line and the cues after it allow for it.
+  const speakingUntil = useRef(0);
   const restedFor = useRef(-1);
+
+  /** Say a line (if the voice is on) and return how many seconds until it's finished. */
+  const say = (text: string, { delay = 0, queue = false }: { delay?: number; queue?: boolean } = {}): number => {
+    const now = Date.now();
+    const begins = queue ? Math.max(now + delay, speakingUntil.current) : now + delay;
+    speakingUntil.current = begins + speechSeconds(text) * 1000;
+    if (useAppStore.getState().sounds.voice) speak(text, delay, { queue });
+    return (speakingUntil.current - now) / 1000;
+  };
+
   // Runs only when the move or its stage changes, never on the timer's every-second updates.
+  // Each line starts just after the chime that marks the change, so the two don't talk over each other.
   const announce = useEffectEvent(() => {
-    if (!move || !useAppStore.getState().sounds.voice) return;
-    const holdLine = `Hold for ${spokenTime(holdFor(move, holds))}.`;
+    if (!move) return;
     if (phase === 'ready') {
       restedFor.current = index;
-      const what = move.eachSide ? `${move.name}, on each side` : move.name;
-      speak(index === 0 ? `Get ready. First: ${what}.` : `Rest for ${readySeconds} seconds. Next: ${what}.`, index === 0 ? 0 : 900);
+      cues.current = {};
+      say(restLine(move, index === 0), { delay: index === 0 ? 0 : 900 });
     } else if (phase === 'switch') {
-      speak('Switch sides.', 400);
-    } else if (side === 2) {
-      speak(`Second side. ${holdLine}`, 500);
+      cues.current = {};
+      say(switchLine(move), { delay: 400 });
     } else {
-      const lead = move.eachSide ? `First side. ${holdLine}` : holdLine;
-      // Straight into a move (skipped the rest): say its name too.
-      speak(restedFor.current === index ? lead : `${move.name}. ${lead}`, 500);
+      const hold = holdFor(move, holds);
+      // Straight into a move (the rest was skipped): its name and setup come first.
+      const withSetup = side === 1 && restedFor.current !== index;
+      // After the rest or the switch, wait for that line to finish rather than cutting it off.
+      const busy = say(startLine(move, hold, { side, withSetup }), { delay: 500, queue: !withSetup });
+      cues.current = cueSchedule(move, hold, busy);
     }
   });
   useEffect(() => announce(), [index, phase, side]);
+
+  // Pausing stops the voice mid-line; the next cue picks up when you play again.
+  useEffect(() => {
+    if (!playing) stopSpeaking();
+  }, [playing]);
 
   // One tick a second while playing: rest → hold (→ switch → second side) → next move, or finish after the last.
   const tick = useEffectEvent(() => {
@@ -122,8 +147,15 @@ export default function SessionPlayer() {
     const sounds = useAppStore.getState().sounds;
     if (left > 1) {
       const now = left - 1;
-      // The last seconds of every hold, counted aloud: "5, 4, 3, 2, 1".
-      if (phase === 'move' && now <= COUNTDOWN && sounds.voice) speak(String(now));
+      if (phase === 'move') {
+        // The last seconds of every hold, counted aloud: "5, 4, 3, 2, 1". Before that, the move's cues.
+        if (now <= COUNTDOWN) {
+          if (sounds.voice) speak(String(now));
+        } else if (cues.current[now]) {
+          say(cues.current[now]);
+          setCue({ stage: `${index}:${phase}:${side}`, text: cues.current[now] });
+        }
+      }
       setLeft(now);
       return;
     }
@@ -177,6 +209,10 @@ export default function SessionPlayer() {
   // Rests and the switch between sides are the quiet stages: a muted ring and time.
   const between = ready || switching;
   const half = phase === 'move' && move.eachSide ? (side === 1 ? 'First side' : 'Second side') : null;
+  // Under the picture, the guide's words for this stage: how to set up, the movement, then each cue as it's said.
+  const guide = guideFor(move);
+  const caption =
+    cue?.stage === `${index}:${phase}:${side}` ? cue.text : ready ? guide.setup : switching ? (guide.other ?? 'Change to your other side.') : guide.go;
 
   return (
     <Screen>
@@ -219,7 +255,7 @@ export default function SessionPlayer() {
         {move.name}
       </T>
       <T variant="body" color={colors.muted} center style={[styles.tip, compact && styles.tipCompact]}>
-        {switching ? 'Change to your other side, then hold again.' : move.tip}
+        {caption}
       </T>
       <T center style={[styles.time, compact && styles.timeCompact, between && styles.timeReady]}>
         {clock(Math.max(0, left))}
@@ -320,8 +356,9 @@ const styles = StyleSheet.create({
   kickerCompact: { marginTop: 14 },
   side: { color: colors.muted, letterSpacing: 0, textTransform: 'none', fontFamily: fonts.semibold },
   name: { marginTop: 6 },
-  tip: { marginTop: 8, minHeight: 50, alignSelf: 'center', maxWidth: 310 },
-  tipCompact: { marginTop: 4, minHeight: 42, fontSize: 15, lineHeight: 21 },
+  // Room for three lines, so the guide's longer lines don't push the timer around as they change.
+  tip: { marginTop: 8, minHeight: 69, alignSelf: 'center', maxWidth: 320 },
+  tipCompact: { marginTop: 4, minHeight: 63, fontSize: 15, lineHeight: 21 },
   time: { marginTop: 10, fontFamily: fonts.display, fontSize: 44, lineHeight: 48, letterSpacing: -1, color: colors.ink, fontVariant: ['tabular-nums'] },
   timeCompact: { marginTop: 4, fontSize: 36, lineHeight: 40 },
   timeReady: { color: colors.muted },

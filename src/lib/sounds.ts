@@ -1,5 +1,6 @@
 import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
 import * as Speech from 'expo-speech';
+import { Platform } from 'react-native';
 
 import { useAppStore } from '@/store/useAppStore';
 
@@ -38,17 +39,29 @@ function playerFor(sound: Sound): AudioPlayer {
   return players[sound];
 }
 
-/** Load the sounds ahead of time, so the first one plays without a delay. */
+/** Load the sounds ahead of time, so the first one plays without a delay. Also picks the guide's voice. */
 export function preloadSounds(): void {
   try {
     (Object.keys(SOURCES) as Sound[]).forEach(playerFor);
   } catch {
     // Sound is a nice-to-have: the session works the same without it.
   }
+  pickVoice();
+}
+
+/**
+ * Browsers block sound until the person has tapped or clicked the page, and log an error for every sound tried
+ * before that (such as the pops as onboarding builds in). On web, wait for that first tap. Phones have no such rule.
+ */
+function canPlay(): boolean {
+  if (Platform.OS !== 'web') return true;
+  const activation = (globalThis as { navigator?: { userActivation?: { hasBeenActive: boolean } } }).navigator?.userActivation;
+  return activation ? activation.hasBeenActive : true;
 }
 
 /** Play a sound from the start. */
 export function playSound(sound: Sound): void {
+  if (!canPlay()) return;
   try {
     const player = playerFor(sound);
     player.seekTo(0).catch(() => undefined);
@@ -69,26 +82,59 @@ export function playStartSound(): void {
   if (chimesOn()) playSound('start');
 }
 
-let pending: ReturnType<typeof setTimeout> | null = null;
+/** A calm coaching pace: a little slower than normal speech. */
+const RATE = 0.9;
 
-/** Say something aloud, cutting off anything still being said. `delayMs` lets a chime finish first. */
-export function speak(text: string, delayMs = 0): void {
-  if (pending) clearTimeout(pending);
-  pending = setTimeout(() => {
-    pending = null;
+/**
+ * The guide's voice: the best English voice on the phone, preferring a British one and the higher-quality
+ * "enhanced" voices people can download in their phone's settings. Until it's found, the phone's default is used.
+ */
+let voice: string | undefined;
+let voicePicked = false;
+
+function pickVoice(): void {
+  if (voicePicked) return;
+  voicePicked = true;
+  Speech.getAvailableVoicesAsync()
+    .then((voices) => {
+      const english = voices.filter((v) => v.language.toLowerCase().startsWith('en'));
+      const score = (v: Speech.Voice) => (v.quality === Speech.VoiceQuality.Enhanced ? 2 : 0) + (v.language.toLowerCase().replace('_', '-') === 'en-gb' ? 1 : 0);
+      const best = english.sort((a, b) => score(b) - score(a))[0];
+      // Only switch from the default for a voice that's actually better: enhanced, or at least British.
+      if (best && score(best) > 0) voice = best.identifier;
+    })
+    .catch(() => undefined);
+}
+
+// Lines waiting to be said (each after its delay), so stopping can cancel them too.
+const timers = new Set<ReturnType<typeof setTimeout>>();
+
+function cancelPending(): void {
+  timers.forEach(clearTimeout);
+  timers.clear();
+}
+
+/**
+ * Say something aloud. Normally it cuts off anything still being said; with `queue` it waits its turn instead,
+ * such as the hold time after a setup line that's still going. `delayMs` lets a chime finish first.
+ */
+export function speak(text: string, delayMs = 0, { queue = false }: { queue?: boolean } = {}): void {
+  if (!queue) cancelPending();
+  const timer = setTimeout(() => {
+    timers.delete(timer);
     try {
-      Speech.stop();
-      Speech.speak(text, { rate: 0.95 });
+      if (!queue) Speech.stop();
+      Speech.speak(text, { rate: RATE, voice });
     } catch {
       // Voice is a nice-to-have: the session works the same without it.
     }
   }, delayMs);
+  timers.add(timer);
 }
 
-/** Stop anything being said, such as when a session ends. */
+/** Stop anything being said, such as when a session ends or is paused. */
 export function stopSpeaking(): void {
-  if (pending) clearTimeout(pending);
-  pending = null;
+  cancelPending();
   try {
     Speech.stop();
   } catch {
