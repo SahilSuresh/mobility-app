@@ -36,6 +36,18 @@ const PALETTES: Record<string, Palette> = {
     seam: '#F6EFE2',
     head: '#E5D8C1',
   },
+  // Light sage, for the Sage share card.
+  '#C2D6C4': {
+    skin: ['#D5E3D5', '#C2D6C4', '#ADC4B0'],
+    edge: 'rgba(60,100,76,0.45)',
+    line: '#4F7A60',
+    lineOpacity: 0.24,
+    shadow: '#2E4D3B',
+    shadowOpacity: 0.14,
+    muscle: ['#B4CAB7', '#9EB9A3'],
+    seam: '#EEF4EC',
+    head: '#CCDDCC',
+  },
   '#3B6351': {
     skin: ['#4E7B65', '#3B6351', '#2B4B3B'],
     edge: 'rgba(255,255,255,0.2)',
