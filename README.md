@@ -90,6 +90,10 @@ The paywall (`src/app/premium.tsx`) opens:
 
 **The Premium pop-up** (`src/components/PremiumNudge.tsx`, rules in `src/lib/nudge.ts`) is a short reminder on Today, Bend-style, shown 1.5 seconds after Today opens or the app comes back from the background. It never shows to anyone with Premium (including a free trial), and it closes itself if Premium turns on while it's open. It also never shows in the 30 minutes after making a plan. It shows at most once every 12 hours, and each "Not now" makes it wait longer: 12 hours, then 1 day, then 3 days, then weekly (`GAPS_HOURS`). Opening the full paywall any other way restarts the wait, so the two never come back to back. The state (`nudge: { lastShown, dismissals }`) is saved with the rest of the app's data.
 
+### App review access
+
+Unknot has no accounts, and store reviewers can't start free trials, so reviewers get an access code instead: Settings → **Have an access code?** (shown only without Premium) turns Premium on for that phone for good (`reviewAccess` in the store; RevenueCat checks can't switch it off). The code itself is only in the git-ignored `.env.local` as `REVIEW_ACCESS_CODE` and in the store consoles' sign-in details; the app holds just its SHA-256 (`src/lib/reviewAccess.ts`). To change it, hash the new code (letters and digits only, upper case) into `REVIEW_CODE_SHA256`, ship an update and give the stores the new code.
+
 ### Paywall setup
 
 The paywall runs on RevenueCat (`react-native-purchases`). Everything about Premium is in `src/lib/purchases.ts`, and RevenueCat is the source of truth: Premium is checked at launch, every time the app comes to the front, and whenever RevenueCat reports a change (renewal, expiry, refund, a pending payment clearing).

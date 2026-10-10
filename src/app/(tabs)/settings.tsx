@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, type Href } from 'expo-router';
 import { useState } from 'react';
-import { Linking, Platform, Pressable, StyleSheet, Switch, View } from 'react-native';
+import { Linking, Platform, Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
 import { T } from '@/components/T';
@@ -14,6 +14,7 @@ import { restSeconds } from '@/lib/holds';
 import { cancelReminders } from '@/lib/notifications';
 import { reminderSummary } from '@/lib/reminders';
 import { manageSubscription, purchasesLive, restore } from '@/lib/purchases';
+import { isReviewCode } from '@/lib/reviewAccess';
 import { useAppStore } from '@/store/useAppStore';
 
 type RowProps = { label: string; value?: string; href?: Href; onPress?: () => void; last?: boolean };
@@ -46,6 +47,7 @@ export default function SettingsTab() {
   const reminder = useAppStore((s) => s.reminder);
   const isPremium = useAppStore((s) => s.isPremium);
   const setPremium = useAppStore((s) => s.setPremium);
+  const unlockReviewAccess = useAppStore((s) => s.unlockReviewAccess);
   const sounds = useAppStore((s) => s.sounds);
   const readySeconds = useAppStore((s) => s.readySeconds);
   // Short enough to fit beside the label: "Voice & chimes · 5s rest", "Chimes · 10s rest", "Silent · 5s rest".
@@ -55,6 +57,9 @@ export default function SettingsTab() {
   const reset = useAppStore((s) => s.reset);
   const [note, setNote] = useState('');
   const [darkMode, setDarkMode] = useState(isDark);
+  // The access code box, for app store review: closed until asked for.
+  const [codeOpen, setCodeOpen] = useState(false);
+  const [code, setCode] = useState('');
   if (!plan) return null;
 
   const restorePurchases = async () => {
@@ -65,6 +70,17 @@ export default function SettingsTab() {
       setNote(active ? 'Premium restored.' : active === null ? `Restore works once the ${store} is connected.` : 'No purchases to restore.');
     } catch {
       setNote(`Couldn't reach the ${store}. Check your connection and try again.`);
+    }
+  };
+
+  const applyCode = async () => {
+    if (await isReviewCode(code)) {
+      unlockReviewAccess();
+      setCodeOpen(false);
+      setCode('');
+      setNote('Premium is on for this phone.');
+    } else {
+      setNote("That code didn't work. Check it and try again.");
     }
   };
 
@@ -147,6 +163,37 @@ export default function SettingsTab() {
         <Row label="Reminders" value={reminderSummary(reminder)} href={{ pathname: '/reminder', params: { edit: '1' } }} />
         {isPremium && purchasesLive() ? <Row label="Manage subscription" onPress={openSubscription} /> : null}
         <Row label="Restore purchases" onPress={restorePurchases} />
+        {isPremium ? null : <Row label="Have an access code?" onPress={() => setCodeOpen((o) => !o)} />}
+        {codeOpen && !isPremium ? (
+          <>
+            <View style={[styles.row, styles.codeRow]}>
+              <TextInput
+                accessibilityLabel="Access code"
+                value={code}
+                onChangeText={setCode}
+                onSubmitEditing={applyCode}
+                placeholder="Access code"
+                placeholderTextColor={colors.muted}
+                autoCapitalize="characters"
+                autoCorrect={false}
+                autoFocus
+                returnKeyType="done"
+                style={[styles.flex, styles.codeInput]}
+              />
+              <Pressable
+                accessibilityRole="button"
+                onPress={applyCode}
+                disabled={!code.trim()}
+                style={({ pressed }) => [styles.apply, !code.trim() && { opacity: 0.45 }, pressed && { opacity: 0.8 }]}
+              >
+                <T variant="smallStrong" color={colors.onGreen}>
+                  Apply
+                </T>
+              </Pressable>
+            </View>
+            <View style={styles.hairline} />
+          </>
+        ) : null}
         <Row label="Help" onPress={() => Linking.openURL(config.links.help)} />
         <Row label="Privacy and terms" onPress={() => Linking.openURL(config.links.privacy)} last />
       </View>
@@ -203,5 +250,8 @@ const styles = StyleSheet.create({
   },
   row: { minHeight: 52, paddingHorizontal: 16, paddingRight: 14, flexDirection: 'row', alignItems: 'center', gap: 8 },
   value: { maxWidth: 170 },
+  codeRow: { gap: 10 },
+  codeInput: { minHeight: 40, paddingHorizontal: 12, borderRadius: 12, borderWidth: 1, borderColor: colors.border, color: colors.ink, fontFamily: fonts.medium, fontSize: 16 },
+  apply: { height: 40, paddingHorizontal: 16, borderRadius: 20, backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center' },
   hairline: { marginLeft: 16, height: 1, backgroundColor: tint(0.10) },
 });
