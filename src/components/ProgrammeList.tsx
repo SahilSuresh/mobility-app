@@ -6,6 +6,7 @@ import type { LookTokens } from '@/constants/looks';
 import { fonts } from '@/constants/theme';
 import { AREA_NAMES } from '@/data/areas';
 import { PROGRAMMES, type Programme } from '@/data/content';
+import { isForYourPlan } from '@/lib/programmes';
 import { playSound } from '@/lib/sounds';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -29,7 +30,8 @@ export function ProgrammeList({ L, hideFree }: { L: LookTokens; /** Leave out th
     .map((p) => ({
       p,
       done: Math.min(p.days, programmeDays[p.id] ?? 0),
-      matches: !!plan && p.areas.some((a) => plan.areas.includes(a)),
+      // Every area it works is one of yours, so the tag marks a few, not nearly all.
+      matches: !!plan && isForYourPlan(p, plan.areas),
     }))
     .sort((a, b) => inProgress(b.done, b.p.days) - inProgress(a.done, a.p.days) || Number(b.matches) - Number(a.matches));
 
@@ -106,7 +108,7 @@ function ProgrammeRow({
       <MoveThumb id={p.cover} size={52} />
       <View style={styles.flex}>
         <View style={styles.titleRow}>
-          <T style={[styles.title, { color: L.ink }]} numberOfLines={1}>
+          <T style={[styles.title, { color: L.ink }]} numberOfLines={2}>
             {p.title}
           </T>
           {p.free || (matches && !started) ? (
@@ -116,9 +118,9 @@ function ProgrammeRow({
           ) : null}
         </View>
         <T variant="caption" color={L.muted} numberOfLines={1}>
-          {p.days} days · {p.minutes} min a day
+          {`${p.days} days, ${p.minutes} min a day`}
         </T>
-        <T variant="caption" color={L.faint} numberOfLines={2} style={styles.areas}>
+        <T variant="caption" color={L.muted} numberOfLines={2} style={styles.areas}>
           {p.about}
         </T>
         {started ? (
@@ -166,8 +168,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 84, paddingVertical: 14, paddingHorizontal: 16 },
-  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
-  title: { fontFamily: fonts.semibold, fontSize: 16, lineHeight: 21 },
+  // The tag wraps under a long name rather than cutting it off.
+  titleRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 8, rowGap: 4, marginBottom: 2 },
+  title: { flexShrink: 1, fontFamily: fonts.semibold, fontSize: 16, lineHeight: 21 },
   tag: { height: 20, paddingHorizontal: 7, borderRadius: 10, borderWidth: 1, justifyContent: 'center' },
   tagText: { fontFamily: fonts.bold, fontSize: 11, letterSpacing: 0.3 },
   areas: { marginTop: 1 },

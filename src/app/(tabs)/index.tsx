@@ -6,11 +6,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Appear } from '@/components/Appear';
 import { Icon } from '@/components/Icon';
 import { PremiumNudge } from '@/components/PremiumNudge';
-import { ProgrammeList } from '@/components/ProgrammeList';
 import { T } from '@/components/T';
 import { BodyPartGrid } from '@/components/today/BodyPartGrid';
 import { DoneBanner, DoneStage } from '@/components/today/DoneStage';
 import { ExerciseGroups } from '@/components/today/ExerciseGroups';
+import { ProgrammeCards } from '@/components/today/ProgrammeCards';
 import { QuickProgrammes } from '@/components/today/QuickProgrammes';
 import { START_BAR_SPACE, StartBar } from '@/components/today/StartBar';
 import { streakIcon } from '@/components/today/streak';
@@ -164,7 +164,7 @@ export default function Today() {
         <QuickProgrammes L={L} />
       </Appear>
       <Appear delay={540}>
-        <ProgrammeList L={L} hideFree />
+        <ProgrammeCards L={L} />
       </Appear>
 
       {/* Now and then, for anyone without Premium: see lib/nudge.ts for when. */}
