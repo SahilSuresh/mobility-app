@@ -41,3 +41,9 @@ export function moveTime(e: Exercise, holds: Holds): number {
   const hold = holdFor(e, holds);
   return e.eachSide ? hold * 2 + SWITCH_SECONDS : hold;
 }
+
+/** Whole minutes for a list of moves with your own holds and rest, the same sum the session preview shows. */
+export function sessionMinutes(moves: Exercise[], holds: Holds, readySeconds: number): number {
+  const seconds = moves.reduce((t, e) => t + moveTime(e, holds) + readySeconds, 0);
+  return Math.max(1, Math.round(seconds / 60));
+}

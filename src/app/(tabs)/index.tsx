@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -9,10 +9,10 @@ import { PremiumNudge } from '@/components/PremiumNudge';
 import { ProgrammeList } from '@/components/ProgrammeList';
 import { T } from '@/components/T';
 import { BodyPartGrid } from '@/components/today/BodyPartGrid';
-import { DoneBanner, DoneStage } from '@/components/today/DoneStage';
 import { ExerciseGroups } from '@/components/today/ExerciseGroups';
 import { QuickProgrammes } from '@/components/today/QuickProgrammes';
 import { START_BAR_SPACE, StartBar } from '@/components/today/StartBar';
+import { TimeOfDay } from '@/components/today/TimeOfDay';
 import { streakIcon } from '@/components/today/streak';
 import { Screen } from '@/components/ui';
 import { LOOKS } from '@/constants/looks';
@@ -23,20 +23,14 @@ import type { AreaId } from '@/data/types';
 import { DAY_LONG, isSameDay, longDate } from '@/lib/dates';
 import { startSession } from '@/lib/flow';
 import { areaSession } from '@/lib/plan';
-import { nextSession, streak } from '@/lib/progress';
+import { nextSession, nextWeekSession, streak } from '@/lib/progress';
 import { useNow } from '@/lib/useNow';
 import { useAppStore } from '@/store/useAppStore';
 import { resolveLook, useLook } from '@/store/useLook';
 
-/** How long the done card stays open after you train before folding into the slim bar. */
-const DONE_CARD_MS = 6000;
-
-/** The day the done card was last folded, so it stays folded when you come back to this tab. */
-let foldedOn = '';
-
 /**
- * Training first. Today's session leads (what it is, its areas, Start), then ways to train something else:
- * one body part, a quick 2 to 10 minutes, or a programme.
+ * Training first. Stretches for the time of day lead, as cards to swipe through; then today's session (what it is,
+ * its areas, Start), then other ways to train: one body part, a quick 2 to 10 minutes, or a programme.
  */
 export default function Today() {
   const plan = useAppStore((s) => s.plan);
@@ -48,26 +42,13 @@ export default function Today() {
   const insets = useSafeAreaInsets();
   const now = useNow();
   const L = LOOKS[resolveLook(choice, now)];
-  const dayKey = now.toDateString();
+  // Today stays about training: what you've done is celebrated on Session complete and shown on Progress.
   const trained = history.some((h) => isSameDay(new Date(h.date), now));
-  const [cardOpen, setCardOpen] = useState(() => foldedOn !== dayKey);
-  const fold = () => {
-    foldedOn = dayKey;
-    setCardOpen(false);
-  };
-  // The done card is a moment, not a wall: it folds itself away after a few seconds.
-  useEffect(() => {
-    if (!trained || !cardOpen) return;
-    const timer = setTimeout(() => {
-      foldedOn = dayKey;
-      setCardOpen(false);
-    }, DONE_CARD_MS);
-    return () => clearTimeout(timer);
-  }, [trained, cardOpen, dayKey]);
   if (!plan) return null;
 
   const next = nextSession(plan, history, now);
   const session = next?.session;
+  const upNext = session ? null : nextWeekSession(plan, now);
   const run = streak(plan, history, now);
   const level = session ? Math.max(...session.areas.map((a) => areaLevels[a] ?? plan.level)) : plan.level;
   const when = !session
@@ -77,8 +58,6 @@ export default function Today() {
       : next?.when === 'catchup'
         ? `Catch-up from ${DAY_LONG[session.weekday]}`
         : 'Today';
-  const todays = history.filter((h) => isSameDay(new Date(h.date), now));
-  const daysShownUp = new Set(history.map((h) => new Date(h.date).toDateString())).size;
   // Training once doesn't hide the rest: whatever's still to do stays here, with Start.
   const showStart = !!session;
   // Checked against the moves themselves: a session can borrow moves from a neighbouring area.
@@ -118,17 +97,9 @@ export default function Today() {
         </View>
       </Appear>
 
-      {trained ? (
-        cardOpen ? (
-          <Appear delay={80}>
-            <DoneStage L={L} today={todays} run={run} now={now} dayNumber={daysShownUp} weekDone={!session} onClose={fold} />
-          </Appear>
-        ) : (
-          <Appear delay={80}>
-            <DoneBanner L={L} today={todays} onOpen={() => setCardOpen(true)} />
-          </Appear>
-        )
-      ) : null}
+      <Appear delay={100}>
+        <TimeOfDay L={L} />
+      </Appear>
 
       {session ? (
         <>
@@ -146,14 +117,23 @@ export default function Today() {
             <ExerciseGroups L={L} session={session} focus={focus} onFocus={setChosenArea} onStart={start} startLabel={startLabel} />
           </Appear>
         </>
-      ) : trained ? null : (
+      ) : (
+        // Nothing left this week: say so, and when the plan picks up (the Plan tab shows what's next).
         <>
-          <T style={[styles.title, { color: L.ink }]} accessibilityRole="header">
-            Week complete
-          </T>
-          <T variant="body" color={L.muted} style={styles.details}>
-            Your next plan starts on Monday.
-          </T>
+          {trained ? null : (
+            <Appear delay={140}>
+              <T style={[styles.title, { color: L.ink }]} accessibilityRole="header">
+                Week complete
+              </T>
+            </Appear>
+          )}
+          {upNext && !trained ? (
+            <Appear delay={200}>
+              <T variant="body" color={L.muted} style={styles.details}>
+                {`Your plan picks up on ${longDate(upNext.date)}. See what's next in Plan.`}
+              </T>
+            </Appear>
+          ) : null}
         </>
       )}
 

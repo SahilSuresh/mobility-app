@@ -104,9 +104,9 @@ export function BodyPartGrid({ L, planAreas }: { L: LookTokens; planAreas: AreaI
   const setMinutes = useAppStore((s) => s.setAreaMinutes);
   const startCustom = useAppStore((s) => s.startCustom);
   const now = useNow();
-  // The list leads, every time Today opens; the body map is one switch away.
-  const [mode, setMode] = useState<'row' | 'body'>('row');
-  useFocusEffect(useCallback(() => setMode('row'), []));
+  // The body map leads, every time Today opens: tap where you feel it. The list is one switch away.
+  const [mode, setMode] = useState<'row' | 'body'>('body');
+  useFocusEffect(useCallback(() => setMode('body'), []));
   const [view, setView] = useState<BodyView>('front');
   // Every part chosen on the body map; one session trains them all.
   const [picked, setPicked] = useState<AreaId[]>([]);
@@ -139,7 +139,7 @@ export function BodyPartGrid({ L, planAreas }: { L: LookTokens; planAreas: AreaI
       sub={mode === 'body' ? 'Tap every part you want to train, then start.' : undefined}
       aside={
         <View style={[styles.switch, { borderColor: L.chip.border }]} accessibilityRole="tablist">
-          {(['row', 'body'] as const).map((m) => (
+          {(['body', 'row'] as const).map((m) => (
             <Pressable
               key={m}
               accessibilityRole="tab"

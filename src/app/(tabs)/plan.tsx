@@ -7,6 +7,7 @@ import { useReducedMotion } from 'react-native-reanimated';
 import { Appear } from '@/components/Appear';
 import { Icon } from '@/components/Icon';
 import { ProgrammeList } from '@/components/ProgrammeList';
+import { UpNext } from '@/components/today/UpNext';
 import { T } from '@/components/T';
 import { Screen } from '@/components/ui';
 import { LOOKS, type LookTokens } from '@/constants/looks';
@@ -15,7 +16,7 @@ import { GOAL_LABEL, LEVEL_NAME } from '@/data/content';
 import type { PlannedSession } from '@/data/types';
 import { DAY_SHORT, dateOfWeekday, weekdayIndex } from '@/lib/dates';
 import { startSession } from '@/lib/flow';
-import { doneForPlan, nextSession, scheduledInWeek, weekNumber } from '@/lib/progress';
+import { doneForPlan, nextSession, nextWeekSession, scheduledInWeek, weekNumber } from '@/lib/progress';
 import { useNow } from '@/lib/useNow';
 import { useAppStore } from '@/store/useAppStore';
 import { resolveLook, useLook } from '@/store/useLook';
@@ -38,6 +39,8 @@ export default function PlanTab() {
   const doneCount = sessions.filter((s) => done.has(s.id)).length;
   const progress = sessions.length ? doneCount / sessions.length : 0;
   const flat = L.dark && styles.flat;
+  // Once this week's sessions are all done, look ahead to next week's first one.
+  const upNext = next ? null : nextWeekSession(plan, now);
 
   return (
     <Screen scroll tabBar backdrop={L.background ? <LinearGradient colors={L.background} style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]} /> : undefined}>
@@ -112,6 +115,12 @@ export default function PlanTab() {
           ) : null}
         </View>
       </Appear>
+
+      {upNext ? (
+        <Appear delay={300 + sessions.length * 70}>
+          <UpNext L={L} session={upNext.session} date={upNext.date} />
+        </Appear>
+      ) : null}
 
       <Appear delay={300 + sessions.length * 70 + 80}>
         <ProgrammeList L={L} />
