@@ -64,13 +64,13 @@ export function Categories({ L }: { L: LookTokens }) {
                   onPress={() => start(c)}
                   style={({ pressed }) => [styles.tile, { backgroundColor: L.chip.bg, borderColor: L.chip.border }, pressed && styles.pressed]}
                 >
-                  <MoveThumb id={c.cover} size={44} />
+                  <MoveThumb id={c.cover} size={36} />
                   <View style={styles.words}>
                     <T style={[styles.name, { color: L.ink }]} numberOfLines={1}>
                       {c.name}
                     </T>
                     <T variant="caption" color={L.muted} numberOfLines={1}>
-                      {`${minutes} min · ${moves.length} moves`}
+                      {`${minutes} min`}
                     </T>
                   </View>
                 </Pressable>
@@ -91,12 +91,12 @@ const styles = StyleSheet.create({
   tile: {
     flex: 1,
     minHeight: 72,
-    padding: 12,
+    padding: 10,
     borderWidth: 1,
     borderRadius: CARD.tileRadius,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
   },
   words: { flex: 1, gap: 2 },
   name: { fontFamily: fonts.bold, fontSize: 15, lineHeight: 19 },
