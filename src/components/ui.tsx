@@ -123,15 +123,17 @@ export function PrimaryButton({ label, onPress, disabled, icon, style }: ButtonP
   );
 }
 
-export function SecondaryButton({ label, onPress, icon, style }: ButtonProps) {
+export function SecondaryButton({ label, onPress, disabled, icon, style }: ButtonProps) {
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityState={{ disabled: !!disabled }}
+      disabled={disabled}
       onPress={() => {
         tap();
         onPress?.();
       }}
-      style={({ pressed }) => [styles.secondary, pressed && styles.pressed, style]}
+      style={({ pressed }) => [styles.secondary, pressed && styles.pressed, disabled && styles.secondaryDisabled, style]}
     >
       {icon ? <Icon name={icon} size={18} color={colors.ink} /> : null}
       <Text maxFontSizeMultiplier={MAX_FONT_SCALE} style={styles.secondaryLabel}>
@@ -256,6 +258,7 @@ const styles = StyleSheet.create({
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none' },
   fill: { flex: 1 },
   pressed: { transform: [{ scale: 0.98 }], opacity: 0.94 },
+  secondaryDisabled: { opacity: 0.5 },
   card: { borderRadius: 24, borderWidth: 1, borderColor: colors.border, boxShadow: shadows.small },
   cardBig: { borderRadius: 34, boxShadow: shadows.card },
   cardHighlight: { borderWidth: 2, borderColor: colors.green },

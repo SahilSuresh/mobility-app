@@ -1,7 +1,9 @@
 import { AREA_NAMES, areasLabel, FOCUS_TITLES, sortAreas } from '@/data/areas';
+import type { Category } from '@/data/categories';
 import { DAY_PATTERNS, type Programme } from '@/data/content';
 import { EXERCISES, moveSeconds } from '@/data/exercises';
 import { POSITION, type Position } from '@/data/poses';
+import type { TimeStretch } from '@/data/timeOfDay';
 import type { AreaId, DaysPerWeek, Exercise, Goal, Level, Minutes, Plan, PlannedSession, Routine, SessionKind } from '@/data/types';
 import { weekdayIndex } from './dates';
 
@@ -246,6 +248,31 @@ export function makeAreaSession(area: AreaId, minutes: number, plan: Plan, level
 
 /** How long a list of moves takes, rounded to whole minutes (at least one), counting the pause between moves. */
 /** One of your routines as a session: its moves in your order, played through `rounds` times. */
+/** A time-of-day stretch (morning, midday, evening, bedtime) as a session the player can run, moves in their set order. */
+export function timeOfDaySession(stretch: TimeStretch): PlannedSession {
+  return setSession(`time-${stretch.id}`, stretch.name, stretch.moves);
+}
+
+/** A category on Today (Runners, Posture and so on) as a session the player can run, moves in their set order. */
+export function categorySession(category: Category): PlannedSession {
+  return setSession(`category-${category.id}`, category.name, category.moves);
+}
+
+/** A ready-made list of moves as a session, played in the order given. */
+function setSession(id: string, title: string, moves: string[]): PlannedSession {
+  const exerciseIds = moves.filter((m) => EXERCISES.some((e) => e.id === m));
+  const areas = sortAreas([...new Set(exerciseIds.map((m) => EXERCISES.find((e) => e.id === m)?.area).filter((a): a is AreaId => !!a))]);
+  return {
+    id,
+    weekday: weekdayIndex(new Date()),
+    title,
+    kind: 'custom',
+    areas,
+    exerciseIds,
+    minutes: minutesForMoves(exerciseIds),
+  };
+}
+
 export function routineSession(routine: Routine): PlannedSession {
   const moves = routine.moves.filter((id) => EXERCISES.some((e) => e.id === id));
   const exerciseIds = Array.from({ length: Math.max(1, routine.rounds) }, () => moves).flat();

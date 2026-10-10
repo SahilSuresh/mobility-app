@@ -11,11 +11,11 @@ import { streakIcon } from '@/components/today/streak';
 import { Card, IconButton, Screen } from '@/components/ui';
 import { LOOKS } from '@/constants/looks';
 import { colors, fonts, glass, tint } from '@/constants/theme';
-import { AREA_NAMES } from '@/data/areas';
+import { AREA_NAMES, areasPhrase } from '@/data/areas';
 import { AREA_COVER } from '@/data/art';
 import { EXERCISES } from '@/data/exercises';
 import type { AreaId, CompletedSession } from '@/data/types';
-import { relativeDay } from '@/lib/dates';
+import { isSameDay, relativeDay } from '@/lib/dates';
 import { areaCounts, minutesOf, plannedDone, sessionMinutes, streak, thisWeek, weeklyTarget, weeksOnTarget } from '@/lib/progress';
 import { useNow } from '@/lib/useNow';
 import { useAppStore } from '@/store/useAppStore';
@@ -40,6 +40,11 @@ export default function ProgressTab() {
   const shown = counts.length ? counts : plan.areas.map((area) => ({ area, count: 0 }));
   const max = Math.max(1, ...shown.map((c) => c.count));
   const run = streak(plan, history, now);
+  // What you did today, summed up at the top (it used to be a card on Today).
+  const todays = history.filter((h) => isSameDay(new Date(h.date), now));
+  const todayMinutes = todays.reduce((t, h) => t + sessionMinutes(h), 0);
+  const todayMoves = todays.reduce((t, h) => t + h.moves, 0);
+  const todayAreas = [...new Set(todays.flatMap((h) => h.areas))];
   const glows = Object.fromEntries(shown.filter((c) => c.count > 0).map((c) => [c.area, 0.4 + 0.6 * (c.count / max)])) as Partial<Record<AreaId, number>>;
 
   return (
@@ -48,6 +53,20 @@ export default function ProgressTab() {
         <T variant="title">Progress</T>
         <IconButton icon="share" label="Share your week" onPress={() => router.push('/share')} />
       </View>
+
+      {todays.length ? (
+        <View accessible style={styles.today}>
+          <View style={styles.todayIcon}>
+            <Icon name="check" size={16} color={colors.onGreen} strokeWidth={2.8} />
+          </View>
+          <View style={styles.flex}>
+            <T variant="bodyStrong">Done today</T>
+            <T variant="small">
+              {`${todayMinutes} ${todayMinutes === 1 ? 'minute' : 'minutes'} and ${todayMoves} moves for your ${areasPhrase(todayAreas)}.`}
+            </T>
+          </View>
+        </View>
+      ) : null}
 
       <Card big style={styles.weekCard}>
         <Ring size={92} stroke={9} progress={plannedDone(plan, history, now) / Math.max(1, weeklyTarget(plan, now))}>
@@ -157,6 +176,8 @@ export default function ProgressTab() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
+  today: { marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  todayIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center' },
   weekCard: { marginTop: 18, padding: 18, flexDirection: 'row', alignItems: 'center', gap: 20, borderRadius: 28 },
   minutes: { marginTop: 4, fontSize: 32, lineHeight: 36 },
   tiles: { marginTop: 12, flexDirection: 'row', gap: 10 },

@@ -48,7 +48,7 @@ export function Section({ L, title, sub, aside, children }: Props) {
 const styles = StyleSheet.create({
   section: { marginTop: 32 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  title: { fontFamily: fonts.serif, fontSize: 20, lineHeight: 26 },
+  title: { fontFamily: fonts.serif, fontSize: 23, lineHeight: 29 },
   sub: { marginTop: 2, fontSize: 15, lineHeight: 21 },
   body: { marginTop: 14 },
 });

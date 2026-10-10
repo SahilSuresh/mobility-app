@@ -243,8 +243,8 @@ export function BodyFigure({ height, glows = {}, view, fill = colors.figure, glo
             .filter(([a]) => (glows[a] ?? 0) >= 1)
             .map(([a, x, y]) => (
               <G key={`${a}${x}`}>
-                <Circle cx={x} cy={y} r={8.5} fill={glowColor} stroke={colors.onGreen} strokeWidth={1.2} />
-                <Path d={`M${x - 3.8} ${y} L${x - 1.1} ${y + 2.8} L${x + 4} ${y - 3.2}`} fill="none" stroke={colors.onGreen} strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round" />
+                <Circle cx={x} cy={y} r={11} fill={glowColor} stroke={colors.onGreen} strokeWidth={1.4} />
+                <Path d={`M${x - 4.9} ${y} L${x - 1.4} ${y + 3.6} L${x + 5.2} ${y - 4.1}`} fill="none" stroke={colors.onGreen} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" />
               </G>
             ))
         : null}
@@ -279,6 +279,26 @@ export function BodyMap({ view, selected, onToggle, height = 396 }: MapProps) {
           style={[styles.spot, { left: x * scale - 24, top: y * scale - 24 }]}
         />
       ))}
+      {/* The whole figure is the target: a tap anywhere picks the nearest area, so close-together parts are easy to hit.
+          Screen readers use the named spots above; a tap on one lands here on that same spot. */}
+      <Pressable
+        accessible={false}
+        importantForAccessibility="no-hide-descendants"
+        onPress={(e) => {
+          // Phones report where the finger landed as locationX/Y; a mouse click on the web as offsetX/Y.
+          const ev = e.nativeEvent as { locationX?: number; locationY?: number; offsetX?: number; offsetY?: number };
+          const px = ev.locationX ?? ev.offsetX;
+          const py = ev.locationY ?? ev.offsetY;
+          if (px === undefined || py === undefined || Number.isNaN(px) || Number.isNaN(py)) return;
+          const nearest = SPOTS[view]
+            .map(([area, x, y]) => ({ area, d: Math.hypot(x * scale - px, y * scale - py) }))
+            .reduce((m, s) => (s.d < m.d ? s : m));
+          if (nearest.d > height * 0.2) return;
+          tap();
+          onToggle(nearest.area);
+        }}
+        style={StyleSheet.absoluteFill}
+      />
     </View>
   );
 }
@@ -300,7 +320,7 @@ export function ViewToggle({ view, onChange }: { view: BodyView; onChange: (v: B
             hitSlop={{ top: 4, bottom: 4 }}
             style={({ pressed }) => [styles.toggleItem, on && styles.toggleOn, pressed && !on && styles.togglePressed]}
           >
-            <Text style={[styles.toggleLabel, on && { color: colors.ink }]}>{v === 'front' ? 'Front' : 'Back'}</Text>
+            <Text style={[styles.toggleLabel, on && { color: colors.onGreen }]}>{v === 'front' ? 'Front' : 'Back'}</Text>
           </Pressable>
         );
       })}
@@ -321,6 +341,6 @@ const styles = StyleSheet.create({
   },
   toggleItem: { flex: 1, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   togglePressed: { opacity: 0.6 },
-  toggleOn: { backgroundColor: colors.card, boxShadow: `0px 2px 8px -2px ${shade(0.5)}` },
+  toggleOn: { backgroundColor: colors.green, boxShadow: `0px 2px 8px -2px ${shade(0.5)}` },
   toggleLabel: { fontFamily: fonts.semibold, fontSize: 15, color: colors.muted },
 });

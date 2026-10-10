@@ -18,7 +18,8 @@ const TABS: Record<string, { label: string; icon: IconName }> = {
 };
 
 const DARK_ACCENT = '#A6F2C8';
-const DARK_MUTED = tint(0.6);
+// Unselected tab labels: readable at a glance, still clearly quieter than the selected one.
+const DARK_MUTED = tint(0.78);
 
 /** Floating, frosted pill tab bar. */
 export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
@@ -87,6 +88,6 @@ const styles = StyleSheet.create({
   barDark: { backgroundColor: 'rgba(16,30,23,0.86)', borderColor: 'rgba(255,255,255,0.08)' },
   tabOnDark: { backgroundColor: accent(0.12) },
   labelOnDark: { fontFamily: fonts.bold, color: DARK_ACCENT },
-  label: { fontFamily: fonts.semibold, fontSize: 11, color: colors.muted },
+  label: { fontFamily: fonts.semibold, fontSize: 12, color: colors.muted },
   labelOn: { fontFamily: fonts.bold, color: colors.greenText },
 });

@@ -40,6 +40,16 @@ export function scheduledInWeek(plan: Plan, now: Date): PlannedSession[] {
   return plan.sessions.filter((s) => s.weekday >= startDay);
 }
 
+/**
+ * When nothing is left this week (all done, or the plan started late in the week): the first session of next week
+ * and the day it falls on, so Today can say what's coming instead of going quiet.
+ */
+export function nextWeekSession(plan: Plan, now: Date): { session: PlannedSession; date: Date } | null {
+  const first = [...plan.sessions].sort((a, b) => a.weekday - b.weekday)[0];
+  if (!first) return null;
+  return { session: first, date: dateOfWeekday(first.weekday, addDays(now, 7)) };
+}
+
 export type DayStatus = 'done' | 'today' | 'planned' | 'missed' | 'rest';
 
 export function weekDays(plan: Plan, history: CompletedSession[], now: Date) {

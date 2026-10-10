@@ -19,6 +19,9 @@ const ARC = 'M4.5 18 A7.5 7.5 0 0 1 19.5 18';
 const SHAPES = {
   back: [{ p: 'M15 6l-6 6 6 6' }],
   chevron: [{ p: 'M9 6l6 6-6 6' }],
+  arrowRight: [{ p: 'M5 12h14M13 6l6 6-6 6' }],
+  arrowUpRight: [{ p: 'M7 17L17 7M9 7h8v8' }],
+  headphones: [{ p: 'M4 15v-3a8 8 0 0 1 16 0v3' }, { r: [3, 14, 4.5, 6.5, 1.8], fill: true }, { r: [16.5, 14, 4.5, 6.5, 1.8], fill: true }],
   close: [{ p: 'M6 6l12 12M18 6L6 18' }],
   check: [{ p: 'M5 12.5l4.5 4.5L19 7.5' }],
   plus: [{ p: 'M12 5v14M5 12h14' }],
