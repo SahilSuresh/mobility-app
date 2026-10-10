@@ -99,7 +99,7 @@ export function ProgrammeCards({ L }: { L: LookTokens }) {
               <T variant="smallStrong" color={L.accent}>
                 {`${p.days} days, ${p.minutes} min a day`}
               </T>
-              <T variant="caption" color={L.muted} style={styles.about}>
+              <T variant="small" color={L.muted} style={styles.about}>
                 {p.about}
               </T>
               {started ? (

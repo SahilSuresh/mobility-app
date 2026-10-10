@@ -128,8 +128,9 @@ export const LOOKS: Record<'current' | 'dawn' | 'vision' | 'dusk' | 'evening', L
     dark: true,
     background: ['#15241D', '#0C1611'],
     ink: '#F4EEE3',
-    muted: 'rgba(244,238,227,0.68)',
-    faint: 'rgba(244,238,227,0.55)',
+    // Secondary text kept bright enough to scan on the dark green, not just to glance at.
+    muted: 'rgba(244,238,227,0.8)',
+    faint: 'rgba(244,238,227,0.66)',
     accent: '#A6F2C8',
     bright: '#A6F2C8',
     onBright: '#10201A',
