@@ -4,7 +4,7 @@ import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
 
 import { config } from '@/constants/config';
-import { accent, colors, fonts, NATIVE_DRIVER } from '@/constants/theme';
+import { accent, colors, fonts, isDark, NATIVE_DRIVER } from '@/constants/theme';
 
 import { T } from './T';
 
@@ -56,7 +56,8 @@ export function LaunchIntro({ onDone }: { onDone: () => void }) {
             <Animated.View style={[styles.ring, { opacity: ring, transform: [{ scale: ring.interpolate({ inputRange: [0, 1], outputRange: [0.82, 1] }) }] }]} />
           )}
           <Animated.View style={{ transform: [{ scale }] }}>
-            <Image source={require('../../assets/images/splash-icon.png')} style={styles.mark} contentFit="contain" />
+            {/* The mark is mint for the dark splash; the light look draws it in deep green so it shows on cream. */}
+            <Image source={require('../../assets/images/splash-icon.png')} style={styles.mark} contentFit="contain" tintColor={isDark ? undefined : colors.greenText} />
           </Animated.View>
         </View>
         <Animated.View style={[styles.text, { opacity: reduceMotion ? 1 : lift, transform: [{ translateY: reduceMotion ? 0 : textRise }] }]}>
