@@ -41,6 +41,28 @@ Steps 1 to 3 need Andrej's own Apple account and bank details.
 - [ ] **Turn auto-renew on for unknot.page.** If the domain lapses, the privacy link breaks and Apple can pull the app.
 - [ ] Sahil ticks **Enforce HTTPS** in the repo's Settings → Pages.
 
-## Later: Google Play
+## Google Play (in progress)
 
-Same as above with a Play Console account, a service-account credential for RevenueCat, the two subscriptions, the `goog_...` key in `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY`, and an internal-testing upload before products can be bought. Before uploading, trim the Android permissions in `app.json`: the app only saves images, so it doesn't need the read-media and external-storage permissions, which Play asks you to justify.
+Play Console account "altairdev" is a **personal** account, so Google requires a **closed test with at least 12 testers, opted in for 14 days in a row**, before you can apply for production. Code for this is on the branch `andrej/play-store`.
+
+### Done (10 October 2026)
+
+- [x] App created in Play Console: Unknot, `page.unknot.app`, English (UK), free
+- [x] App content: privacy policy, no ads, content rating (Everyone), target audience 18+, data safety, no government or financial features, health = Activity and fitness, no advertising ID
+- [x] Sign-in details: reviewers unlock Premium with an access code (Settings → "Have an access code?"). The code is in `.env.local` as `REVIEW_ACCESS_CODE`; see the README's "App review access"
+- [x] Store settings: Health & fitness, support@unknot.page, https://unknot.page
+- [x] Store listing draft: descriptions, icon, feature graphic, 6 screenshots
+- [x] Closed testing track "Closed testing - Alpha": all countries, feedback to support@unknot.page
+- [x] Android permissions trimmed (no photo, video or audio read access); layout fixed for 360-wide phones
+- [x] Store build: EAS build versionCode 4, downloaded to `Downloads/Unknot-1.0.0-4.aab`
+
+### Next
+
+1. [ ] **Upload the build** (Andrej, by hand: it's the first upload): Play Console → Unknot → Test and release → Testing → Closed testing → Closed testing - Alpha → Create new release → drag in `Unknot-1.0.0-4.aab` → accept Google-managed app signing. Stop before "Send for review".
+2. [ ] Release name and notes
+3. [ ] **Subscriptions** in Play Console (only possible once a build is uploaded): yearly with a 7-day free trial, and monthly
+4. [ ] **RevenueCat ↔ Google Play**: a Google Cloud service account key uploaded to RevenueCat (Andrej does the key), products imported and attached to `premium`, and the `goog_...` key in `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY` plus an EAS environment variable. Then a new build, so Premium can be bought on Android.
+5. [ ] **12 testers**: existing lists are "Spark testers" (3) and "Ossa team" (1), so 8 or more Gmail addresses are still needed
+6. [ ] Send the closed test for review (ask first), share the opt-in link, and keep 12+ testers in for 14 days
+7. [ ] Apply for production access, then a production release
+8. [ ] Merge `andrej/play-store` into `main` once Sahil has seen it
