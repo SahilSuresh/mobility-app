@@ -58,9 +58,11 @@ Play Console account "altairdev" is a **personal** account, so Google requires a
 
 ### Next
 
-1. [ ] **Upload the build** (Andrej, by hand: it's the first upload): Play Console → Unknot → Test and release → Testing → Closed testing → Closed testing - Alpha → Create new release → drag in `Unknot-1.0.0-4.aab` → accept Google-managed app signing. Stop before "Send for review".
-2. [ ] Release name and notes
-3. [ ] **Subscriptions** in Play Console (only possible once a build is uploaded): yearly with a 7-day free trial, and monthly
+1. [x] **Build uploaded** (11 October): draft release "1.0.0 (4) – first closed test" on Closed testing - Alpha, version code 4, with release notes. Not sent for review.
+2. [x] Release name and notes
+3. [ ] **Subscriptions** in Play Console. Done as drafts: `premium_yearly`, base plan `yearly` (auto-renewing, £29.99, all 178 countries) and its offer `free-trial-7d` (7 days free, new customers who never had an Unknot subscription). Still to do, by Andrej because they are real-money actions:
+   - [ ] **Activate** the `yearly` base plan, then the `free-trial-7d` offer (Monetise with Play → Subscriptions → Unknot Premium (Yearly))
+   - [ ] `premium_monthly` exists ("Unknot Premium (Monthly)") but has no base plan yet: Add base plan → ID `monthly` → Auto-renewing, billing period Monthly → Set prices → select all countries → £9.99 GBP → Save → Activate
 4. [ ] **RevenueCat ↔ Google Play**: a Google Cloud service account key uploaded to RevenueCat (Andrej does the key), products imported and attached to `premium`, and the `goog_...` key in `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY` plus an EAS environment variable. Then a new build, so Premium can be bought on Android.
 5. [ ] **12 testers**: existing lists are "Spark testers" (3) and "Ossa team" (1), so 8 or more Gmail addresses are still needed
 6. [ ] Send the closed test for review (ask first), share the opt-in link, and keep 12+ testers in for 14 days
