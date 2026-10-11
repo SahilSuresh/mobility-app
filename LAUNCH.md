@@ -84,11 +84,11 @@ Apple Developer account: Andrej Gazi (team HXPN3USWQ5). App Store Connect app **
 
 ### Next
 
-1. [ ] Version page text: promotional text, description, keywords, support and marketing URLs, copyright (started; the tab froze before saving)
-2. [ ] Upload the iPhone screenshots
-3. [ ] App Privacy answers (same as Google: purchase history and identifiers, used for app functionality and analytics, not linked to identity for tracking)
+1. [x] Version page text saved (promotional text, description, keywords, URLs, copyright, review notes with the access code)
+2. [x] Six iPhone screenshots uploaded (1206×2622; Apple's 6.1"/6.3" slot)
+3. [x] App Privacy published: Purchases (app functionality, analytics) and User ID (app functionality), linked to the user, no tracking
 4. [ ] **Andrej (real-money steps):** subscription prices: yearly £29.99 with a 7-day free introductory offer, monthly £9.99. Then App Pricing → Free.
-5. [ ] **Andrej:** App Review contact details (name, phone, email). The notes give reviewers the access code (Settings → "Have an access code?").
-6. [ ] **Andrej, in a terminal:** `npx eas-cli@latest build --platform ios --profile production`. It asks you to sign in to Apple once to make the signing certificate. Then `npx eas-cli@latest submit --platform ios` uploads it to App Store Connect.
+5. [ ] **Andrej:** App Review contact **phone number**. The name and email are filled in, but the page won't save build 2 and "Sign-in required: off" without the phone number.
+6. [x] iOS build 1.0.0 (2) built with EAS and submitted; it shows "Ready to Submit" in TestFlight (internal group "Team (Expo)")
 7. [ ] Decide on the EU Digital Services Act trader status. Selling subscriptions usually makes you a "trader", which shows an address, phone and email on the EU store page. The alternative is to leave the EU out for now.
 8. [ ] Test with TestFlight, attach the build to version 1.0, then submit for review (ask first)
