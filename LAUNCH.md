@@ -87,8 +87,8 @@ Apple Developer account: Andrej Gazi (team HXPN3USWQ5). App Store Connect app **
 1. [x] Version page text saved (promotional text, description, keywords, URLs, copyright, review notes with the access code)
 2. [x] Six iPhone screenshots uploaded (1206×2622; Apple's 6.1"/6.3" slot)
 3. [x] App Privacy published: Purchases (app functionality, analytics) and User ID (app functionality), linked to the user, no tracking
-4. [ ] **Andrej (real-money steps):** subscription prices: yearly £29.99 with a 7-day free introductory offer, monthly £9.99. Then App Pricing → Free.
+4. [x] Prices set by Andrej: yearly £29.99 with a free first week, monthly £9.99 (175 countries). The app price is Free, available in all 175 countries from release. Both subscriptions have a paywall review screenshot.
 5. [ ] **Andrej:** App Review contact **phone number**. The name and email are filled in, but the page won't save build 2 and "Sign-in required: off" without the phone number.
 6. [x] iOS build 1.0.0 (2) built with EAS and submitted; it shows "Ready to Submit" in TestFlight (internal group "Team (Expo)")
-7. [ ] Decide on the EU Digital Services Act trader status. Selling subscriptions usually makes you a "trader", which shows an address, phone and email on the EU store page. The alternative is to leave the EU out for now.
+7. [x] EU Digital Services Act: left as "non-trader" for now (Andrej's choice, 11 October). Revisit if Apple or the EU asks.
 8. [ ] Test with TestFlight, attach the build to version 1.0, then submit for review (ask first)
