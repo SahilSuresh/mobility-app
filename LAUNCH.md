@@ -68,6 +68,7 @@ Play Console account "altairdev" is a **personal** account, so Google requires a
 6. [ ] Send the closed test for review (ask first), share the opt-in link, and keep 12+ testers in for 14 days
 7. [ ] Apply for production access, then a production release
 8. [ ] Merge `andrej/play-store` into `main` once Sahil has seen it
+9. [x] New icon (11 October): store icon, feature graphic and screenshot 8 are live on the listing; closed-test release "1.0.0 (6) – new icon" (versionCode 6) sent for review
 
 ## Apple App Store (in progress)
 
@@ -85,10 +86,11 @@ Apple Developer account: Andrej Gazi (team HXPN3USWQ5). App Store Connect app **
 ### Next
 
 1. [x] Version page text saved (promotional text, description, keywords, URLs, copyright, review notes with the access code)
-2. [x] Six iPhone screenshots uploaded (1206×2622; Apple's 6.1"/6.3" slot)
+2. [x] Eight designed iPhone screenshots uploaded (1206×2622; Apple's 6.1"/6.3" slot)
 3. [x] App Privacy published: Purchases (app functionality, analytics) and User ID (app functionality), linked to the user, no tracking
 4. [x] Prices set by Andrej: yearly £29.99 with a free first week, monthly £9.99 (175 countries). The app price is Free, available in all 175 countries from release. Both subscriptions have a paywall review screenshot.
-5. [ ] **Andrej:** App Review contact **phone number**. The name and email are filled in, but the page won't save build 2 and "Sign-in required: off" without the phone number.
+5. [x] App Review contact details complete, with phone number
 6. [x] iOS build 1.0.0 (2) built with EAS and submitted; it shows "Ready to Submit" in TestFlight (internal group "Team (Expo)")
 7. [x] EU Digital Services Act: left as "non-trader" for now (Andrej's choice, 11 October). Revisit if Apple or the EU asks.
-8. [ ] Test with TestFlight, attach the build to version 1.0, then submit for review (ask first)
+8. [x] New app icon (mint knot on dark green, 11 October): iOS build 1.0.0 (3) and Android versionCode 6 carry it; store icon, feature graphic and screenshot 8 updated in both stores
+9. [x] **Submitted for App Review (11 October):** version 1.0 with build 3, the Unknot Premium group and both subscriptions ("Waiting for Review"; up to 48 hours). Apple's new "1 Year Upfront" availability was set to all 175 countries at the existing prices, and the regulated medical device question is answered "No"
