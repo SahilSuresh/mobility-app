@@ -68,3 +68,27 @@ Play Console account "altairdev" is a **personal** account, so Google requires a
 6. [ ] Send the closed test for review (ask first), share the opt-in link, and keep 12+ testers in for 14 days
 7. [ ] Apply for production access, then a production release
 8. [ ] Merge `andrej/play-store` into `main` once Sahil has seen it
+
+## Apple App Store (in progress)
+
+Apple Developer account: Andrej Gazi (team HXPN3USWQ5). App Store Connect app **Unknot** (Apple ID 6821625516, bundle `page.unknot.app`, SKU `unknot-ios`). The Paid Apps agreement, bank account and tax forms are already active.
+
+### Done (11 October 2026)
+
+- [x] App ID `page.unknot.app` registered (In-App Purchase included; no push needed)
+- [x] App created; subtitle "Stretching & mobility routines"; category Health & Fitness; content rights: no third-party content
+- [x] Age rating: 9+ (health and wellness topics, nothing else)
+- [x] Subscription group "Unknot Premium": `premium_yearly` (1 year, level 1) and `premium_monthly` (1 month, level 2), with display names and descriptions
+- [x] RevenueCat: app "Unknot (App Store)" using the team's existing In-App Purchase key (valid); products attached to `premium` and the `default` offering; the `appl_...` key is in `.env.local` and EAS (production, preview and development)
+- [x] iPhone 6.9" screenshots (1290×2796) made
+
+### Next
+
+1. [ ] Version page text: promotional text, description, keywords, support and marketing URLs, copyright (started; the tab froze before saving)
+2. [ ] Upload the iPhone screenshots
+3. [ ] App Privacy answers (same as Google: purchase history and identifiers, used for app functionality and analytics, not linked to identity for tracking)
+4. [ ] **Andrej (real-money steps):** subscription prices: yearly £29.99 with a 7-day free introductory offer, monthly £9.99. Then App Pricing → Free.
+5. [ ] **Andrej:** App Review contact details (name, phone, email). The notes give reviewers the access code (Settings → "Have an access code?").
+6. [ ] **Andrej, in a terminal:** `npx eas-cli@latest build --platform ios --profile production`. It asks you to sign in to Apple once to make the signing certificate. Then `npx eas-cli@latest submit --platform ios` uploads it to App Store Connect.
+7. [ ] Decide on the EU Digital Services Act trader status. Selling subscriptions usually makes you a "trader", which shows an address, phone and email on the EU store page. The alternative is to leave the EU out for now.
+8. [ ] Test with TestFlight, attach the build to version 1.0, then submit for review (ask first)
