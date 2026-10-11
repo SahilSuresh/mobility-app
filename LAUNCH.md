@@ -67,7 +67,7 @@ Play Console account "altairdev" is a **personal** account, so Google requires a
 5. [ ] **12 testers**: existing lists are "Spark testers" (3) and "Ossa team" (1), so 8 or more Gmail addresses are still needed
 6. [ ] Send the closed test for review (ask first), share the opt-in link, and keep 12+ testers in for 14 days
 7. [ ] Apply for production access, then a production release
-8. [ ] Merge `andrej/play-store` into `main` once Sahil has seen it
+8. [x] `andrej/play-store` merged into `main` and pushed (11 October)
 9. [x] New icon (11 October): store icon, feature graphic and screenshot 8 are live on the listing; closed-test release "1.0.0 (6) – new icon" (versionCode 6) sent for review
 
 ## Apple App Store (in progress)
