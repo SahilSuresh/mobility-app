@@ -46,6 +46,8 @@ export function TimeOfDay({ L }: { L: LookTokens }) {
   const [scrollX] = useState(() => new Animated.Value(0));
 
   const cardWidth = Math.round(width * CARD_SHARE);
+  // The title shrinks a little on narrow phones, so "Morning wake-up" stays on one line.
+  const titleSize = Math.min(30, Math.round(cardWidth * 0.095));
   const step = cardWidth + GAP;
 
   const start = (stretch: TimeStretch) => {
@@ -108,7 +110,7 @@ export function TimeOfDay({ L }: { L: LookTokens }) {
                             </View>
                           ) : null}
                         </View>
-                        <T style={styles.title}>{stretch.name}</T>
+                        <T style={[styles.title, { fontSize: titleSize, lineHeight: Math.round(titleSize * 1.2) }]}>{stretch.name}</T>
                       </View>
                     </Pressable>
                   </Animated.View>

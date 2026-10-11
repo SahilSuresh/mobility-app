@@ -10,25 +10,31 @@
     "ios": {
       "icon": "./assets/images/icon.png",
       "bundleIdentifier": "page.unknot.app",
-      "supportsTablet": false
+      "supportsTablet": false,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "page.unknot.app",
       "adaptiveIcon": {
-        "backgroundColor": "#FFF8EC",
+        "backgroundColor": "#133025",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
       "permissions": [
-        "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ],
+      "blockedPermissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.READ_MEDIA_IMAGES",
         "android.permission.READ_MEDIA_VIDEO",
         "android.permission.READ_MEDIA_AUDIO",
-        "android.permission.MODIFY_AUDIO_SETTINGS"
+        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
+        "android.permission.ACCESS_MEDIA_LOCATION"
       ]
     },
     "web": {
@@ -49,7 +55,8 @@
         "expo-media-library",
         {
           "photosPermission": false,
-          "savePhotosPermission": "Save your progress cards to Photos."
+          "savePhotosPermission": "Save your progress cards to Photos.",
+          "granularPermissions": []
         }
       ],
       "expo-sharing",
