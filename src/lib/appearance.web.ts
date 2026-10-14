@@ -19,7 +19,7 @@ export function saveAppearance(appearance: Appearance): void {
   }
 }
 
-export function reloadApp(): boolean {
+export function reloadApp(_onFail?: () => void): boolean {
   globalThis.location?.reload();
   return true;
 }

@@ -75,7 +75,7 @@ export default function Building() {
                 <BodyFigure height={figure} view={view} />
                 {areas.map((area, i) =>
                   VISIBLE[view].includes(area) ? (
-                    <Animated.View key={area} style={[styles.layer, { opacity: lights[i] }]} pointerEvents="none">
+                    <Animated.View key={area} style={[styles.layer, { opacity: lights[i] }, { pointerEvents: 'none' }]}>
                       <BodyFigure height={figure} view={view} glows={{ [area]: 1 }} overlay />
                     </Animated.View>
                   ) : null,

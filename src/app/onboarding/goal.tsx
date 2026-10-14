@@ -14,6 +14,7 @@ import { getExercise } from '@/data/exercises';
 import type { Exercise, Goal, Level } from '@/data/types';
 import { tap } from '@/lib/haptics';
 import { playSound, preloadSounds } from '@/lib/sounds';
+import { useViewport } from '@/lib/viewport';
 import { useAppStore } from '@/store/useAppStore';
 
 /** A drawing and a one-line description for each goal. */
@@ -26,6 +27,13 @@ const GOAL_INFO: Record<Goal, { cover: string; line: string }> = {
   sport: { cover: 'hip-wgs', line: 'Warm up and recover' },
   everyday: { cover: 'hip-squat', line: 'Bend, lift and reach with ease' },
 };
+
+/** Splits a list into rows of two; with an odd number, the last row has one. */
+function pairs<T>(items: readonly T[]): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += 2) out.push(items.slice(i, i + 2));
+  return out;
+}
 
 /** What each level means for the plan, with real moves from the library at that level. */
 const LEVEL_INFO: Record<Level, { line: string; moves: string[] }> = {
@@ -43,6 +51,7 @@ export default function GoalAndExperience() {
   // Nothing is picked until the person taps a goal; only then does "Your experience" appear.
   const [goal, setGoal] = useState<Goal | null>(null);
   const level = useAppStore((s) => s.draft.level);
+  const narrow = useViewport().width < 400;
   const setDraft = useAppStore((s) => s.setDraft);
   const scroll = useRef<ScrollView>(null);
 
@@ -76,36 +85,42 @@ export default function GoalAndExperience() {
           </T>
         </Appear>
 
+        {/* Two to a row, each taking an equal share of it, so the pairs fit on any phone width; an odd one out spans the row. */}
         <View style={styles.goals} accessibilityRole="radiogroup">
-          {GOALS.map((g, i) => {
-            const info = GOAL_INFO[g.id];
-            const on = goal === g.id;
-            const wide = i === GOALS.length - 1 && GOALS.length % 2 === 1;
-            return (
-              <Appear key={g.id} delay={CARDS_AT + i * CARD_STAGGER} style={wide ? styles.cellWide : styles.cellHalf}>
-                <Pressable
-                  accessibilityRole="radio"
-                  accessibilityState={{ checked: on }}
-                  accessibilityLabel={`${g.label}. ${info.line}`}
-                  onPress={() => pickGoal(g.id)}
-                  style={({ pressed }) => [styles.goal, wide ? styles.goalWide : styles.goalHalf, on && styles.goalOn, pressed && styles.pressed]}
-                >
-                  <MoveThumb id={info.cover} size={wide ? 44 : 48} />
-                  <View style={wide ? styles.goalTextWide : styles.goalText}>
-                    <T variant="bodyStrong" numberOfLines={1}>
-                      {g.label}
-                    </T>
-                    <T variant="caption" numberOfLines={2}>
-                      {info.line}
-                    </T>
-                  </View>
-                  <View style={[styles.check, on ? styles.checkOn : styles.checkOff, !wide && styles.checkCorner]}>
-                    {on ? <Icon name="check" size={12} color={colors.onGreen} strokeWidth={3} /> : null}
-                  </View>
-                </Pressable>
-              </Appear>
-            );
-          })}
+          {pairs(GOALS).map((row) => (
+            <View key={row.map((g) => g.id).join('-')} style={styles.goalRow}>
+              {row.map((g) => {
+                const i = GOALS.indexOf(g);
+                const info = GOAL_INFO[g.id];
+                const on = goal === g.id;
+                const wide = row.length === 1;
+                return (
+                  <Appear key={g.id} delay={CARDS_AT + i * CARD_STAGGER} style={styles.cell}>
+                    <Pressable
+                      accessibilityRole="radio"
+                      accessibilityState={{ checked: on }}
+                      accessibilityLabel={`${g.label}. ${info.line}`}
+                      onPress={() => pickGoal(g.id)}
+                      style={({ pressed }) => [styles.goal, wide ? styles.goalWide : styles.goalHalf, on && styles.goalOn, pressed && styles.pressed]}
+                    >
+                      <MoveThumb id={info.cover} size={wide ? 44 : 48} />
+                      <View style={wide ? styles.goalTextWide : styles.goalText}>
+                        <T variant="bodyStrong" numberOfLines={1}>
+                          {g.label}
+                        </T>
+                        <T variant="caption" numberOfLines={2}>
+                          {info.line}
+                        </T>
+                      </View>
+                      <View style={[styles.check, on ? styles.checkOn : styles.checkOff, !wide && styles.checkCorner]}>
+                        {on ? <Icon name="check" size={12} color={colors.onGreen} strokeWidth={3} /> : null}
+                      </View>
+                    </Pressable>
+                  </Appear>
+                );
+              })}
+            </View>
+          ))}
         </View>
 
         {goal === null ? null : (
@@ -133,7 +148,7 @@ export default function GoalAndExperience() {
                         tap();
                         setDraft({ level: l.id });
                       }}
-                      style={({ pressed }) => [styles.segment, on && styles.segmentOn, pressed && styles.pressed]}
+                      style={({ pressed }) => [styles.segment, narrow && styles.segmentNarrow, on && styles.segmentOn, pressed && styles.pressed]}
                     >
                       <View style={styles.bars}>
                         {[7, 11, 15].map((h, i) => (
@@ -194,10 +209,10 @@ const styles = StyleSheet.create({
   sub: { marginTop: 6 },
   pressed: { opacity: 0.85, transform: [{ scale: 0.985 }] },
 
-  goals: { marginTop: 18, flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  goals: { marginTop: 18, gap: 10 },
+  goalRow: { flexDirection: 'row', gap: 10 },
+  cell: { flex: 1 },
   goal: { borderRadius: 20, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
-  cellHalf: { width: '48.5%' },
-  cellWide: { width: '100%' },
   goalHalf: { flexGrow: 1, minHeight: 118, padding: 13, gap: 8 },
   goalWide: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingLeft: 12, paddingRight: 16 },
   goalOn: { borderWidth: 2, borderColor: colors.green, backgroundColor: accent(0.08), boxShadow: shadows.small },
@@ -211,6 +226,8 @@ const styles = StyleSheet.create({
   h2: { marginTop: 24 },
   segments: { marginTop: 14, flexDirection: 'row', gap: 4, padding: 4, borderRadius: 18, backgroundColor: tint(0.08) },
   segment: { flex: 1, height: 48, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
+  // On narrow phones the bars sit above the name, so "Intermediate" has the whole width and is never cut off.
+  segmentNarrow: { flexDirection: 'column', height: 56, gap: 4 },
   segmentOn: { backgroundColor: colors.card, boxShadow: `0px 2px 8px -2px ${shade(0.25)}` },
   bars: { height: 15, flexDirection: 'row', alignItems: 'flex-end', gap: 2 },
   bar: { width: 3.5, borderRadius: 2 },

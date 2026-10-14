@@ -149,4 +149,6 @@ export type Reminder = {
   comeback?: boolean;
   /** Week ahead: Sunday evening, what next week holds. Off unless turned on. */
   weekly?: boolean;
+  /** Whether reminders play a sound when they arrive. On unless turned off; the phone's own settings still apply. */
+  sound?: boolean;
 };

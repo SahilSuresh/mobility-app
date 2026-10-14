@@ -49,7 +49,7 @@ export function LaunchIntro({ onDone }: { onDone: () => void }) {
   const textRise = lift.interpolate({ inputRange: [0, 1], outputRange: [12, 0] });
 
   return (
-    <Animated.View style={[StyleSheet.absoluteFill, styles.root, { opacity: fade }]} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <Animated.View style={[StyleSheet.absoluteFill, styles.root, { opacity: fade }, { pointerEvents: 'none' }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <Animated.View style={[styles.group, { transform: [{ translateY: rise }] }]}>
         <View style={styles.markWrap}>
           {reduceMotion ? null : (

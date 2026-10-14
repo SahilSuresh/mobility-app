@@ -17,6 +17,7 @@ import { AREA_NAMES } from '@/data/areas';
 import { durationLabel, getExercise } from '@/data/exercises';
 import type { AreaId, Exercise } from '@/data/types';
 import { playStartSound } from '@/lib/sounds';
+import { useViewport } from '@/lib/viewport';
 
 /**
  * Moves from the library, in a ring round the body. Tour stops light an area on the body and lift its move;
@@ -47,6 +48,8 @@ const POINTS: { icon: IconName; label: string }[] = [
 
 export default function Welcome() {
   const reduceMotion = useReducedMotion();
+  // Narrow phones (iPhone SE and mini, small Androids) get slightly smaller feature labels so all three fit.
+  const narrow = useViewport().width < 400;
   const [stage, setStage] = useState({ width: 0, height: 0 });
   const [t] = useState(() => new Animated.Value(0));
   const [intro] = useState(() => new Animated.Value(reduceMotion ? 1 : 0));
@@ -110,7 +113,7 @@ export default function Welcome() {
 
       <Rise intro={intro} order={1} style={styles.stageWrap}>
         <View style={styles.stage} onLayout={onLayout} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          <View style={styles.arch} pointerEvents="none">
+          <View style={[styles.arch, { pointerEvents: 'none' }]}>
             <LinearGradient colors={[colors.card, glass]} locations={[0, 1]} style={StyleSheet.absoluteFill} />
           </View>
 
@@ -132,7 +135,7 @@ export default function Welcome() {
               <View style={[styles.layer, { left: cx - figureHeight / 4, top: cy - figureHeight / 2 }]}>
                 <BodyFigure height={figureHeight} view="front" />
                 {TOUR.map((m, i) => (
-                  <Animated.View key={m.move} style={[styles.layer, { opacity: fade(i) }]} pointerEvents="none">
+                  <Animated.View key={m.move} style={[styles.layer, { opacity: fade(i) }, { pointerEvents: 'none' }]}>
                     <BodyFigure height={figureHeight} view="front" glows={{ [m.exercise.area]: 1 }} overlay />
                   </Animated.View>
                 ))}
@@ -157,7 +160,7 @@ export default function Welcome() {
                 );
               })}
 
-              <View style={[styles.captionSlot, { top: ringH + 4 }]} pointerEvents="none">
+              <View style={[styles.captionSlot, { top: ringH + 4 }, { pointerEvents: 'none' }]}>
                 {TOUR.map((m, i) => {
                   const opacity = fade(i);
                   const shift = typeof opacity === 'number' ? 0 : opacity.interpolate({ inputRange: [0, 1], outputRange: [6, 0] });
@@ -189,8 +192,8 @@ export default function Welcome() {
         <View style={styles.points}>
           {POINTS.map((p, i) => (
             <View key={p.label} style={[styles.point, i > 0 && styles.pointDivider]}>
-              <Icon name={p.icon} size={15} color={colors.greenText} strokeWidth={2} />
-              <T variant="caption" style={styles.pointLabel} numberOfLines={1}>
+              <Icon name={p.icon} size={narrow ? 13 : 15} color={colors.greenText} strokeWidth={2} />
+              <T variant="caption" style={[styles.pointLabel, narrow && styles.pointLabelNarrow]} numberOfLines={1}>
                 {p.label}
               </T>
             </View>
@@ -294,9 +297,11 @@ const styles = StyleSheet.create({
   sub: { marginTop: 10, maxWidth: 330, fontSize: 17, lineHeight: 25 },
 
   points: { flexDirection: 'row', marginTop: 18 },
-  point: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 22 },
+  // Each point takes the width its words need, plus a share of what's left, so none is cut off on narrow phones.
+  point: { flexGrow: 1, flexBasis: 'auto', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, height: 22, paddingHorizontal: 4 },
   pointDivider: { borderLeftWidth: 1, borderLeftColor: colors.line },
-  pointLabel: { flexShrink: 1, fontFamily: fonts.semibold, fontSize: 12.5, color: colors.ink },
+  pointLabel: { fontFamily: fonts.semibold, fontSize: 12.5, color: colors.ink },
+  pointLabelNarrow: { fontSize: 11.5 },
 
   cta: { marginTop: 20 },
   note: { marginTop: 12, marginBottom: 2 },

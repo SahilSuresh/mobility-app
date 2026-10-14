@@ -1,4 +1,4 @@
-import { useKeepAwake } from 'expo-keep-awake';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { BackHandler, Pressable, StyleSheet, View } from 'react-native';
@@ -17,9 +17,27 @@ import { goBack } from '@/lib/flow';
 import { cueSchedule, guideFor, restLine, speechSeconds, startLine, switchLine } from '@/lib/guide';
 import { success, tap } from '@/lib/haptics';
 import { COUNTDOWN, holdFor, restSeconds, SWITCH_SECONDS } from '@/lib/holds';
-import { playSound, preloadSounds, speak, stopSpeaking } from '@/lib/sounds';
+import { isSpeaking, playSound, preloadSounds, speak, stopSpeaking } from '@/lib/sounds';
 import { useViewport } from '@/lib/viewport';
 import { findSession, useAppStore } from '@/store/useAppStore';
+
+/**
+ * Keeps the screen on for the whole session. Like expo-keep-awake's own hook, but quiet when the session closes
+ * before the screen lock had a chance to switch on (a browser grants it a moment later, and releasing it
+ * before then threw "The wake lock … has not activated yet").
+ */
+function useScreenAwake() {
+  useEffect(() => {
+    activateKeepAwakeAsync(KEEP_AWAKE_TAG).catch(() => undefined);
+    return () => {
+      deactivateKeepAwake(KEEP_AWAKE_TAG).catch(() => undefined);
+    };
+  }, []);
+}
+const KEEP_AWAKE_TAG = 'session';
+
+/** The longest a rest or switch break waits past 0:00 for the guide to finish, in seconds: a safety net, never reached in practice. */
+const MAX_VOICE_WAIT = 15;
 
 function clock(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -28,11 +46,14 @@ function clock(seconds: number): string {
 }
 
 export default function SessionPlayer() {
-  useKeepAwake();
+  useScreenAwake();
   const { id } = useLocalSearchParams<{ id: string }>();
   // Short phones get a slightly smaller ring and tighter spacing so nothing is pushed off-screen.
-  const compact = useViewport().height < 760;
-  const ringSize = compact ? 216 : 268;
+  const viewport = useViewport();
+  const compact = viewport.height < 760;
+  // The picture grows with the screen: about a third of its height, from 210 on the smallest phones to 330 on the
+  // biggest (a Pro Max), and never wider than the screen allows.
+  const ringSize = Math.round(Math.min(viewport.width - 64, Math.max(210, Math.min(330, viewport.height * 0.34))));
   const session = useAppStore((s) => findSession(s, id));
   const recordSession = useAppStore((s) => s.recordSession);
   // Your own hold times from the preview, fixed for the length of the session.
@@ -104,6 +125,8 @@ export default function SessionPlayer() {
   // When the voice will have finished what it's saying (ms), so a queued line and the cues after it allow for it.
   const speakingUntil = useRef(0);
   const restedFor = useRef(-1);
+  // Seconds a rest or switch break has waited at 0:00 for the guide to finish talking.
+  const waited = useRef(0);
 
   /** Say a line (if the voice is on) and return how many seconds until it's finished. */
   const say = (text: string, { delay = 0, queue = false }: { delay?: number; queue?: boolean } = {}): number => {
@@ -118,10 +141,12 @@ export default function SessionPlayer() {
   // Each line starts just after the chime that marks the change, so the two don't talk over each other.
   const announce = useEffectEvent(() => {
     if (!move) return;
+    waited.current = 0;
     if (phase === 'ready') {
       restedFor.current = index;
       cues.current = {};
-      say(restLine(move, index === 0), { delay: index === 0 ? 0 : 900 });
+      // The first line waits for the Start chime to finish too, like every later line waits for its chime.
+      say(restLine(move, index === 0), { delay: 900 });
     } else if (phase === 'switch') {
       cues.current = {};
       say(switchLine(move), { delay: 400 });
@@ -157,6 +182,13 @@ export default function SessionPlayer() {
         }
       }
       setLeft(now);
+      return;
+    }
+    // A rest or switch break that's run out while the guide is still explaining waits at 0:00 for it to finish,
+    // so the setup is always heard in full before the move starts. The hold itself is never stretched.
+    if ((phase === 'ready' || phase === 'switch') && sounds.voice && isSpeaking() && waited.current < MAX_VOICE_WAIT) {
+      waited.current += 1;
+      if (left !== 0) setLeft(0);
       return;
     }
     if (phase === 'ready' && move) {

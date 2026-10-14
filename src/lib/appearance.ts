@@ -1,3 +1,4 @@
+import { reloadAppAsync } from 'expo';
 import Storage from 'expo-sqlite/kv-store';
 import { DevSettings } from 'react-native';
 
@@ -27,13 +28,15 @@ export function saveAppearance(appearance: Appearance): void {
 }
 
 /**
- * Reload so every screen is drawn in the new palette. Returns false where the app can't
- * reload itself (store builds without expo-updates), so the caller can ask for a restart.
+ * Reload so every screen is drawn in the new palette. `reloadAppAsync` from `expo` reloads in store builds
+ * (TestFlight, the App Store, Google Play) as well as development ones; before it, store builds couldn't
+ * reload, so the switch only took effect after closing and reopening the app. If the reload fails, `onFail`
+ * lets the caller ask for a restart instead.
  */
-export function reloadApp(): boolean {
-  if (__DEV__) {
-    DevSettings.reload();
-    return true;
-  }
-  return false;
+export function reloadApp(onFail?: () => void): boolean {
+  reloadAppAsync('Appearance changed').catch(() => {
+    if (__DEV__) DevSettings.reload();
+    else onFail?.();
+  });
+  return true;
 }

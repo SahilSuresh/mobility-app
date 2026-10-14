@@ -38,7 +38,7 @@ export function Sheet({ visible, onClose, children }: SheetProps) {
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       <View style={[styles.fill, frame && { justifyContent: 'center' }]}>
         <Pressable accessibilityLabel="Close" style={styles.scrim} onPress={onClose} />
-        <View pointerEvents="box-none" style={frame ? [styles.framed, { width: frame.width, height: frame.height }] : styles.fill}>
+        <View style={[frame ? [styles.framed, { width: frame.width, height: frame.height }] : styles.fill, { pointerEvents: 'box-none' }]}>
           <Animated.View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16) + 18, transform: [{ translateY }] }]}>
             <View style={styles.grabber} />
             {children}

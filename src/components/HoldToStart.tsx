@@ -72,7 +72,6 @@ export function HoldToStart({ label, onStart, bg, text, halo, compact, style }: 
   return (
     <View style={style}>
       <Animated.View
-        pointerEvents="none"
         style={[
           styles.halo,
           compact && styles.haloCompact,
@@ -84,6 +83,7 @@ export function HoldToStart({ label, onStart, bg, text, halo, compact, style }: 
               { scaleY: breath.interpolate({ inputRange: [0, 1], outputRange: [1, 1.18] }) },
             ],
           },
+          { pointerEvents: 'none' },
         ]}
       />
       <Pressable
@@ -100,8 +100,7 @@ export function HoldToStart({ label, onStart, bg, text, halo, compact, style }: 
         style={[styles.button, compact && styles.buttonCompact, { backgroundColor: bg }]}
       >
         <Animated.View
-          pointerEvents="none"
-          style={[styles.fill, { backgroundColor: text, width: fill.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) }]}
+          style={[styles.fill, { backgroundColor: text, width: fill.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) }, { pointerEvents: 'none' }]}
         />
         <Icon name="play" size={compact ? 12 : 15} color={text} />
         <Text maxFontSizeMultiplier={MAX_FONT_SCALE} style={[styles.label, compact && styles.labelCompact, { color: text }]}>

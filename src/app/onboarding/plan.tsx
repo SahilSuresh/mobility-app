@@ -17,14 +17,18 @@ import { planStartDay } from '@/lib/plan';
 import { goHome, startSession } from '@/lib/flow';
 import { nextSession } from '@/lib/progress';
 import { playSound, preloadSounds } from '@/lib/sounds';
+import { useViewport } from '@/lib/viewport';
 import { useAppStore } from '@/store/useAppStore';
 
 const FIGURE = 132;
+/** On short phones (iPhone SE, small Androids) the card is tighter, so more of the first week shows under it. */
+const FIGURE_COMPACT = 96;
 const VIEWS: BodyView[] = ['front', 'back'];
 
 export default function PlanReady() {
   const plan = useAppStore((s) => s.plan);
   const history = useAppStore((s) => s.history);
+  const compact = useViewport().height < 700;
   // The reveal, in order: the headline, the card and both figures, the focus areas one by one,
   // the numbers counting up, the first week session by session, then the button.
   const areaCount = plan?.areas.length ?? 0;
@@ -72,12 +76,12 @@ export default function PlanReady() {
 
       <Appear delay={260}>
         <View style={styles.hero}>
-          <View style={styles.heroTop}>
+          <View style={[styles.heroTop, compact && styles.heroTopCompact]}>
             <View style={styles.bodies} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
               <View style={styles.halo} />
               {VIEWS.map((view, i) => (
                 <Appear key={view} kind="pop" delay={400 + i * 110}>
-                  <BodyFigure height={FIGURE} view={view} glows={glows} />
+                  <BodyFigure height={compact ? FIGURE_COMPACT : FIGURE} view={view} glows={glows} />
                 </Appear>
               ))}
             </View>
@@ -94,15 +98,15 @@ export default function PlanReady() {
               </View>
             </View>
           </View>
-          <View style={styles.stats}>
-            <Stat value={plan.days} delay={STATS_AT} label={plan.days === 7 ? 'every day' : 'days a week'} />
-            <Stat value={plan.minutes} delay={STATS_AT + 120} label="min a session" divider />
-            <Stat value={plan.days * plan.minutes} delay={STATS_AT + 240} label="min a week" divider />
+          <View style={[styles.stats, compact && styles.statsCompact]}>
+            <Stat value={plan.days} delay={STATS_AT} label={plan.days === 7 ? 'every day' : 'days a week'} compact={compact} />
+            <Stat value={plan.minutes} delay={STATS_AT + 120} label="min a session" divider compact={compact} />
+            <Stat value={plan.days * plan.minutes} delay={STATS_AT + 240} label="min a week" divider compact={compact} />
           </View>
         </View>
       </Appear>
 
-      <View style={styles.weekWrap}>
+      <View style={[styles.weekWrap, compact && styles.weekWrapCompact]}>
         <Appear delay={ROWS_AT - 120} style={styles.weekHeader}>
           <T variant="kicker">Your first week</T>
           <T variant="caption">
@@ -143,10 +147,10 @@ export default function PlanReady() {
 }
 
 /** One of the plan's numbers, counting up into place. */
-function Stat({ value, delay, label, divider }: { value: number; delay: number; label: string; divider?: boolean }) {
+function Stat({ value, delay, label, divider, compact }: { value: number; delay: number; label: string; divider?: boolean; compact?: boolean }) {
   return (
     <View style={[styles.stat, divider && styles.statDivider]}>
-      <CountUp value={value} delay={delay} style={styles.statValue} />
+      <CountUp value={value} delay={delay} style={[styles.statValue, compact && styles.statValueCompact]} />
       <T variant="caption">{label}</T>
     </View>
   );
@@ -157,6 +161,7 @@ const styles = StyleSheet.create({
 
   hero: { marginTop: 16, borderRadius: 24, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, boxShadow: shadows.card, overflow: 'hidden' },
   heroTop: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingTop: 16, paddingHorizontal: 16 },
+  heroTopCompact: { paddingTop: 10 },
   bodies: { flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center' },
   halo: { position: 'absolute', alignSelf: 'center', left: -6, right: -6, top: 4, bottom: 4, borderRadius: 80, backgroundColor: accent(0.07) },
   areas: { flex: 1, gap: 8 },
@@ -165,11 +170,14 @@ const styles = StyleSheet.create({
   chipText: { fontFamily: fonts.semibold, fontSize: 13, color: colors.greenDeep },
 
   stats: { flexDirection: 'row', marginTop: 16, paddingVertical: 14, borderTopWidth: 1, borderTopColor: colors.line, backgroundColor: glassSoft },
+  statsCompact: { marginTop: 10, paddingVertical: 9 },
   stat: { flex: 1, paddingHorizontal: 16, gap: 1 },
   statDivider: { borderLeftWidth: 1, borderLeftColor: colors.line },
   statValue: { fontFamily: fonts.display, fontSize: 24, lineHeight: 28, color: colors.ink },
+  statValueCompact: { fontSize: 20, lineHeight: 24 },
 
   weekWrap: { flex: 1, marginTop: 22 },
+  weekWrapCompact: { marginTop: 14 },
   weekHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   list: { flex: 1, marginTop: 10, marginHorizontal: -24 },
   listContent: { gap: 10, paddingHorizontal: 24, paddingBottom: 8 },

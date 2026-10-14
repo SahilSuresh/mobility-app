@@ -13,7 +13,16 @@ export async function captureCard(ref: RefObject<View | null>): Promise<string> 
   if (!node) throw new Error('The card is not on screen.');
   const html2canvas = (await import('html2canvas')).default;
   // A clear background keeps the card's rounded corners round.
-  const canvas = await html2canvas(node, { backgroundColor: null, scale: 3, useCORS: true, logging: false });
+  const canvas = await html2canvas(node, {
+    backgroundColor: null,
+    scale: 3,
+    useCORS: true,
+    logging: false,
+    // On short screens the card is shown shrunk (a transform on a parent); draw it from a copy at full size.
+    onclone: (_doc, clone) => {
+      for (let el = clone.parentElement; el; el = el.parentElement) el.style.transform = 'none';
+    },
+  });
   return canvas.toDataURL('image/png');
 }
 

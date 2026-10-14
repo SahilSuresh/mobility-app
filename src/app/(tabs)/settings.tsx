@@ -15,6 +15,7 @@ import { cancelReminders } from '@/lib/notifications';
 import { reminderSummary } from '@/lib/reminders';
 import { manageSubscription, purchasesLive, restore } from '@/lib/purchases';
 import { isReviewCode } from '@/lib/reviewAccess';
+import { useNotificationStatus } from '@/lib/useNotificationStatus';
 import { useAppStore } from '@/store/useAppStore';
 
 type RowProps = { label: string; value?: string; href?: Href; onPress?: () => void; last?: boolean };
@@ -27,7 +28,8 @@ function Row({ label, value, href, onPress, last }: RowProps) {
         onPress={onPress ?? (href ? () => router.push(href) : undefined)}
         style={({ pressed }) => [styles.row, pressed && { backgroundColor: tint(0.05) }]}
       >
-        <T variant="body" style={[styles.flex, { fontFamily: fonts.medium }]}>
+        {/* The label keeps its one line; a value beside it takes the rest and shortens with "…" if it must. */}
+        <T variant="body" numberOfLines={1} style={[value ? styles.label : styles.flex, { fontFamily: fonts.medium }]}>
           {label}
         </T>
         {value ? (
@@ -54,6 +56,9 @@ export default function SettingsTab() {
   const chimes = sounds.moveEnd || sounds.readyEnd;
   const audio = chimes && sounds.voice ? 'Voice & chimes' : chimes ? 'Chimes' : sounds.voice ? 'Voice' : 'Silent';
   const soundSummary = `${audio} · ${restSeconds(readySeconds)}s rest`;
+  // "7:00 pm · Plan days", "Off", or a warning when the phone is blocking them.
+  const { status: notifyStatus } = useNotificationStatus();
+  const notificationSummary = notifyStatus === 'denied' ? 'Blocked in Settings' : reminderSummary(reminder);
   const reset = useAppStore((s) => s.reset);
   const [note, setNote] = useState('');
   const [darkMode, setDarkMode] = useState(isDark);
@@ -142,7 +147,7 @@ export default function SettingsTab() {
               setDarkMode(on);
               saveAppearance(on ? 'dark' : 'light');
               // The whole app is drawn in one palette, picked at start-up, so it reloads to switch.
-              if (!reloadApp()) setNote('Restart the app to see the new look.');
+              reloadApp(() => setNote('Restart the app to see the new look.'));
             }}
             trackColor={{ true: colors.green, false: colors.line }}
           />
@@ -157,10 +162,16 @@ export default function SettingsTab() {
       </View>
 
       <T variant="kicker" style={styles.section}>
+        Notifications
+      </T>
+      <View style={styles.group}>
+        <Row label="Notifications" value={notificationSummary} href="/notifications" last />
+      </View>
+
+      <T variant="kicker" style={styles.section}>
         General
       </T>
       <View style={styles.group}>
-        <Row label="Reminders" value={reminderSummary(reminder)} href={{ pathname: '/reminder', params: { edit: '1' } }} />
         {isPremium && purchasesLive() ? <Row label="Manage subscription" onPress={openSubscription} /> : null}
         <Row label="Restore purchases" onPress={restorePurchases} />
         {isPremium ? null : <Row label="Have an access code?" onPress={() => setCodeOpen((o) => !o)} />}
@@ -249,7 +260,8 @@ const styles = StyleSheet.create({
     boxShadow: shadows.small,
   },
   row: { minHeight: 52, paddingHorizontal: 16, paddingRight: 14, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  value: { maxWidth: 170 },
+  label: { flexShrink: 0 },
+  value: { flex: 1, textAlign: 'right' },
   codeRow: { gap: 10 },
   codeInput: { minHeight: 40, paddingHorizontal: 12, borderRadius: 12, borderWidth: 1, borderColor: colors.border, color: colors.ink, fontFamily: fonts.medium, fontSize: 16 },
   apply: { height: 40, paddingHorizontal: 16, borderRadius: 20, backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center' },

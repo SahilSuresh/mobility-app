@@ -65,6 +65,8 @@ type CardLook = (typeof LOOKS)[LookId];
 const AT = { card: 0, text: 220, number: 380, days: 560, stats: 560 + 7 * STAGGER + 80, buttons: 900 };
 /** By now every number has finished counting, so a saved card never catches one mid-count. */
 const SETTLED = AT.stats + 800;
+/** Height the colour picker under the card takes (its gap, swatches and name), plus a little room to breathe. */
+const LOOKS_SPACE = 96;
 
 /** Said in the first person, since it's your card: the plan done, some sessions in, or none yet. */
 function headline(sessions: number, done: number, target: number): string {
@@ -95,6 +97,9 @@ export default function Share() {
   // The card rises in as the screen opens, and gives a small squeeze when its colour changes.
   const [enter] = useState(() => new Animated.Value(reduceMotion ? 1 : 0));
   const [squeeze] = useState(() => new Animated.Value(1));
+  // The space for the card, and the card's own height at full size, both measured on screen.
+  const [stageHeight, setStageHeight] = useState(0);
+  const [cardHeight, setCardHeight] = useState(0);
 
   useEffect(() => {
     if (reduceMotion) return;
@@ -177,9 +182,14 @@ export default function Share() {
     }
   };
 
+  // How much the card shrinks to fit: the stage's height less the colour picker under it, against the card's own.
+  const fit = stageHeight && cardHeight ? Math.min(1, Math.max(0.6, (stageHeight - LOOKS_SPACE) / cardHeight)) : 1;
   const enterStyle = {
     opacity: enter.interpolate({ inputRange: [0, 0.5], outputRange: [0, 1], extrapolate: 'clamp' }),
-    transform: [{ translateY: enter.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) }, { scale: Animated.multiply(enter.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1] }), squeeze) }],
+    transform: [
+      { translateY: enter.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) },
+      { scale: Animated.multiply(Animated.multiply(enter.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1] }), squeeze), fit) },
+    ],
   };
 
   return (
@@ -192,14 +202,18 @@ export default function Share() {
         <View style={{ width: 44 }} />
       </View>
 
-      <View style={styles.stage}>
+      <View style={styles.stage} onLayout={(e) => setStageHeight(e.nativeEvent.layout.height)}>
+        {/* On short phones the card shrinks to fit between the header and the buttons. The box around it takes the
+            card's shrunk size, so nothing overlaps; the saved image is still captured at full size. */}
+        <View style={{ width: cardWidth * fit, height: cardHeight ? cardHeight * fit : undefined, alignItems: 'center', justifyContent: 'center' }}>
         {/* The shadow sits outside the captured view, so the saved image is just the card. */}
         <Animated.View style={[styles.cardShadow, enterStyle]}>
-          <View ref={card} collapsable={false} style={[styles.card, { width: cardWidth }]}>
+          <View ref={card} collapsable={false} style={[styles.card, { width: cardWidth }]} onLayout={(e) => setCardHeight(e.nativeEvent.layout.height)}>
             <LinearGradient colors={look.gradient} locations={[0, 0.55, 1]} start={{ x: 0.15, y: 0 }} end={{ x: 0.85, y: 1 }} style={StyleSheet.absoluteFill} />
             <WeekCard look={look} plan={{ week: weekNumber(plan, now), range: weekRange(days[0].date, days[6].date) }} sessions={week.length} done={done} target={target} days={days} minutes={minutesOf(week)} moves={moves} streakDays={streak(plan, history, now)} glows={glows} />
           </View>
         </Animated.View>
+        </View>
 
         <Appear delay={AT.buttons} style={styles.looks}>
           <View style={styles.lookRow} accessibilityRole="radiogroup" accessibilityLabel="Card colour">
@@ -269,7 +283,7 @@ function WeekCard({ look, plan, sessions, done, target, days, minutes, moves, st
   return (
     <View style={styles.cardInner}>
       <Appear delay={AT.text + 200} style={styles.figure}>
-        <View pointerEvents="none">
+        <View style={{ pointerEvents: 'none' }}>
           <BodyFigure height={170} glows={glows} fill={look.figure} glowColor={look.glow} />
         </View>
       </Appear>

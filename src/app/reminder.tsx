@@ -62,7 +62,8 @@ export default function ReminderScreen() {
   const planDays = plan ? reminderDays(plan, { slot, ...time }) : [];
   const preview = sessionMessage(upcoming, time.hour, new Date().getDate());
 
-  const reminder: Reminder = { slot, ...time, days, streak, comeback, weekly };
+  // Sound is set on the Notifications screen; keep it as it is.
+  const reminder: Reminder = { slot, ...time, days, streak, comeback, weekly, sound: saved?.sound };
 
   const save = async () => {
     tap();
@@ -88,7 +89,7 @@ export default function ReminderScreen() {
   const test = async () => {
     tap();
     playSound('select');
-    const result = await sendTestReminder(upcoming);
+    const result = await sendTestReminder(upcoming, saved?.sound !== false);
     setNote(
       result === 'granted'
         ? { text: 'A test reminder is on its way. Lock your phone to see it.' }

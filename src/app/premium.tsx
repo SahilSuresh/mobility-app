@@ -375,7 +375,7 @@ function Shine() {
   if (reduceMotion) return null;
   const translateX = sweep.interpolate({ inputRange: [0, 1], outputRange: [-120, width + 40] });
   return (
-    <View pointerEvents="none" style={styles.shineClip} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
+    <View style={[styles.shineClip, { pointerEvents: 'none' }]} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
       <Animated.View style={[styles.shineBand, { transform: [{ translateX }, { rotate: '18deg' }] }]}>
         <LinearGradient
           colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.28)', 'rgba(255,255,255,0)']}

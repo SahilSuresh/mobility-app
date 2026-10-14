@@ -105,6 +105,7 @@ export default function RootLayout() {
           <Stack.Screen name="complete" options={{ animation: 'fade', gestureEnabled: false }} />
           <Stack.Screen name="premium" options={{ presentation: 'modal' }} />
           <Stack.Screen name="reminder" />
+          <Stack.Screen name="notifications" />
           <Stack.Screen name="sound-timer" />
           <Stack.Screen name="edit-areas" options={{ presentation: 'modal' }} />
           <Stack.Screen name="routine-builder" options={{ presentation: 'modal' }} />
