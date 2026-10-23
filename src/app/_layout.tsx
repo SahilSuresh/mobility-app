@@ -12,6 +12,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { AppState, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { LaunchIntro } from '@/components/LaunchIntro';
 import { colors, isDark, shade } from '@/constants/theme';
@@ -94,7 +95,8 @@ export default function RootLayout() {
 
   return (
     <DesktopFrame>
-      <View style={styles.fill}>
+      {/* The gesture root is what lets the tabs' swipe (SwipeTabs) work; it has to sit above every screen. */}
+      <GestureHandlerRootView style={styles.fill}>
         <StatusBar style={isDark ? 'light' : 'dark'} />
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bgTop } }}>
           <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
@@ -114,7 +116,7 @@ export default function RootLayout() {
           <Stack.Screen name="area/[id]" />
         </Stack>
         {intro ? <LaunchIntro onDone={endIntro} /> : null}
-      </View>
+      </GestureHandlerRootView>
     </DesktopFrame>
   );
 }
