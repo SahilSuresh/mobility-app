@@ -127,12 +127,16 @@ export default function SessionPlayer() {
   const restedFor = useRef(-1);
   // Seconds a rest or switch break has waited at 0:00 for the guide to finish talking.
   const waited = useRef(0);
+  // The guide's latest line, and the one a pause cut off (said again on resume).
+  const lastLine = useRef('');
+  const cutOff = useRef('');
 
   /** Say a line (if the voice is on) and return how many seconds until it's finished. */
   const say = (text: string, { delay = 0, queue = false }: { delay?: number; queue?: boolean } = {}): number => {
     const now = Date.now();
     const begins = queue ? Math.max(now + delay, speakingUntil.current) : now + delay;
     speakingUntil.current = begins + speechSeconds(text) * 1000;
+    lastLine.current = text;
     if (useAppStore.getState().sounds.voice) speak(text, delay, { queue });
     return (speakingUntil.current - now) / 1000;
   };
@@ -161,10 +165,22 @@ export default function SessionPlayer() {
   });
   useEffect(() => announce(), [index, phase, side]);
 
-  // Pausing stops the voice mid-line; the next cue picks up when you play again.
-  useEffect(() => {
-    if (!playing) stopSpeaking();
-  }, [playing]);
+  // Pausing stops the voice mid-line. Playing again says that line again from the start, so the guide doesn't
+  // stay silent until the next cue (which is how it used to feel like the sound had stopped for good).
+  const pauseOrPlay = useEffectEvent((on: boolean) => {
+    if (!on) {
+      if (Date.now() < speakingUntil.current && lastLine.current) cutOff.current = lastLine.current;
+      stopSpeaking();
+      speakingUntil.current = Date.now();
+      return;
+    }
+    if (cutOff.current) {
+      const line = cutOff.current;
+      cutOff.current = '';
+      say(line, { delay: 250 });
+    }
+  });
+  useEffect(() => pauseOrPlay(playing), [playing]);
 
   // One tick a second while playing: rest → hold (→ switch → second side) → next move, or finish after the last.
   const tick = useEffectEvent(() => {
@@ -275,7 +291,7 @@ export default function SessionPlayer() {
       <View style={[styles.stage, compact && styles.stageCompact]}>
         <Ring size={ringSize} stroke={6} progress={left / total} color={between ? accent(0.35) : colors.green}>
           {/* The second side of a two-sided move shows the picture flipped; it turns over during the switch break. */}
-          <ExerciseArt exercise={move} size={ringSize - 44} shadow breathe={playing && !between} mirrored={move.eachSide && (switching || side === 2)} />
+          <ExerciseArt exercise={move} size={ringSize - 44} shadow breathe={!between} paused={!playing} mirrored={move.eachSide && (switching || side === 2)} />
         </Ring>
       </View>
 

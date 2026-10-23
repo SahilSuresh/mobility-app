@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
 import Svg, { Defs, Ellipse, G, LinearGradient, Mask, Path, RadialGradient, Stop } from 'react-native-svg';
@@ -19,6 +19,8 @@ type Props = {
   shadow?: boolean;
   /** Play the move: switch between the normal starting position and the exercise. */
   breathe?: boolean;
+  /** The session player's pause: hold on the exercise and keep both pictures ready for the resume. */
+  paused?: boolean;
   /** A curved arrow showing which way to move. On by default for large drawings (120 and up). */
   arrow?: boolean;
   /** Where in the cycle this one starts (0–1), to stagger a list of moving drawings. */
@@ -320,6 +322,50 @@ function arrowFor(pose: PoseKey): { path: string; head: string } | null {
 export const SWITCH = { start: 1100, fade: 420, hold: 2600 } as const;
 export const SWITCH_CYCLE = SWITCH.start + SWITCH.fade + SWITCH.hold + SWITCH.fade;
 
+/**
+ * The two-picture switch as one value: 1 shows the exercise, 0 the starting position. Shared by the drawn poses and
+ * the illustrations.
+ * - Not playing (a list thumbnail, a rest): the exercise, still.
+ * - Paused (the session player): eases to the exercise and holds there. Both pictures stay on screen, so nothing
+ *   has to load again on resume; resuming carries on from the exercise instead of jumping back to the start, which
+ *   is what made the picture blink out for a moment after every pause.
+ */
+export function useSwitchCycle(playing: boolean, paused: boolean, phase = 0): Animated.Value {
+  const [show] = useState(() => new Animated.Value(1));
+  // Whether this run of playing has begun, so a resume after a pause continues instead of starting over.
+  const started = useRef(false);
+
+  useEffect(() => {
+    const change = (to: number) => Animated.timing(show, { toValue: to, duration: SWITCH.fade, easing: Easing.inOut(Easing.quad), useNativeDriver: NATIVE_DRIVER });
+    if (!playing) {
+      started.current = false;
+      show.stopAnimation();
+      show.setValue(1);
+      return;
+    }
+    if (paused) {
+      const settle = change(1);
+      settle.start();
+      return () => settle.stop();
+    }
+    const cycle = Animated.loop(Animated.sequence([Animated.delay(SWITCH.start), change(1), Animated.delay(SWITCH.hold), change(0)]));
+    let run: Animated.CompositeAnimation;
+    if (started.current) {
+      // Resuming: from the exercise, hold, then back into the normal cycle.
+      run = Animated.sequence([change(1), Animated.delay(SWITCH.hold), change(0), cycle]);
+    } else {
+      started.current = true;
+      show.setValue(0);
+      // Stagger: start part-way through the cycle, so a list of moves doesn't switch in step.
+      run = Animated.sequence([Animated.delay((phase % 1) * SWITCH_CYCLE), cycle]);
+    }
+    run.start();
+    return () => run.stop();
+  }, [playing, paused, phase, show]);
+
+  return show;
+}
+
 /** The figure in one position, with its floor shadow and (optionally) the glow on the area being stretched. */
 function Drawing({ p, id, dot }: { p: Pose; id: string; dot: boolean }) {
   const shape = body(p, 0);
@@ -364,29 +410,14 @@ function Drawing({ p, id, dot }: { p: Pose; id: string; dot: boolean }) {
  * Playing, it switches between two pictures: the normal starting position and the exercise, with a short crossfade
  * and a hold on each. Paused, or with reduced motion turned on, it shows the exercise.
  */
-export function PoseBubble({ pose, size, color, dot = true, outline, shadow, breathe, arrow, phase = 0, style }: Props) {
+export function PoseBubble({ pose, size, color, dot = true, outline, shadow, breathe, paused, arrow, phase = 0, style }: Props) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
   const reduceMotion = useReducedMotion();
   const playing = !!breathe && !reduceMotion;
   const direction = (arrow ?? size >= 120) ? arrowFor(pose) : null;
-  // 1 shows the exercise, 0 the starting position.
-  const [show] = useState(() => new Animated.Value(1));
-
-  useEffect(() => {
-    if (!playing) {
-      show.setValue(1);
-      return;
-    }
-    show.setValue(0);
-    const change = (to: number) => Animated.timing(show, { toValue: to, duration: SWITCH.fade, easing: Easing.inOut(Easing.quad), useNativeDriver: NATIVE_DRIVER });
-    const loop = Animated.sequence([
-      // Stagger: start part-way through the cycle, so a list of moves doesn't switch in step.
-      Animated.delay((phase % 1) * SWITCH_CYCLE),
-      Animated.loop(Animated.sequence([Animated.delay(SWITCH.start), change(1), Animated.delay(SWITCH.hold), change(0)])),
-    ]);
-    loop.start();
-    return () => loop.stop();
-  }, [playing, phase, show]);
+  const show = useSwitchCycle(playing, !!paused, phase);
+  // The player keeps the starting picture mounted throughout (rests and pauses too), so it never has to appear from nothing.
+  const both = playing || (paused !== undefined && !reduceMotion);
 
   return (
     <View
@@ -407,7 +438,7 @@ export function PoseBubble({ pose, size, color, dot = true, outline, shadow, bre
           borderColor: colors.card,
         }}
       >
-        {playing ? (
+        {both ? (
           <Animated.View style={[StyleSheet.absoluteFill, { opacity: show.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) }]}>
             <Drawing p={START[pose]} id={`${uid}s`} dot={false} />
           </Animated.View>

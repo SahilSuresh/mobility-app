@@ -1,15 +1,14 @@
 import { Image } from 'expo-image';
-import { useEffect, useState } from 'react';
-import { Animated, Easing, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Animated, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
 
-import { colors, NATIVE_DRIVER, REGION_COLORS, shade, shadows } from '@/constants/theme';
+import { colors, REGION_COLORS, shade, shadows } from '@/constants/theme';
 import { ART, ART_BACKGROUND, ART_INK } from '@/data/art';
 import { getExercise } from '@/data/exercises';
 import type { Exercise } from '@/data/types';
 
 import { Icon, type IconName } from './Icon';
-import { PoseBubble, SWITCH, SWITCH_CYCLE } from './PoseBubble';
+import { PoseBubble, useSwitchCycle } from './PoseBubble';
 
 type Props = {
   exercise: Exercise;
@@ -19,6 +18,8 @@ type Props = {
   outline?: boolean;
   /** Switch between the starting position and the exercise, like the drawn poses do. */
   breathe?: boolean;
+  /** The session player's pause: hold on the exercise and keep both pictures loaded, so resuming doesn't blink. */
+  paused?: boolean;
   /** Where in the switch cycle to start (0–1), so a list of moves doesn't switch in step. */
   phase?: number;
   /** The drawn poses' dot on the area worked; illustrations don't need it. */
@@ -33,27 +34,13 @@ type Props = {
  * show them: playing, it switches from the relaxed start to the exercise and back with a soft crossfade (paused, or
  * with reduced motion, it shows the exercise). Moves without illustrations yet fall back to the drawn pose.
  */
-export function ExerciseArt({ exercise, size, shadow, outline, breathe, phase = 0, dot, mirrored, style }: Props) {
+export function ExerciseArt({ exercise, size, shadow, outline, breathe, paused, phase = 0, dot, mirrored, style }: Props) {
   const art = ART[exercise.id];
   const reduceMotion = useReducedMotion();
   const playing = !!art && !!breathe && !reduceMotion;
-  // 1 shows the exercise, 0 the starting position.
-  const [show] = useState(() => new Animated.Value(1));
-
-  useEffect(() => {
-    if (!playing) {
-      show.setValue(1);
-      return;
-    }
-    show.setValue(0);
-    const change = (to: number) => Animated.timing(show, { toValue: to, duration: SWITCH.fade, easing: Easing.inOut(Easing.quad), useNativeDriver: NATIVE_DRIVER });
-    const loop = Animated.sequence([
-      Animated.delay((phase % 1) * SWITCH_CYCLE),
-      Animated.loop(Animated.sequence([Animated.delay(SWITCH.start), change(1), Animated.delay(SWITCH.hold), change(0)])),
-    ]);
-    loop.start();
-    return () => loop.stop();
-  }, [playing, phase, show]);
+  const show = useSwitchCycle(playing, !!paused, phase);
+  // The player keeps the starting picture mounted throughout (rests and pauses too), so it's already loaded when it shows.
+  const both = playing || (!!art && paused !== undefined && !reduceMotion);
 
   if (!art) {
     return (
@@ -64,6 +51,7 @@ export function ExerciseArt({ exercise, size, shadow, outline, breathe, phase = 
         shadow={shadow}
         outline={outline}
         breathe={breathe}
+        paused={paused}
         phase={phase}
         dot={dot}
         style={[style, mirrored && styles.mirrored]}
@@ -86,7 +74,7 @@ export function ExerciseArt({ exercise, size, shadow, outline, breathe, phase = 
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
     >
-      {playing ? (
+      {both ? (
         <Animated.View style={[styles.layer, picture, { opacity: show.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) }]}>
           <Image source={art.start} style={StyleSheet.absoluteFill} contentFit="contain" transition={0} />
         </Animated.View>
