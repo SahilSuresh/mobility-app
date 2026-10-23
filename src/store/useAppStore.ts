@@ -44,8 +44,6 @@ type Data = {
   /** The current one-off session (stiff-today or programme day). */
   extra: PlannedSession | null;
   isPremium: boolean;
-  /** Premium turned on with the app review code (see lib/reviewAccess.ts); the store can't switch it off. */
-  reviewAccess: boolean;
   reminder: Reminder | null;
   flags: Flags;
   programmeDays: Record<string, number>;
@@ -73,8 +71,6 @@ type Actions = {
   startCustom: (session: PlannedSession) => void;
   startProgramme: (programmeId: string) => PlannedSession | null;
   setPremium: (value: boolean) => void;
-  /** Turns on Premium for app review on this phone, for good. */
-  unlockReviewAccess: () => void;
   setReminder: (reminder: Reminder | null) => void;
   setFlag: (flag: keyof Flags) => void;
   /** The Premium pop-up or the paywall was just seen: the gap before the pop-up comes back starts now. */
@@ -101,7 +97,6 @@ const initialData: Data = {
   history: [],
   extra: null,
   isPremium: false,
-  reviewAccess: false,
   reminder: null,
   flags: { seenPaywall: false, seenReminder: false },
   programmeDays: {},
@@ -215,8 +210,7 @@ export const useAppStore = create<AppState>()(
         return session;
       },
 
-      setPremium: (value) => set((s) => ({ isPremium: value || s.reviewAccess })),
-      unlockReviewAccess: () => set({ reviewAccess: true, isPremium: true }),
+      setPremium: (value) => set({ isPremium: value }),
       setReminder: (reminder) => {
         set({ reminder });
         syncReminders();
@@ -250,7 +244,13 @@ export const useAppStore = create<AppState>()(
       name: 'mobility-app',
       version: 1,
       storage: createJSONStorage(() => safeStorage),
-      merge: (persisted, current) => withoutMissingMoves({ ...current, ...(persisted as Partial<AppState>) }),
+      merge: (persisted, current) => {
+        // The old app review code (removed 23 Oct 2026) saved `reviewAccess` and forced Premium on.
+        // Drop it, and with it the Premium it granted; RevenueCat sets the real status at launch.
+        const { reviewAccess, ...saved } = (persisted ?? {}) as Partial<AppState> & { reviewAccess?: boolean };
+        if (reviewAccess) saved.isPremium = false;
+        return withoutMissingMoves({ ...current, ...saved });
+      },
       partialize: (s): Data => ({
         draft: s.draft,
         plan: s.plan,
@@ -258,7 +258,6 @@ export const useAppStore = create<AppState>()(
         history: s.history,
         extra: s.extra,
         isPremium: s.isPremium,
-        reviewAccess: s.reviewAccess,
         reminder: s.reminder,
         flags: s.flags,
         programmeDays: s.programmeDays,

@@ -92,7 +92,7 @@ The paywall (`src/app/premium.tsx`) opens:
 
 ### App review access
 
-Unknot has no accounts, and store reviewers can't start free trials, so reviewers get an access code instead: Settings → **Have an access code?** (shown only without Premium) turns Premium on for that phone for good (`reviewAccess` in the store; RevenueCat checks can't switch it off). The code itself is only in the git-ignored `.env.local` as `REVIEW_ACCESS_CODE` and in the store consoles' sign-in details; the app holds just its SHA-256 (`src/lib/reviewAccess.ts`). To change it, hash the new code (letters and digits only, upper case) into `REVIEW_CODE_SHA256`, ship an update and give the stores the new code.
+There is no review code, gesture or hidden switch. App Review tests Premium the same way users get it: the paywall's free trial, bought in Apple's sandbox (Google Play: a licence tester account). The old "Have an access code?" box was removed on 23 Oct 2026 after Apple rejected the app under guideline 5.6 ("features hidden during review"); phones that had used it drop back to their real RevenueCat status. Don't add any reviewer-only path again.
 
 ### Paywall setup
 
